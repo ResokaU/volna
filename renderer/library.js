@@ -14,6 +14,8 @@ async function loadAllData() {
   state.history = await g('history:get', 'history', []);
   state.playlists = await g('playlists:get', 'playlists', []);
   state.stats = await g('stats:get', 'stats', { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() });
+  if (ipc) { try { state.lastTrack = await ipc.invoke('lastTrack:get'); } catch (_) {} }
+  else state.lastTrack = lsGet('lastTrack', null);
 
   if (ipc) {
     try { state.settings = { ...state.settings, ...(await ipc.invoke('settings:get') || {}) }; }
@@ -151,6 +153,7 @@ function applySettings() {
   setZoom(state.settings.uiScale || 1, true);
   restoreEqUI();
   updateDislikeCount();
+  $$('.bit-chip').forEach(x => x.classList.toggle('active', x.dataset.bit === (state.settings.bitrate || 'best')));
   const su = $('#set-updates');
   if (su) su.checked = state.settings.checkUpdates !== false;
   $$('.accent-chip').forEach(c => c.classList.toggle('active', c.dataset.accent === (state.settings.accent || 'neon')));
@@ -210,6 +213,12 @@ function bindLibraryUI() {
   $('#set-updates').addEventListener('change', e => saveSetting('checkUpdates', e.target.checked));
 
   bindEq();
+  bindPlaylistDnD();
+  $$('.bit-chip').forEach(ch => ch.addEventListener('click', async () => {
+    await saveSetting('bitrate', ch.dataset.bit);
+    $$('.bit-chip').forEach(x => x.classList.toggle('active', x.dataset.bit === ch.dataset.bit));
+    toast(ch.dataset.bit === 'best' ? '🎚 Качество: лучшее' : '🎚 Качество: экономия трафика (перезапусти трек)', 'success');
+  }));
   $('#fav-filter').addEventListener('input', e => {
     state.favFilter = e.target.value;
     if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
@@ -242,6 +251,7 @@ function bindLibraryUI() {
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       try {
         localStorage.setItem('ga:wallpaper', c.toDataURL('image/jpeg', 0.82));
+        saveSetting('wallpaperData', c.toDataURL('image/jpeg', 0.82));
         applyWallpaper();
         toast('🖼 Обои установлены', 'success');
       } catch (_) { toast('Картинка слишком большая', 'error'); }
@@ -377,7 +387,84 @@ async function removeFromPlaylist(idx) {
   openPlaylist(pl.id); // перерисовка детального вида
   updateBadges();
   highlightPlaying();
-  toast('Убрано: ' + (removed.title || ''), '');
+  toast('Убрано: ' + (removed.title || ''), '', { label: '↩ Вернуть', fn: async () => {
+    const pl2 = state.playlists.find(p => p.id === pl.id);
+    if (!pl2) return;
+    pl2.tracks.splice(Math.min(idx, pl2.tracks.length), 0, removed);
+    await persistPlaylists();
+    if ($('#view-playlist-detail')?.classList.contains('active') && state.currentPlaylistId === pl.id) openPlaylist(pl.id);
+    updateBadges();
+    toast('↩ Вернулось на место', 'success');
+  }});
+}
+
+/* экспорт/импорт плейлиста файлом (.volna.json) */
+async function exportPlaylist() {
+  const pl = state.playlists.find(p => p.id === state.currentPlaylistId);
+  if (!pl) return;
+  if (!pl.tracks.length) { toast('Плейлист пуст', 'error'); return; }
+  const r = await ipc.invoke('dialog:exportPlaylistFile', { name: pl.name, tracks: pl.tracks }).catch(() => null);
+  if (r?.ok) toast('⤓ Экспортировано: ' + pl.name, 'success');
+  else if (r && !r.ok && r.error) toast('Ошибка: ' + r.error, 'error');
+}
+
+async function importPlaylistFile() {
+  if (!ipc) { toast('Доступно только в приложении', 'error'); return; }
+  const r = await ipc.invoke('dialog:importPlaylistFile').catch(() => null);
+  if (!r?.ok) { if (r && r.error) toast('Ошибка: ' + r.error, 'error'); return; }
+  const tracks = (r.tracks || []).filter(t => t && t.id != null && t.permalink_url && t.title).slice(0, 500);
+  if (!tracks.length) { toast('В файле нет валидных треков', 'error'); return; }
+  let name = r.name || 'Импорт'; let n = 2;
+  while (state.playlists.some(p => p.name === name)) name = (r.name || 'Импорт') + ' (' + n++ + ')';
+  tracks.forEach(rememberTrack);
+  state.playlists.push({ id: Date.now(), name, desc: 'Импорт из файла · ' + new Date().toLocaleDateString('ru-RU'), tracks, createdAt: new Date().toISOString() });
+  await persistPlaylists();
+  updateBadges();
+  if ($('#view-playlists')?.classList.contains('active')) renderPlaylists();
+  toast('⤒ Импортировано «' + name + '» — ' + tracks.length + ' треков', 'success');
+}
+
+/* drag&drop порядок треков в плейлисте */
+function bindPlaylistDnD() {
+  const listEl = $('#pl-detail-tracks');
+  if (!listEl) return;
+  let dragIdx = -1;
+  listEl.addEventListener('dragstart', e => {
+    const card = e.target.closest('.track-card');
+    if (!card) return;
+    dragIdx = +card.dataset.idx;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(dragIdx)); } catch (_) {}
+  });
+  listEl.addEventListener('dragover', e => {
+    if (dragIdx < 0) return;
+    e.preventDefault();
+    const card = e.target.closest('.track-card');
+    if (card) {
+      $$('#pl-detail-tracks .track-card').forEach(x => x.classList.remove('drop-target'));
+      card.classList.add('drop-target');
+    }
+  });
+  listEl.addEventListener('drop', e => {
+    e.preventDefault();
+    const card = e.target.closest('.track-card');
+    if (!card || dragIdx < 0) { dragIdx = -1; return; }
+    const to = +card.dataset.idx;
+    const pl = state.playlists.find(p => p.id === state.currentPlaylistId);
+    if (pl && to !== dragIdx && pl.tracks[dragIdx]) {
+      const [moved] = pl.tracks.splice(dragIdx, 1);
+      pl.tracks.splice(to, 0, moved);
+      persistPlaylists();
+      openPlaylist(pl.id);
+      highlightPlaying();
+    }
+    dragIdx = -1;
+  });
+  listEl.addEventListener('dragend', () => {
+    dragIdx = -1;
+    $$('#pl-detail-tracks .track-card').forEach(x => x.classList.remove('dragging', 'drop-target'));
+  });
 }
 
 function toggleSort() {
@@ -488,6 +575,13 @@ async function createPlaylist() {
   toast('📁 Плейлист создан', 'success');
 }
 
+/* мозаика из обложек первых 4 треков плейлиста */
+function mosaicHTML(pl) {
+  const covers = (pl.tracks || []).map(t => artwork(t)).filter(Boolean).slice(0, 4);
+  if (covers.length < 2) return '<div class="pl-art"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg></div>';
+  return '<div class="pl-mosaic">' + covers.map(u => `<img src="${escapeHtml(u)}" alt="" loading="lazy" onerror="this.style.opacity=0">`).join('') + '</div>';
+}
+
 function renderPlaylists() {
   const grid = $('#playlists-grid');
   if (!state.playlists.length) {
@@ -496,7 +590,7 @@ function renderPlaylists() {
   }
   grid.innerHTML = state.playlists.map(pl => `
     <div class="track-card" onclick="openPlaylist(${pl.id})">
-      <div class="track-art pl-art"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg></div>
+      <div class="track-art">${mosaicHTML(pl)}</div>
       <div class="track-info">
         <div class="track-title" title="${escapeHtml(pl.name)}">${escapeHtml(pl.name)}</div>
         <div class="track-artist">${pl.tracks.length} треков</div>
@@ -970,7 +1064,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '3.3.9', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '5.0.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

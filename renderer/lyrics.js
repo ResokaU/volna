@@ -46,8 +46,15 @@ async function loadLyrics(track, force) {
   const cached = state.lyricsCache[track.id];
   if (cached && !force) { applyRecord(cached, track); return; }
 
+  // свой текст (тап-синхрон) важнее LRCLIB
+  const custom = (state.settings.customLyrics || {})[track.id];
+  if (custom && !force) {
+    applyRecord({ syncedLyrics: custom, artist_name: track.user?.username || '', track_name: track.title || '', duration: Math.round((track.duration || 0) / 1000) }, track);
+    return;
+  }
+
   const gen = state.playGen || 0; // токен: если трек сменился — ответ не применяем
-  state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null };
+  state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: (state.settings.lyrOffsets || {})[track.id] || 0, lastIdx: null };
   renderLyrics();
 
   const { title, artist } = splitArtistTitle(track);
@@ -210,7 +217,95 @@ function nudgeLyrics(d) {
   if (!state.lyrics) return;
   state.lyrics.offset = Math.round(((state.lyrics.offset || 0) + d) * 2) / 2;
   state.lyrics.lastIdx = null;
+  const t = state.currentTrack;
+  if (t) {
+    const map = state.settings.lyrOffsets || {};
+    map[t.id] = state.lyrics.offset;
+    saveSetting('lyrOffsets', map); // подгонка помнится для этого трека навсегда
+  }
   toast(`Синхронизация: ${state.lyrics.offset > 0 ? '+' : ''}${state.lyrics.offset.toFixed(1)}с`);
+}
+
+/* ---------- ✍️ свой текст: тап-синхрон ---------- */
+function openTapEditor() {
+  const t = state.currentTrack;
+  if (!t) { toast('Сначала включи трек', 'error'); return; }
+  renderTapIntro();
+  openModal('taplyrics_modal');
+}
+function renderTapIntro() {
+  const body = $('#taplyrics-body');
+  if (!body) return;
+  body.innerHTML = `
+    <button class="modal-close" onclick="closeModal('taplyrics_modal')">×</button>
+    <h2>✍️ Свой текст: тап-синхрон</h2>
+    <div class="tap-hint">Вставь строки текста песни (просто текст, без таймингов). Затем запусти тап-режим и жми <strong>ПРОБЕЛ</strong> в такт каждой строке, пока играет трек. Получится собственное караоке — сохранится навсегда, LRCLIB не нужен.</div>
+    <textarea id="tap-lines" placeholder="строка 1&#10;строка 2&#10;строка 3…" spellcheck="false"></textarea>
+    <div class="ac-actions">
+      <button class="ac-btn primary" onclick="tapStart()">▶ Начать тап</button>
+      <button class="ac-btn ghost" onclick="closeModal('taplyrics_modal')">Отмена</button>
+    </div>`;
+}
+function tapStart() {
+  const lines = ($('#tap-lines')?.value || '').split(String.fromCharCode(10)).map(x => x.trim()).filter(Boolean);
+  if (lines.length < 2) { toast('Нужно минимум 2 строки', 'error'); return; }
+  state.tapLyrics = { lines, times: [], i: 0 };
+  if (state.engine === 'audio' && state.audio) {
+    state.audio.currentTime = 0;
+    state.audio.play().catch(() => {});
+  } else if (state.widget) {
+    try { state.widget.seekTo(0); state.widget.play(); } catch (_) {}
+  }
+  renderTapUI();
+}
+function renderTapUI() {
+  const T = state.tapLyrics;
+  const body = $('#taplyrics-body');
+  if (!T || !body) return;
+  body.innerHTML = `
+    <button class="modal-close" onclick="tapCancel()">×</button>
+    <h2>Тап-синхрон · строка ${T.i + 1} из ${T.lines.length}</h2>
+    <div class="tap-current">${escapeHtml(T.lines[T.i] || '(конец)')}</div>
+    <div class="tap-next">${escapeHtml(T.lines[T.i + 1] || '')}</div>
+    <div class="ac-actions">
+      ${T.i < T.lines.length
+        ? '<button class="ac-btn primary" onclick="tapLog()">ПРОБЕЛ — строка прозвучала</button>'
+        : '<button class="ac-btn primary" onclick="tapSave()">💾 Сохранить караоке</button>'}
+      <button class="ac-btn ghost" onclick="tapUndo()">← Назад</button>
+    </div>
+    <div class="tap-hint">Пробел на клавиатуре тоже работает · Backspace — шаг назад · Esc — отмена</div>`;
+}
+function tapLog() {
+  const T = state.tapLyrics;
+  if (!T || T.i >= T.lines.length) return;
+  T.times.push(Math.round((state._lastPosMs || 0) / 10) / 100);
+  T.i++;
+  renderTapUI();
+}
+function tapUndo() {
+  const T = state.tapLyrics;
+  if (!T || T.i <= 0) return;
+  T.times.pop(); T.i--;
+  renderTapUI();
+}
+function tapCancel() { state.tapLyrics = null; closeModal('taplyrics_modal'); }
+function tapSave() {
+  const T = state.tapLyrics, t = state.currentTrack;
+  if (!T || !t) return;
+  const fmt = sec => {
+    const m = Math.floor(sec / 60), ss = (sec % 60).toFixed(2).padStart(5, '0');
+    return String(m).padStart(2, '0') + ':' + ss;
+  };
+  const lrc = T.lines.map((line, i) => '[' + fmt(T.times[i] || 0) + ']' + line).join(String.fromCharCode(10));
+  const rec = { syncedLyrics: lrc, artist_name: t.user?.username || '', track_name: t.title || '', duration: Math.round((t.duration || 0) / 1000) };
+  const map = state.settings.customLyrics || {};
+  map[t.id] = lrc;
+  saveSetting('customLyrics', map);
+  state.lyricsCache[t.id] = rec;
+  state.tapLyrics = null;
+  closeModal('taplyrics_modal');
+  applyRecord(rec, t);
+  toast('✍️ Твоё караоке сохранено навсегда', 'success');
 }
 
 function openGenius() {

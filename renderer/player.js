@@ -79,6 +79,11 @@ function bindMediaKeys() {
       else state.widget?.pause();
     });
     ipc.on('mini:closed', () => { state.mini = false; });
+    ipc.on('media:pause', () => {
+      if (state.engine === 'audio' && state.audio) state.audio.pause();
+      else state.widget?.pause();
+    });
+    ipc.on('remote:vol', v => setVolume(v));
   } catch (_) {}
 }
 
@@ -175,8 +180,11 @@ async function resolveStreamUrl(track) {
   const trans = (t?.media?.transcodings || [])
     .filter(x => x?.format?.protocol === 'progressive' && x.url);
   if (!trans.length) return null;
-  // предпочтение старшим пресетам (mp3_1_0 ≈ 128-320, mp3_0_0 ≈ 64)
-  trans.sort((a, b) => presetRank(b.preset) - presetRank(a.preset));
+  // предпочтение пресетам: «Лучшее» — старшие, «Экономия трафика» — младшие
+  const wantSmall = state.settings.bitrate === 'small';
+  trans.sort((a, b) => wantSmall
+    ? presetRank(a.preset) - presetRank(b.preset)
+    : presetRank(b.preset) - presetRank(a.preset));
   for (const tr of trans) {
     try {
       const sep = tr.url.includes('?') ? '&' : '?';
@@ -186,6 +194,69 @@ async function resolveStreamUrl(track) {
   }
   return null;
 }
+/* 🌊 волновая форма трека: декодируем mp3, рисуем пики, клик = seek */
+function startWaveform(track, url) {
+  if (!url || state.waveCache.has(track.id)) return;
+  const p = (async () => {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const AC = window.OfflineAudioContext || window.AudioContext;
+    const tmp = new AC(1, 1, 44100);
+    const audio = await tmp.decodeAudioData(buf);
+    const ch = audio.getChannelData(0);
+    const N = 300, step = Math.floor(ch.length / N);
+    const peaks = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      let max = 0;
+      for (let j = i * step; j < (i + 1) * step && j < ch.length; j += 40) {
+        const v = Math.abs(ch[j]);
+        if (v > max) max = v;
+      }
+      peaks[i] = max;
+    }
+    const norm = Math.max.apply(null, peaks) || 1;
+    for (let i = 0; i < N; i++) peaks[i] /= norm;
+    return peaks;
+  })().catch(() => null);
+  state.waveCache.set(track.id, p);
+  p.then(peaks => { if (!peaks) state.waveCache.delete(track.id); else drawWave(state._lastPosMs || 0, state._lastDurMs || 0); });
+}
+
+function drawWave(posMs, durMs) {
+  const c = $('#np-wave');
+  if (!c) return;
+  const p = state.currentTrack ? state.waveCache.get(state.currentTrack.id) : null;
+  if (!p || !p.then && !p.length) return;
+  Promise.resolve(p).then(peaks => {
+    if (!peaks) { c.style.display = 'none'; return; }
+    c.style.display = 'block';
+    const ctx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    ctx.clearRect(0, 0, W, H);
+    const frac = durMs ? Math.min(1, (posMs || 0) / durMs) : 0;
+    const bar = W / peaks.length;
+    const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#b14aff';
+    for (let i = 0; i < peaks.length; i++) {
+      const h = Math.max(2, peaks[i] * (H - 6));
+      ctx.fillStyle = i / peaks.length < frac ? accent : 'rgba(255,255,255,.22)';
+      ctx.fillRect(i * bar, (H - h) / 2, Math.max(1, bar - 1), h);
+    }
+  }).catch(() => {});
+}
+
+function bindNpWave() {
+  const c = $('#np-wave');
+  if (!c) return;
+  c.onpointerdown = e => {
+    const r = c.getBoundingClientRect();
+    const pct = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    const dur = state._lastDurMs || state.currentTrack?.duration || 0;
+    if (dur) engSeek(pct * dur);
+    if (state.lyrics) state.lyrics.lastIdx = null;
+  };
+}
+
 function presetRank(p) {
   const s = String(p || '');
   if (s.includes('aac_1_0') || s.includes('mp3_2_0')) return 3;
@@ -213,6 +284,10 @@ async function tryNativePlay(track, gen) {
   // превью (Go+/SNIPPET) короче полного трека — уходим на виджет
   el.addEventListener('loadedmetadata', function once() {
     el.removeEventListener('loadedmetadata', once);
+    if (state.pendingSeekMs && state.currentTrack?.id === track.id) {
+      try { el.currentTime = state.pendingSeekMs / 1000; } catch (_) {}
+      state.pendingSeekMs = null;
+    }
     if (state.playGen === gen && state.engine === 'audio' && state.currentTrack?.id === track.id
       && el.duration && el.duration < (track.duration || 0) / 1000 * 0.85 - 2) {
       startWidget(track);
@@ -230,7 +305,13 @@ function startWidget(track) {
     state.widget.load(track.permalink_url, {
       auto_play: true,
       show_artwork: false,
-      callback: () => applyVolume()
+      callback: () => {
+        applyVolume();
+        if (state.pendingSeekMs) {
+          try { state.widget.seekTo(state.pendingSeekMs); } catch (_) {}
+          state.pendingSeekMs = null;
+        }
+      }
     });
   } catch (e) { toast('Не удалось запустить трек', 'error'); }
 }
@@ -285,6 +366,21 @@ function bindNpProgress() {
     if (state.lyrics) state.lyrics.lastIdx = null; // подсветка строки сразу перескочит
     updateNpUI(pct * (state.currentTrack?.duration || 0), state.currentTrack?.duration || 0);
   });
+}
+
+/* «Продолжить где остановился»: сохраняем трек+позицию раз в 5 секунд */
+function saveLastTrack(posMs, durMs) {
+  const t = state.currentTrack;
+  if (!ipc || !t || !state.isPlaying) return;
+  if (state._ltSaved && Date.now() - state._ltSaved < 5000) return;
+  state._ltSaved = Date.now();
+  ipc.invoke('lastTrack:set', {
+    track: { id: t.id, title: t.title, duration: t.duration, permalink_url: t.permalink_url,
+      artwork_url: t.artwork_url, playback_count: t.playback_count, user: t.user },
+    posMs: Math.round(posMs || 0), savedAt: Date.now()
+  }).catch(() => {});
+  try { ipc.send('remote:state', { title: t.title, artist: t.user?.username || '', art: artwork(t),
+    isPlaying: state.isPlaying, pos: Math.round(posMs || 0), dur: Math.round(durMs || 0), vol: state.volume }); } catch (_) {}
 }
 
 /* синк прогресса/времени Now Playing из тика плеера */
@@ -477,10 +573,13 @@ function updateProgressUI() {
     const dur = (state.audio.duration || 0) * 1000;
     if (dur && !seekDragging) $('#progress').style.width = (pos / dur * 100) + '%';
     $('#time-cur').textContent = formatTime(pos / 1000);
+    state._lastPosMs = pos; state._lastDurMs = dur;
     handleListenThreshold(pos, dur);
     if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
     mediaSessionPosition(pos / 1000, dur / 1000);
     updateNpUI(pos, dur);
+    drawWave(pos, dur);
+    saveLastTrack(pos, dur);
     sendMiniSync();
     return;
   }
@@ -490,9 +589,11 @@ function updateProgressUI() {
       if (!dur) return;
       if (!seekDragging) $('#progress').style.width = (pos / dur * 100) + '%';
       $('#time-cur').textContent = formatTime(pos / 1000);
+      state._lastPosMs = pos; state._lastDurMs = dur;
       handleListenThreshold(pos, dur);
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
       updateNpUI(pos, dur);
+      drawWave(pos, dur);
       sendMiniSync();
     });
   });

@@ -261,6 +261,7 @@
             <button class="toolbar-btn" onclick="playAllFavorites()">❤️ Играть лайки</button>
             <button class="toolbar-btn" onclick="switchView('discover')">🔍 Поиск</button>
           </div>
+          <div id="home-resume"></div>
         </div>
         <div class="section-head"><div><h2 class="section-title">Продолжить</h2><div class="section-sub">Недавно игравшие</div></div></div>
         <div class="tracks" id="home-continue"></div>
@@ -314,6 +315,8 @@
           </div>
           <div class="toolbar-actions">
             <button class="toolbar-btn" onclick="openRenamePlaylist(state.currentPlaylistId)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Переименовать</button>
+            <button class="toolbar-btn" onclick="exportPlaylist()" title="Файл .volna.json — передай другу"><svg class="ic" viewBox="0 0 24 24"><use href="#i-download"/></svg>Экспорт</button>
+            <button class="toolbar-btn" onclick="importPlaylistFile()" title="Импорт файла .volna.json"><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Импорт</button>
             <button class="toolbar-btn" onclick="playCurrentPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
             <button class="toolbar-btn danger" onclick="deleteCurrentPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Удалить</button>
           </div>
@@ -445,6 +448,20 @@
             <button class="sc-btn" onclick="nudgeZoom(.1)" title="Больше (Ctrl+=)">+</button>
             <button class="sc-btn" onclick="setZoom(1)" title="Сброс (Ctrl+0)" style="width:auto;padding:0 12px;font-size:12px">Сброс</button>
           </div>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Качество аудио (нативный движок)</h3>
+          <div class="eq-presets">
+            <button class="bit-chip active" data-bit="best">Лучшее</button>
+            <button class="bit-chip" data-bit="small">Экономия трафика</button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Пульт с телефона</h3>
+          <div class="setting-row" style="margin-bottom:10px">
+            <button class="toolbar-btn" onclick="showRemoteQR()">📱 Показать QR и адрес</button>
+          </div>
+          <div id="remote-box"></div>
         </div>
         <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-volume"/></svg>Громкость по умолчанию</h3>
@@ -632,6 +649,10 @@
     <input type="text" id="playlist-desc" placeholder="Описание (опционально)">
     <button class="modal-btn" onclick="createPlaylist()">Создать</button>
   </div>
+</div>
+
+<div class="modal" id="taplyrics_modal">
+  <div class="modal-content" id="taplyrics-body"></div>
 </div>
 
 <div class="modal" id="rename_modal">

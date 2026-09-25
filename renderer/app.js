@@ -86,10 +86,17 @@ function emptyHTML(icon, title, text) {
 }
 
 /* ---------- тосты ---------- */
-function toast(msg, type = '') {
+function toast(msg, type = '', action) {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = msg;
+  if (action && action.label) {
+    const b = document.createElement('button');
+    b.className = 'toast-act';
+    b.textContent = action.label;
+    b.onclick = () => { t.remove(); if (action.fn) action.fn(); };
+    t.appendChild(b);
+  }
   document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add('show'));
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 2400);
@@ -346,6 +353,11 @@ function paintPalette() {
 function onKeydown(e) {
   const tag = e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (state.tapLyrics) {
+    if (e.code === 'Space') { e.preventDefault(); tapLog(); return; }
+    if (e.code === 'Backspace') { e.preventDefault(); tapUndo(); return; }
+    if (e.key === 'Escape') { tapCancel(); return; }
+  }
 
   if (e.key === 'Escape') {
     if (!$$('.modal.show').length && $('#view-nowplaying')?.classList.contains('active')) { collapseNp(); return; }
@@ -509,7 +521,7 @@ function startWaves() {
 function applyWallpaper() {
   const el = $('#wallpaper');
   if (!el) return;
-  const wp = localStorage.getItem('ga:wallpaper');
+  const wp = (state.settings && state.settings.wallpaperData) || localStorage.getItem('ga:wallpaper');
   const dim = (+localStorage.getItem('ga:wallpaperDim') || 55) / 100;
   if (wp) {
     el.style.backgroundImage = `url(${wp})`;
@@ -536,6 +548,14 @@ function renderHome() {
   if (cEl) cEl.innerHTML = cont.length
     ? cont.map((t, i) => trackCardHTML(t, i, 'home')).join('')
     : emptyHTML('i-spark', 'Начни с чего-нибудь', 'Включи трек — и он появится здесь');
+  const lt = state.lastTrack;
+  const rEl = $('#home-resume');
+  if (rEl) {
+    if (lt && lt.track && lt.track.id !== state.currentTrack?.id) {
+      rEl.innerHTML = '<button class="resume-btn" onclick="resumeLast()">▶ Продолжить: '
+        + escapeHtml(lt.track.title || '') + '<span class="resume-at">с ' + formatTime((lt.posMs || 0) / 1000) + '</span></button>';
+    } else rEl.innerHTML = '';
+  }
   const pEl = $('#home-popular');
   if (pEl) {
     if (state.trending.length) {
@@ -578,16 +598,19 @@ function renderNp() {
         <button class="pbtn rate" onclick="cycleRate();renderNp()" title="Скорость">${state.rate === 1 ? '1' : state.rate}×</button>
         <button class="pbtn ${state.npClip && state.npClip.trackId === t.id && state.npClip.on ? 'active' : ''}" onclick="toggleNpClip()" title="Клип с YouTube (звук трека глушится)">🎬</button>
       </div>
+      <canvas id="np-wave" width="600" height="46" title="Волновая форма — клик для перемотки"></canvas>
       <div class="np-progress-row">
         <span id="np-time-cur">0:00</span>
         <div class="np-progress-wrap" id="np-progress-wrap" title="Перемотка"><div class="np-progress" id="np-progress"></div></div>
         <span id="np-time-dur">${formatTime((t.duration || 0) / 1000)}</span>
       </div>
+      ${L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
       ${L.status === 'synced'
         ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`
         : (L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
     </div>`;
   bindNpProgress();
+  bindNpWave();
   // при открытии сразу показать текущую строку, а не начало текста
   const L2 = state.lyrics;
   if (L2.status === 'synced' && L2.lastIdx != null) {
@@ -598,6 +621,29 @@ function renderNp() {
     }
   }
   highlightPlaying();
+}
+
+/* 📱 пульт с телефона */
+async function showRemoteQR() {
+  if (!ipc) return;
+  const url = await ipc.invoke('remote:info').catch(() => null);
+  if (!url) { toast('Не удалось поднять сервер пульта', 'error'); return; }
+  try {
+    const QR = require('qrcode');
+    const dataUrl = await new Promise(res => QR.toDataURL(url, { width: 220, margin: 1 }, (e, d) => res(e ? null : d)));
+    const box = $('#remote-box');
+    if (box) box.innerHTML = '<img class="remote-qr" src="' + dataUrl + '" alt="QR">'
+      + '<div class="remote-url">' + escapeHtml(url) + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Телефон — в той же Wi-Fi сети. Пауза, треки, громкость, позиция.</div>';
+  } catch (_) { toast('QR не собрался', 'error'); }
+}
+
+function resumeLast() {
+  const lt = state.lastTrack;
+  if (!lt || !lt.track) return;
+  state.pendingSeekMs = lt.posMs || 0;
+  toast('▶ Продолжаю с ' + formatTime((lt.posMs || 0) / 1000), 'success');
+  playTrack(lt.track, 'single');
 }
 
 function collapseNp() {
