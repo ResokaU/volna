@@ -42,6 +42,15 @@ async function loadLyrics(track, force) {
   const cached = state.lyricsCache[track.id];
   if (cached && !force) { applyRecord(cached, track); return; }
 
+  // сохранённый выбор пользователя (после ручного подбора/вариантов)
+  const savedChoice = lsGet('lyricsChoice', {})[track.id];
+  if (savedChoice && !force) {
+    try {
+      const rec = await scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(savedChoice.artist || '')}&track_name=${encodeURIComponent(savedChoice.title || '')}&album_name=&duration=${Math.round((track.duration || 0) / 1000)}`, { timeout: 25000 });
+      if (rec && (rec.syncedLyrics || rec.plainLyrics)) { applyRecord(rec, track); return; }
+    } catch (_) {}
+  }
+
   // свой текст (тап-синхрон) важнее LRCLIB
   const custom = (state.settings.customLyrics || {})[track.id];
   if (custom && !force) {
@@ -57,62 +66,137 @@ async function loadLyrics(track, force) {
   const dur = Math.round((track.duration || 0) / 1000);
   // коллабы: «Kai Angel & 9mice» — LRCLIB может знать каждого по отдельности
   const artistList = [artist];
-  for (const p of artist.split(/\s*&\s*|\s*,\s*|\s+и\s+|\s+[x×]\s+|\s+feat\.?\s*|\s+ft\.?\s*/i)) {
-    const a = p.trim();
-    if (a && a !== artist && !artistList.includes(a)) artistList.push(a);
+  for (const p of splitArtists(artist)) {
+    if (p && p !== artist && !artistList.includes(p)) artistList.push(p);
   }
 
   try {
-    // параллельно: точные + нечёткие по каждому артисту, общие q и «только название»
-    const gReqs = artistList.map(a =>
-      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(a)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`)
-        .then(r => { if (r) r.__exact = true; return r; })
-    );
-    const nReqs = artistList.map(a =>
-      scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(a)}`, { timeout: 25000 })
-    );
-    const qSet = new Set();
-    qSet.add((artist + ' ' + title).trim());
-    if (artistList[1]) qSet.add((artistList[1] + ' ' + title).trim());
-    if (title) qSet.add(title);
-    const qReqs = [...qSet].map(q => scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(q)}`, { timeout: 25000 }));
-    const results = await Promise.allSettled([...gReqs, ...nReqs, ...qReqs]);
-    const exacts = [], byName = [], byQ = [];
-    results.forEach((r, i) => {
-      const v = val(r);
-      if (!v) return;
-      if (i < artistList.length) { if (v.syncedLyrics || v.plainLyrics) exacts.push(v); }
-      else if (i < artistList.length + nReqs.length) { if (Array.isArray(v)) byName.push(...v.slice(0, 20)); }
-      else if (Array.isArray(v)) byQ.push(...v.slice(0, 20));
-    });
-    const pick = list => {
-      const arr = (Array.isArray(list) ? list : []).slice(0, 20);
-      return arr.filter(r => r.syncedLyrics)
-        .sort((a, b) => Math.abs((a.duration || 0) - dur) - Math.abs((b.duration || 0) - dur))[0]
-        || arr[0] || null;
+    // Фаза 1 — старое проверенное ядро из 3 запросов (не душим LRCLIB параллелью)
+    const collect = (res, pool) => {
+      for (const r of res) {
+        if (r.status !== 'fulfilled' || !r.value) continue;
+        const v = r.value;
+        if (Array.isArray(v)) pool.push(...v.slice(0, 20));
+        else if (v.syncedLyrics || v.plainLyrics) pool.push(v);
+      }
     };
-    const rec = exacts.find(r => r.syncedLyrics)
-      || pick(byName) || pick(byQ)
-      || exacts[0] || null;
-    // пока ждали LRCLIB, могли переключить трек — старый ответ не применяем
-    if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
-    if (rec) {
+    const pick = pool => {
+      const arr = (Array.isArray(pool) ? pool : []).slice(0, 40);
+      const synced = arr.filter(r => r.syncedLyrics)
+        .sort((a, b) => Math.abs((a.duration || 0) - dur) - Math.abs((b.duration || 0) - dur));
+      return synced[0] || arr[0] || null;
+    };
+    const applyBest = rec => {
+      if (rec.__src === 'title') state.lyrics.loose = true; // найдено без артиста — покажем предупреждение
       state.lyricsCache[track.id] = rec;
       const keys = Object.keys(state.lyricsCache);
-      if (keys.length > 40) delete state.lyricsCache[keys[0]]; // не раздуваем память
+      if (keys.length > 40) delete state.lyricsCache[keys[0]];
       applyRecord(rec, track);
+    };
+
+    let pool = [];
+    collect(await Promise.allSettled([
+      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`)
+        .then(r => { if (r) r.__src = 'exact'; return r; }),
+      scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`, { timeout: 25000 })
+        .then(r => { if (Array.isArray(r)) r.forEach(x => { x.__src = 'artist'; }); return r; }),
+      scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((artist + ' ' + title).trim())}`, { timeout: 25000 })
+        .then(r => { if (Array.isArray(r)) r.forEach(x => { x.__src = 'artist'; }); return r; })
+    ]), pool);
+    if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
+    let rec = pick(pool);
+    if (isConfident(rec, dur)) { applyBest(rec); return; }
+
+    // Фаза 2 — коллабы и «только название», батчами по 3 (LRCLIB не любит параллель)
+    const extras = [];
+    for (const a of artistList.slice(1)) {
+      extras.push(
+        scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(a)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`)
+          .then(r => { if (r) r.__src = 'exact'; return r; }),
+        scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(a)}`, { timeout: 25000 })
+          .then(r => { if (Array.isArray(r)) r.forEach(x => { x.__src = 'artist'; }); return r; })
+      );
+    }
+    if (title) extras.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(title)}`, { timeout: 25000 })
+      .then(r => { if (Array.isArray(r)) r.forEach(x => { x.__src = 'title'; }); return r; }));
+    for (let i = 0; i < extras.length; i += 3) {
+      collect(await Promise.allSettled(extras.slice(i, i + 3)), pool);
+      if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
+      rec = pick(pool);
+      if (isConfident(rec, dur)) { applyBest(rec); return; }
+    }
+
+    // пока ждали LRCLIB, могли переключить трек — старый ответ не применяем
+    if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
+    const cands = pool.filter(r => r && (r.syncedLyrics || r.plainLyrics))
+      .sort((a, b) => rankRec(b, dur) - rankRec(a, dur))
+      .filter((r, i, arr) => arr.findIndex(x =>
+        (x.artist_name || '').toLowerCase() === (r.artist_name || '').toLowerCase()
+        && (x.track_name || '').toLowerCase() === (r.track_name || '').toLowerCase()) === i)
+      .slice(0, 3);
+    if (cands.length) {
+      state.lyrics.status = 'pick';
+      state.lyrics.candidates = cands;
+      state.lyrics.query = { title, artist };
     } else {
       state.lyrics.status = 'none';
       state.lyrics.query = { title, artist };
-      renderLyrics();
-      resetLyricsScroll();
     }
+    renderLyrics();
+    resetLyricsScroll();
   } catch (_) {
     state.lyrics.status = 'none';
     state.lyrics.query = { title, artist };
     renderLyrics();
     resetLyricsScroll();
   }
+}
+
+/* разделение имени артиста на участников (без регулярок — надёжнее) */
+function splitArtists(name) {
+  const seps = [' & ', ' && ', ' и ', ' И ', ' feat. ', ' feat ', ' ft. ', ' ft ', ' x ', ' X ', ' × ', ', ', ','];
+  let parts = [String(name || '')];
+  for (const sep of seps) {
+    const next = [];
+    for (const piece of parts) {
+      const low = piece.toLowerCase(), s = sep.toLowerCase();
+      let from = 0, idx;
+      let cur = piece;
+      let curLow = low;
+      while ((idx = curLow.indexOf(s, from)) >= 0) {
+        next.push(cur.slice(0, idx));
+        cur = cur.slice(idx + s.length);
+        curLow = curLow.slice(idx + s.length);
+        from = 0;
+      }
+      next.push(cur);
+    }
+    parts = next;
+  }
+  return parts.map(x => x.trim()).filter(Boolean);
+}
+
+/* ранжирование кандидатов */
+function rankRec(rec, dur) {
+  if (!rec) return -Infinity;
+  let score = rec.syncedLyrics ? 100 : 0;
+  if (rec.__src === 'exact') score += 40;
+  else if (rec.__src === 'artist') score += 25;
+  else if (rec.__src === 'title') score -= 10;
+  score -= Math.min(50, Math.abs((rec.duration || 0) - dur) / 10);
+  return score;
+}
+
+/* уверенное автоприменение: найденное без артиста (только название) — лишь при
+   жёстком совпадении длительности, иначе чужая песня; остальное — по артисту */
+function isConfident(rec, dur) {
+  if (!rec || (!rec.syncedLyrics && !rec.plainLyrics)) return false;
+  const d = rec.duration || 0;
+  const tight = !!d && Math.abs(d - dur) <= Math.max(4, dur * 0.07);
+  const loose = !d || Math.abs(d - dur) <= Math.max(10, dur * 0.25);
+  if (rec.__src === 'title') return rec.syncedLyrics && tight;
+  if (rec.__src === 'exact') return rec.syncedLyrics || (rec.plainLyrics && loose);
+  return rec.syncedLyrics && loose;
 }
 
 function applyRecord(rec, track) {
@@ -161,6 +245,19 @@ function renderLyrics() {
     box.innerHTML = emptyHTML('i-quote', 'Текст появится здесь', 'Включи любой трек — VOLNA сам найдёт синхронизированный текст');
   } else if (L.status === 'loading') {
     box.innerHTML = '<div class="lyr-skel"></div><div class="lyr-skel" style="width:70%"></div><div class="lyr-skel" style="width:85%"></div><div class="lyr-skel" style="width:55%"></div>';
+  } else if (L.status === 'pick') {
+    const cands = L.candidates || [];
+    box.innerHTML = '<div class="lyr-pick-title">Нашлись похожие — выбери свою версию:</div>' +
+      cands.map((c, i) =>
+        '<div class="lyr-cand" onclick="applyLyricsCandidate(' + i + ')">' +
+        '<div class="lyr-cand-txt"><strong>' + escapeHtml(c.artist_name || '—') + '</strong> — ' + escapeHtml(c.track_name || '—') + '</div>' +
+        '<div class="lyr-cand-meta">' + (c.duration ? formatTime(c.duration) : '?') +
+        (c.syncedLyrics ? ' · ⏱ синхронизирован' : ' · без таймингов') + '</div>' +
+        '</div>').join('') +
+      '<div class="lyr-manual">' +
+        '<input type="text" id="lyrics-manual-input" placeholder="исполнитель — название…">' +
+        '<button onclick="lyricsManualSearch()">Найти</button>' +
+      '</div>';
   } else if (L.status === 'none') {
     const q = L.query || {};
     box.innerHTML = emptyHTML('i-search', 'Текст не нашёлся',
@@ -172,7 +269,10 @@ function renderLyrics() {
   } else if (L.status === 'plain') {
     box.innerHTML = `<div class="lyr-plain">${escapeHtml(L.plain).replace(/\n/g, '<br>')}</div>`;
   } else {
-    box.innerHTML = L.lines.map(l =>
+    const warn = L.loose
+      ? '<div class="lyr-warn">⚠ Найдено по названию — <button onclick="showVariants()">не тот текст? проверить варианты</button></div>'
+      : '';
+    box.innerHTML = warn + L.lines.map(l =>
       `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`
     ).join('');
     L.lastIdx = null;
@@ -400,4 +500,55 @@ function cycleMascot() {
   localStorage.setItem('ga:mascotIdx', next);
   updateMascot();
   toast('🎭 Маскот: ' + MASCOTS[next % MASCOTS.length].name);
+}
+
+
+/* сохранение/чтение выбора текста (переживает перезапуски) */
+function lyricsChoiceSet(id, v) {
+  const m = lsGet('lyricsChoice', {});
+  m[id] = v;
+  const keys = Object.keys(m);
+  if (keys.length > 200) delete m[keys[0]];
+  lsSet('lyricsChoice', m);
+}
+
+function applyLyricsCandidate(i) {
+  const rec = state.lyrics?.candidates?.[i];
+  const t = state.currentTrack;
+  if (!rec || !t) return;
+  lyricsChoiceSet(t.id, { artist: rec.artist_name || '', title: rec.track_name || '' });
+  state.lyricsCache[t.id] = rec;
+  applyRecord(rec, t);
+  toast('📝 Текст сохранён для этого трека', 'success');
+}
+
+/* «не тот текст?» — собрать варианты заново и показать */
+async function showVariants() {
+  const t = state.currentTrack;
+  if (!t) return;
+  state.lyrics.status = 'loading';
+  renderLyrics();
+  const dur = Math.round((t.duration || 0) / 1000);
+  const st = splitArtistTitle(t);
+  const artistList = splitArtists(st.artist);
+  const reqs = [];
+  for (const a of [st.artist, ...artistList]) {
+    reqs.push(scJson(LRCLIB + '/api/search?track_name=' + encodeURIComponent(st.title) + '&artist_name=' + encodeURIComponent(a), { timeout: 25000 }));
+  }
+  if (st.title) reqs.push(scJson(LRCLIB + '/api/search?q=' + encodeURIComponent(st.title), { timeout: 25000 }));
+  const res = await Promise.allSettled(reqs);
+  const pool = [];
+  for (const r of res) {
+    if (r.status !== 'fulfilled' || !Array.isArray(r.value)) continue;
+    r.value.slice(0, 20).forEach(x => pool.push(x));
+  }
+  const cands = pool.filter(x => x && (x.syncedLyrics || x.plainLyrics))
+    .filter((x, i, arr) => arr.findIndex(y =>
+      (y.artist_name || '').toLowerCase() === (x.artist_name || '').toLowerCase()
+      && (y.track_name || '').toLowerCase() === (x.track_name || '').toLowerCase()) === i)
+    .slice(0, 4);
+  if (!cands.length) { toast('Других вариантов LRCLIB не знает', 'error'); state.lyrics.status = 'none'; renderLyrics(); return; }
+  state.lyrics.status = 'pick';
+  state.lyrics.candidates = cands;
+  renderLyrics();
 }
