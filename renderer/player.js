@@ -314,6 +314,7 @@ async function playTrack(track, listKey = null) {
   } else { state.currentIdx = 0; listKey = 'single'; }
   state.currentListKey = listKey;
   state.currentTrack = track;
+  state.npClip = null; state.clipMuted = false; // клип не переезжает между треками
   state.listenedCounted = false; // честная статистика: счёт после 30с прослушивания
 
   $('#player-title').textContent = track.title;
@@ -554,7 +555,7 @@ function setVolume(v) {
 function nudgeVolume(d) { setVolume(state.volume + d); }
 
 function applyVolume() {
-  const v = state.muted ? 0 : state.volume;
+  const v = (state.muted || state.clipMuted) ? 0 : state.volume; // клип на экране — звук трека глушим
   $('#vol-fill').style.width = v * 100 + '%';
   if (state.engine === 'audio' && state.audio) state.audio.volume = v;
   else { try { state.widget?.setVolume(v * 100); } catch (_) {} }

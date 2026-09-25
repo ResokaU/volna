@@ -99,7 +99,8 @@ function applyRecord(rec, track) {
   state.lyrics.lastIdx = null;
   renderLyrics();
   resetLyricsScroll(); // новая песня — текст всегда сверху
-  if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false) switchView('lyrics');
+  if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false
+    && !$('#view-nowplaying')?.classList.contains('active')) switchView('lyrics'); // не выдёргиваем из полноэкранки
 }
 
 function resetLyricsScroll() {

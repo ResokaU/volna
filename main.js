@@ -715,6 +715,25 @@ ipcMain.handle('shell:openExternal', (_e, url) => {
   return false;
 });
 
+// поиск клипа на YouTube по «артист + название» (грубый скрейп выдачи)
+ipcMain.handle('yt:search', async (_e, q) => {
+  try {
+    if (typeof q !== 'string' || !q.trim()) return null;
+    const res = await net.fetch('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8'
+      },
+      signal: AbortSignal.timeout(12000)
+    });
+    const html = await res.text();
+    const m2 = html.match(/"videoRenderer":{"videoId":"([w-]{11})"/)
+      || html.match(/"videoId":"([w-]{11})"/)
+      || html.match(/watch?v=([w-]{11})/);
+    return m2 ? m2[1] : null;
+  } catch (_) { return null; }
+});
+
 // буфер обмена: шаринг-карточка трека (PNG dataURL из renderer)
 ipcMain.handle('share:clipboard', (_e, dataUrl) => {
   try {

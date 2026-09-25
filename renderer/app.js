@@ -562,7 +562,9 @@ function renderNp() {
   const plainHtml = escapeHtml(L.plain || '').split(String.fromCharCode(10)).join('<br>');
   const art = artwork(t);
   box.innerHTML = `
-    <div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>
+    ${state.npClip && state.npClip.trackId === t.id && state.npClip.on
+      ? `<div class="np-video"><iframe src="https://www.youtube-nocookie.com/embed/${state.npClip.videoId}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`
+      : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`}
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(t.user?.username || '—')}</div>
@@ -574,6 +576,7 @@ function renderNp() {
         <button class="pbtn" onclick="playNext()" title="Next"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
         <button class="pbtn ${state.repeat ? 'active' : ''}" onclick="toggleRepeat();renderNp()" title="Repeat"><svg class="ic" viewBox="0 0 24 24"><use href="#i-repeat"/></svg></button>
         <button class="pbtn rate" onclick="cycleRate();renderNp()" title="Скорость">${state.rate === 1 ? '1' : state.rate}×</button>
+        <button class="pbtn ${state.npClip && state.npClip.trackId === t.id && state.npClip.on ? 'active' : ''}" onclick="toggleNpClip()" title="Клип с YouTube (звук трека глушится)">🎬</button>
       </div>
       <div class="np-progress-row">
         <span id="np-time-cur">0:00</span>
@@ -631,6 +634,26 @@ function triggerEgg(track) {
 function winMin() { ipc?.send('win:minimize'); }
 function winMax() { ipc?.send('win:maximize'); }
 function winClose() { ipc?.send('win:close'); } // как и раньше: крестик прячет в трей
+
+/* 🎬 клип в полноэкранке: YouTube вместо обложки, звук трека глушится */
+async function toggleNpClip() {
+  const t = state.currentTrack;
+  if (!t || !$('#view-nowplaying')?.classList.contains('active')) return;
+  if (state.npClip && state.npClip.trackId === t.id) {
+    state.npClip.on = !state.npClip.on;
+    state.clipMuted = state.npClip.on;
+    applyVolume(); renderNp();
+    return;
+  }
+  toast('🎬 Ищу клип на YouTube…');
+  const q = ((t.user?.username || '') + ' ' + (t.title || '')).trim();
+  const id = await ipc.invoke('yt:search', q).catch(() => null);
+  if (!id) { toast('Клип не нашёлся — у этого трека, видимо, только обложка', 'error'); return; }
+  state.npClip = { trackId: t.id, videoId: id, on: true };
+  state.clipMuted = true;
+  applyVolume(); renderNp();
+  toast('🎬 Клип на экране — звук трека заглушён', 'success');
+}
 
 /* секрет: 7 кликов по «VOLNA» в сайдбаре */
 let _logoClicks = 0, _logoTimer = null;
