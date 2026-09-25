@@ -89,12 +89,25 @@ async function loadLyrics(track, force) {
     }
 
     const variants = lyricsVariants(track);
-    // параллельно: точные запросы по каждому варианту + общий поиск по q
-    const requests = variants.map(v =>
-      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(v.artist)}&track_name=${encodeURIComponent(v.title)}&album_name=&duration=${dur}`)
-    );
+    // параллельно: точные get по вариантам + нечёткий search по имени + q-поиски.
+    // search?track_name=&artist_name= — ключевой: находит при неполном совпадении.
+    const requests = [];
+    for (const v of variants) {
+      requests.push(
+        scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(v.artist)}&track_name=${encodeURIComponent(v.title)}&album_name=&duration=${dur}`)
+          .then(r => { if (r) r.__exact = true; return r; })
+      );
+      requests.push(
+        scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(v.title)}&artist_name=${encodeURIComponent(v.artist)}`)
+      );
+    }
+    const clean = cleanTitleForLyrics(track?.title || '');
+    const uploader = (track?.user?.username || '').trim();
+    if (uploader && clean) requests.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((uploader + ' ' + clean).trim())}`));
     const raw = (track?.title || '').trim();
-    if (raw) requests.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(raw)}`));
+    if (raw && raw.toLowerCase() !== (uploader + ' ' + clean).trim().toLowerCase()) {
+      requests.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(raw)}`));
+    }
     const results = await Promise.allSettled(requests);
     const pool = [];
     for (const r of results) {
@@ -138,16 +151,19 @@ async function loadLyrics(track, force) {
   }
 }
 
-/* уверенный автосоответ: синхронизированный текст и длительность сходится */
+/* уверенный автосоответ: длительность в допуске + либо синхронизация,
+   либо точное совпадение исполнителя/названия (get-эндпоинт) */
 function isConfidentMatch(rec, dur) {
-  if (!rec || !rec.syncedLyrics) return false; // текст без таймингов — лучше предложить выбор
+  if (!rec || (!rec.syncedLyrics && !rec.plainLyrics)) return false;
   const d = rec.duration || 0;
-  if (!d) return true;
-  return Math.abs(d - dur) <= Math.max(8, dur * 0.2);
+  const durationOk = !d || Math.abs(d - dur) <= Math.max(10, dur * 0.25);
+  if (rec.syncedLyrics && durationOk) return true;   // карaoke с похожим таймингом
+  if (rec.__exact && durationOk) return true;        // точный get — доверяем и plain
+  return false;
 }
 function matchScore(rec, dur) {
   if (!rec) return -Infinity;
-  return (rec.syncedLyrics ? 100 : 0) + (rec.plainLyrics ? 10 : 0)
+  return (rec.syncedLyrics ? 100 : 0) + (rec.plainLyrics ? 10 : 0) + (rec.__exact ? 30 : 0)
     - Math.min(50, Math.abs((rec.duration || 0) - dur) / 10);
 }
 function pickLyricsRecord(list, dur) {
