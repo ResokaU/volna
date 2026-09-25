@@ -261,6 +261,18 @@ function updateLyricsSync(posMs) {
     els[i].classList.toggle('on', i === idx);
     els[i].classList.toggle('past', i < idx);
   }
+  const npEls = $('#np-lyrics')?.children;
+  if (npEls && npEls.length) {
+    for (let i = 0; i < npEls.length; i++) {
+      npEls[i].classList.toggle('on', i === idx);
+      npEls[i].classList.toggle('past', i < idx);
+    }
+    const nw = $('#np-lyrics-wrap');
+    if (nw && npEls[idx]) {
+      const y = npEls[idx].offsetTop - nw.clientHeight / 2 + npEls[idx].offsetHeight / 2;
+      nw.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    }
+  }
   const active = els[idx];
   const wrap = $('#lyrics-wrap');
   if (active && wrap) {

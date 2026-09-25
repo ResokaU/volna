@@ -106,11 +106,17 @@ function openAbout() { openModal('about_modal'); fillAbout(); }
 /* ---------- переключение view ---------- */
 const NAV_ALIAS = { 'playlist-detail': 'playlists' };
 function switchView(name) {
-  $$('.view').forEach(v => v.classList.remove('active'));
+  // Now Playing — полноэкранный режим; запоминаем, куда возвращаться
+  if (name === 'nowplaying') {
+    const cur = $('.view').find(v => v.classList.contains('active'));
+    state.npBack = cur ? cur.id.replace('view-', '') : 'home';
+  }
+  $('.view').forEach(v => v.classList.remove('active'));
   $('#view-' + name)?.classList.add('active');
   const navName = NAV_ALIAS[name] || name;
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === navName));
   $('.main')?.scrollTo({ top: 0 });
+  if (name === 'nowplaying') renderNp();
   if (name === 'favorites') renderFavorites();
   if (name === 'playlists') renderPlaylists();
   if (name === 'history') renderHistory();
@@ -118,6 +124,7 @@ function switchView(name) {
   if (name === 'stats') renderStats();
   if (name === 'trending') loadTrending();
   if (name === 'foryou') loadForyou();
+  if (name === 'home') renderHome();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
   if (typeof updateMascot === 'function') updateMascot();
 }
@@ -253,6 +260,7 @@ const PALETTE_CMDS = [
   { t: 'Mini player', k: 'M', run: () => toggleMiniPlayer() },
   { t: 'Sleep timer', k: '', run: () => openSleepModal() },
   { t: 'Поиск', k: 'F', run: () => switchView('discover') },
+  { t: 'Главная', k: '1', run: () => switchView('home') },
   { t: 'Тренды', k: '2', run: () => switchView('trending') },
   { t: 'Лайки', k: '3', run: () => switchView('favorites') },
   { t: 'Плейлисты', k: '4', run: () => switchView('playlists') },
@@ -337,7 +345,10 @@ function onKeydown(e) {
   const tag = e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-  if (e.key === 'Escape') { $$('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return; }
+  if (e.key === 'Escape') {
+    if (!$('.modal.show').length && $('#view-nowplaying')?.classList.contains('active')) { collapseNp(); return; }
+    $('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return;
+  }
   if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); togglePalette(); return; }
   if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'q') { e.preventDefault(); if (ipc) ipc.invoke('app:quit').catch(() => {}); return; }
   // масштаб UI: Ctrl+= / Ctrl+- / Ctrl+0
@@ -360,7 +371,7 @@ function onKeydown(e) {
   if (k === 'l') { likeCurrent(); return; }
   if (k === 'm') { toggleMiniPlayer(); return; }
 
-  const views = { '1': 'discover', '2': 'trending', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings' };
+  const views = { '1': 'home', '2': 'trending', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings' };
   if (views[e.key]) switchView(views[e.key]);
 }
 
@@ -436,6 +447,7 @@ async function init() {
   renderChips();            // search.js
   bindMediaKeys();          // player.js
   defaultSearch();          // search.js
+  switchView('home');       // новое лицо: приземляемся на главную
 }
 
 /* ---------- динамичные волны (canvas внизу экрана) ---------- */
@@ -500,6 +512,60 @@ function applyWallpaper() {
     document.body.classList.remove('wallpaper-on');
     el.style.backgroundImage = '';
   }
+}
+
+/* ---------- Главная: приветствие, продолжить, популярное ---------- */
+function renderHome() {
+  const h = new Date().getHours();
+  const greet = h < 5 ? 'Ночной эфир 🌙' : h < 12 ? 'Доброе утро ☀️' : h < 18 ? 'Добрый день 🌊' : 'Добрый вечер 🌆';
+  const g = $('#home-greeting'); if (g) g.textContent = greet;
+  const sub = $('#home-sub');
+  if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
+  const cont = state.history.filter(x => x.id !== state.currentTrack?.id).slice(0, 8);
+  const cEl = $('#home-continue');
+  if (cEl) cEl.innerHTML = cont.length
+    ? cont.map((t, i) => trackCardHTML(t, i, 'hist')).join('')
+    : emptyHTML('i-spark', 'Начни с чего-нибудь', 'Включи трек — и он появится здесь');
+  const pEl = $('#home-popular');
+  if (pEl) {
+    if (state.trending.length) {
+      pEl.innerHTML = state.trending.slice(0, 8).map((t, i) => trackCardHTML(t, i, 'trending')).join('');
+      highlightPlaying();
+    } else {
+      pEl.innerHTML = Array(8).fill('<div class="skeleton"></div>').join('');
+      loadTrending(); // по готовности renderTrending обновит и эту строку
+    }
+  }
+  highlightPlaying();
+}
+
+/* ---------- Now Playing: полноэкранный режим ---------- */
+function renderNp() {
+  const box = $('#np-body');
+  if (!box) return;
+  const t = state.currentTrack;
+  if (!t) {
+    box.innerHTML = emptyHTML('i-note', 'Ничего не играет', 'Включи трек — и он раскроется на весь экран');
+    return;
+  }
+  const L = state.lyrics;
+  const plainHtml = escapeHtml(L.plain || '').split(String.fromCharCode(10)).join('<br>');
+  const art = artwork(t);
+  box.innerHTML = `
+    <div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>
+    <div class="np-info">
+      <div class="np-title">${escapeHtml(t.title)}</div>
+      <div class="np-artist">${escapeHtml(t.user?.username || '—')}</div>
+      <div class="np-meta">${state.isPlaying ? '▶ играет' : '⏸ пауза'} · ${formatTime((t.duration || 0) / 1000)}${state.rate !== 1 ? ` · ${state.rate}×` : ''}${L.status === 'synced' ? ' · ⏱ караоке' : ''}</div>
+      ${L.status === 'synced'
+        ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`
+        : (L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
+    </div>`;
+  highlightPlaying();
+}
+
+function collapseNp() {
+  switchView(state.npBack || 'home');
 }
 
 function clearWallpaper() {

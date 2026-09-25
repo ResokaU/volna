@@ -277,6 +277,7 @@ async function playTrack(track, listKey = null) {
   // ambient: размытая обложка светится фоном за плеером
   $('#player').style.setProperty('--ambient', art ? `url(${art})` : 'none');
   $('#player').classList.toggle('no-ambient', !art);
+  document.body.style.setProperty('--ambient', art ? `url(${art})` : 'none');
   $('#time-dur').textContent = formatTime((track.duration || 0) / 1000);
   $('#progress').style.width = '0%';
   $('#time-cur').textContent = '0:00';

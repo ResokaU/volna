@@ -120,6 +120,10 @@
     </div>
 
     <div class="nav-group">
+      <div class="nav-label">VOLNA</div>
+      <div class="nav-item" data-view="home"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Главная</div>
+    </div>
+    <div class="nav-group">
       <div class="nav-label">Discover</div>
       <div class="nav-item active" data-view="discover"><svg class="ic" viewBox="0 0 24 24"><use href="#i-head"/></svg>Поиск</div>
       <div class="nav-item" data-view="foryou"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Для вас</div>
@@ -236,6 +240,28 @@
         </div>
         <div class="trend-tabs" id="trend-tabs"></div>
         <div class="tracks" id="trending-tracks"></div>
+      </section>
+
+      <section class="view" id="view-home">
+        <div class="home-hero">
+          <div class="home-greet" id="home-greeting">Привет</div>
+          <div class="home-sub" id="home-sub"></div>
+          <div class="home-actions">
+            <button class="toolbar-btn" onclick="feelingLucky()">🎲 Мне повезёт</button>
+            <button class="toolbar-btn" onclick="enableRadio()">📻 Radio по треку</button>
+            <button class="toolbar-btn" onclick="playAllFavorites()">❤️ Играть лайки</button>
+            <button class="toolbar-btn" onclick="switchView('discover')">🔍 Поиск</button>
+          </div>
+        </div>
+        <div class="section-head"><div><h2 class="section-title">Продолжить</h2><div class="section-sub">Недавно игравшие</div></div></div>
+        <div class="tracks" id="home-continue"></div>
+        <div class="section-head"><div><h2 class="section-title">Популярное сейчас</h2><div class="section-sub">Мировые чарты</div></div></div>
+        <div class="tracks" id="home-popular"></div>
+      </section>
+
+      <section class="view" id="view-nowplaying">
+        <button class="toolbar-btn np-collapse" onclick="collapseNp()">✕ Свернуть <span style="opacity:.5">Esc</span></button>
+        <div id="np-body" class="np-body"></div>
       </section>
 
       <section class="view" id="view-favorites">
@@ -484,7 +510,7 @@
 
 <div class="player" id="player">
   <div class="sleep-timer" id="sleep-timer">😴 <span id="sleep-countdown">00:00</span></div>
-  <div class="player-cover">
+  <div class="player-cover" onclick="switchView('nowplaying')" title="Развернуть (большой экран + текст)">
     <canvas class="viz" id="viz" width="100" height="100"></canvas>
     <img id="player-cover" src="" alt="">
   </div>
@@ -515,6 +541,9 @@
     </button>
     <button class="pbtn" onclick="switchView('lyrics')" title="Текст песни">
       <svg class="ic" viewBox="0 0 24 24"><use href="#i-quote"/></svg>
+    </button>
+    <button class="pbtn" onclick="switchView('nowplaying')" title="Развернуть на весь экран">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-expand"/></svg>
     </button>
     <button class="pbtn" onclick="toggleMiniPlayer()" title="Mini">
       <svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>

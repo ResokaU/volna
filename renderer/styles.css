@@ -681,3 +681,31 @@ cursor:none;transition:.2s;font-family:inherit}
 .eq-col span{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
 .eq-col input[type=range]{writing-mode:vertical-lr;direction:rtl;width:20px;height:110px;
 accent-color:var(--acid);cursor:none}
+
+
+/* ============ v3.2: Главная ============ */
+.home-hero{padding:18px 0 8px}
+.home-greet{font-family:'Unbounded','Golos Text',sans-serif;font-size:clamp(30px,4.4vw,52px);
+font-weight:900;letter-spacing:-.02em;line-height:1.05;
+background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.home-sub{color:var(--dim);font-size:15px;margin-top:8px}
+.home-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+
+/* ============ v3.2: Now Playing (полноэкранный) ============ */
+#view-nowplaying{position:relative;min-height:calc(100vh - 140px)}
+#view-nowplaying::before{content:'';position:absolute;inset:-90px;
+background:var(--ambient,none) center/cover no-repeat;
+filter:blur(90px) saturate(1.9);opacity:.35;z-index:0;pointer-events:none}
+.np-collapse{position:absolute;top:0;right:0;z-index:2}
+.np-body{position:relative;z-index:1;display:flex;gap:44px;align-items:flex-start;
+flex-wrap:wrap;padding-top:44px}
+.np-cover-wrap{flex:0 0 auto}
+.np-cover-wrap img{width:min(380px,38vw);aspect-ratio:1;object-fit:cover;border-radius:26px;
+box-shadow:0 30px 80px -20px rgba(0,0,0,.85)}
+.np-info{flex:1;min-width:280px;max-width:640px}
+.np-title{font-family:'Unbounded','Golos Text',sans-serif;font-size:clamp(20px,2.6vw,32px);
+font-weight:900;letter-spacing:-.02em;line-height:1.15}
+.np-artist{color:var(--dim);font-size:16px;margin-top:8px}
+.np-meta{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:12px}
+.np-lyrics-wrap{margin-top:24px;max-height:46vh;overflow-y:auto;padding-right:14px}
+.np-plain{margin-top:22px;color:var(--dim);line-height:1.7;max-height:44vh;overflow-y:auto;white-space:pre-wrap}

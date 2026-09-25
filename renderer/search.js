@@ -522,5 +522,9 @@ async function runTrending() {
 
 function renderTrending() {
   $('#trending-tracks').innerHTML = state.trending.map((t, i) => trackCardHTML(t, i, 'trending')).join('');
+  const hp = $('#home-popular');
+  if (hp && $('#view-home')?.classList.contains('active')) {
+    hp.innerHTML = state.trending.slice(0, 8).map((t, i) => trackCardHTML(t, i, 'trending')).join('');
+  }
   highlightPlaying();
 }
