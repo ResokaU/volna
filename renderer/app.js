@@ -365,6 +365,7 @@ function onKeydown(e) {
   }
 
   if (e.key === 'Escape') {
+    if (!$$('.modal.show').length && $('#view-vibe')?.classList.contains('active')) { collapseVibe(); return; }
     if (!$$('.modal.show').length && $('#view-nowplaying')?.classList.contains('active')) { collapseNp(); return; }
     $$('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return;
   }
@@ -719,6 +720,17 @@ function bindVcatChips() {
   });
   box.addEventListener('dragend', () => { if (dragEl) dragEl.classList.remove('dragging'); });
 }
+function vibeToggle(which) {
+  const fx = $('#vibe-fx-panel'), se = $('#vibe-search-panel');
+  const open = which === 'fx' ? fx : se;
+  const other = which === 'fx' ? se : fx;
+  other.classList.remove('open');
+  open.classList.toggle('open');
+  if (which === 'fx' && fx.classList.contains('open') && state.vibeShader && state.vibeShader !== 'off') {
+    VibeGL.start($('#vibe-gl'), state.vibeShader); // перезапуск, если canvas пересобран
+  }
+}
+
 function rerollVibe() {
   const t = state.currentTrack;
   if (!t) { toast('Сначала включи трек', 'error'); return; }

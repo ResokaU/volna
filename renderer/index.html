@@ -275,9 +275,19 @@
         <div class="vibe-shade"></div>
         <canvas id="vibe-gl"></canvas>
         <canvas id="vibe-particles"></canvas>
-        <div class="vibe-toolbar">
+        <div class="vibe-text" id="vibe-text"></div>
+        <div class="vibe-icons">
+          <button class="vibe-ic" onclick="vibeToggle('fx')" title="Шейдеры">✨</button>
+          <button class="vibe-ic" onclick="vibeToggle('search')" title="Поиск фона">
+            <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="vibe-ic" onclick="rerollVibe()" title="Другой фон">🔄</button>
+          <button class="vibe-ic vibe-ic-close" onclick="collapseVibe()" title="Закрыть (Esc)">✕</button>
+        </div>
+        <div class="vibe-panel" id="vibe-fx-panel">
           <div class="eq-presets" id="vshader-chips"></div>
-          <button class="bit-chip vibe-search-toggle" onclick="this.closest('.vibe-toolbar').classList.toggle('open')" title="Поиск фона">🔎</button>
+        </div>
+        <div class="vibe-panel" id="vibe-search-panel">
           <div class="vibe-tools">
             <select id="vibe-src" title="Источник картинок">
               <option value="wallhaven">Wallhaven</option>
@@ -285,13 +295,11 @@
               <option value="yandere">Yande.re (аниме)</option>
               <option value="konachan">Konachan (аниме)</option>
             </select>
-            <input type="text" id="vibe-q" placeholder="🔎 фон: ночной лес, город, аниме…">
-            <button class="toolbar-btn" onclick="doVibeSearch()">Найти</button>
+            <input type="text" id="vibe-q" placeholder="фон: ночной лес, город, аниме…">
+            <button class="vibe-find" onclick="doVibeSearch()">Найти</button>
           </div>
           <div class="vibe-results" id="vibe-results"></div>
         </div>
-        <div class="vibe-text" id="vibe-text"></div>
-        <button class="toolbar-btn vibe-collapse" onclick="collapseVibe()">✕ Esc</button>
         <button class="toolbar-btn vibe-reroll" onclick="rerollVibe()">🔄 Другой фон</button>
       </section>
 

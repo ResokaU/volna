@@ -936,3 +936,31 @@ body[data-accent="slate"]{--accent:#27303f;--accent2:#64748b;--accent3:#cbd5e1;
 .vibe-toolbar.open .vibe-tools{display:flex}
 .vibe-toolbar.open .vibe-results{display:flex}
 .vibe-search-toggle{font-size:15px}
+
+
+/* ============ v5.2: тихий режим вайба ============ */
+.vibe-icons{position:absolute;top:14px;right:14px;z-index:5;display:flex;gap:8px}
+.vibe-ic{width:42px;height:42px;border-radius:13px;background:rgba(5,5,10,.55);
+backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);color:#eee;
+display:flex;align-items:center;justify-content:center;cursor:none;transition:.2s;font-size:14px}
+.vibe-ic:hover{background:var(--acid);color:#000;transform:translateY(-2px)}
+.vibe-ic-close:hover{background:#ff3d55;color:#fff}
+.vibe-ic svg{width:18px;height:18px}
+.vibe-panel{position:absolute;top:66px;right:14px;z-index:5;display:none;flex-direction:column;gap:8px;
+background:rgba(5,5,10,.72);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.12);
+border-radius:16px;padding:12px;max-width:min(560px,92vw)}
+.vibe-panel.open{display:flex}
+#vibe-search-panel .vibe-results{display:flex;position:static;max-height:180px;overflow-y:auto;
+background:transparent;padding:4px 0}
+#vibe-search-panel .vibe-tools{display:flex;gap:6px;align-items:center}
+#vibe-search-panel select,#vibe-search-panel input{background:rgba(255,255,255,.07);
+border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 10px;color:var(--text);
+font-family:inherit;font-size:12px;outline:none;cursor:text}
+#vibe-search-panel select{cursor:none}
+#vibe-search-panel .vibe-find{background:var(--acid);color:#000;border:none;border-radius:10px;
+padding:7px 14px;font-weight:700;font-size:12px;cursor:none;font-family:inherit}
+.vibe-collapse{display:none}
+/* хотбар: плеер подстраивается под вайб */
+body.vibe-on #player{background:rgba(8,8,14,.45);border-color:rgba(255,255,255,.07);
+box-shadow:0 20px 50px -18px rgba(0,0,0,.8);width:min(88vw,720px);bottom:18px}
+body.vibe-on #player:hover{background:rgba(10,10,18,.62)}
