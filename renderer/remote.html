@@ -2,51 +2,77 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>VOLNA · пульт</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;color:#eee;font-family:system-ui,-apple-system,sans-serif;
-padding:28px 20px;text-align:center;
-background:#0a0a12;
-background-image:radial-gradient(600px 400px at 50% -10%,rgba(177,74,255,.4),transparent),
-radial-gradient(500px 300px at 90% 110%,rgba(214,255,58,.16),transparent),
-radial-gradient(400px 300px at 10% 100%,rgba(255,61,127,.14),transparent)}
-.logo{font-weight:900;font-size:24px;letter-spacing:.08em;margin-bottom:18px;
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{color:#eee;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;text-align:center;
+padding:max(24px,env(safe-area-inset-top)) 22px 32px;min-height:100vh;
+display:flex;flex-direction:column;align-items:center;
+background:#08080f;
+background-image:radial-gradient(640px 420px at 50% -8%,rgba(177,74,255,.42),transparent),
+radial-gradient(520px 340px at 92% 108%,rgba(214,255,58,.15),transparent),
+radial-gradient(420px 320px at 8% 102%,rgba(255,61,127,.2),transparent);
+background-attachment:fixed;overflow-x:hidden;
+-webkit-user-select:none;user-select:none}
+/* размытая обложка как фон всего пульта */
+#ambg{position:fixed;inset:-60px;background-size:cover;background-position:center;
+filter:blur(70px) saturate(1.9);opacity:.35;z-index:-1;transition:background-image .8s}
+.logo{font-weight:900;font-size:23px;letter-spacing:.1em;margin-bottom:20px;
 background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);
 -webkit-background-clip:text;background-clip:text;color:transparent}
-#art{width:min(62vw,240px);aspect-ratio:1;border-radius:22px;object-fit:cover;
-background:#181820;box-shadow:0 24px 70px -14px rgba(0,0,0,.85)}
-h3{margin:16px 0 2px;font-size:19px;line-height:1.35;word-break:break-word}
-p{margin:2px 0;color:#999;font-size:14px}
-#bar{height:5px;background:rgba(255,255,255,.14);border-radius:9px;margin:20px auto;max-width:320px}
-#pf{height:100%;background:linear-gradient(90deg,#b14aff,#d6ff3a);border-radius:9px;width:0%}
-#tm{font-size:12px;color:#777;font-variant-numeric:tabular-nums}
-.row{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:8px}
-button{background:rgba(255,255,255,.09);border:none;color:#eee;width:66px;height:66px;
-border-radius:50%;font-size:22px;margin:6px 4px;cursor:pointer;
-transition:transform .1s,background .15s;-webkit-tap-highlight-color:transparent}
-button:active{transform:scale(.9);background:#b14aff}
-button.big{width:84px;height:84px;font-size:30px;background:rgba(255,255,255,.15)}
-input[type=range]{width:min(78vw,300px);accent-color:#b14aff;margin-top:18px;display:block;margin-left:auto;margin-right:auto}
-.m{font-size:11px;color:#666;margin-top:26px}
-@media (min-width:500px){#art{width:220px}}
+.cover-wrap{position:relative;width:min(66vw,250px);aspect-ratio:1;margin-bottom:6px}
+#art{width:100%;height:100%;border-radius:26px;object-fit:cover;background:#181820;
+box-shadow:0 26px 70px -16px rgba(0,0,0,.9)}
+#ring{position:absolute;inset:-10px;border-radius:30px;border:1px solid rgba(177,74,255,.35);
+opacity:0;transition:opacity .4s}
+body.playing #ring{opacity:1;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 18px rgba(177,74,255,.35)}50%{box-shadow:0 0 44px rgba(255,61,127,.5)}}
+h3{margin:18px 0 3px;font-size:19px;line-height:1.35;font-weight:800;word-break:break-word}
+# volunteered{}
+#a{color:#9a9ab0;font-size:14px}
+#bar{width:min(80vw,330px);height:5px;background:rgba(255,255,255,.13);border-radius:9px;
+margin:22px auto 8px;overflow:hidden}
+#pf{height:100%;background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);border-radius:9px;width:0%}
+#tm{font-size:12px;color:#888;font-variant-numeric:tabular-nums;margin-bottom:6px}
+.row{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:6px}
+button{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);color:#eee;
+width:62px;height:62px;border-radius:50%;font-size:20px;cursor:pointer;
+transition:transform .1s,background .15s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.88)}
+button.big{width:88px;height:88px;font-size:32px;border:none;color:#fff;
+background:linear-gradient(135deg,#b14aff,#ff3d7f);
+box-shadow:0 10px 30px -8px rgba(177,74,255,.75)}
+body.playing button.big{animation:beat 1.9s ease-in-out infinite}
+@keyframes beat{0%,100%{box-shadow:0 10px 30px -8px rgba(177,74,255,.75)}50%{box-shadow:0 10px 44px -6px rgba(255,61,127,.9)}}
+button.like.liked{color:#ff3d7f;border-color:rgba(255,61,127,.6)}
+button.like.liked::after{content:'♥'}
+#like{font-size:19px}
+.mini{width:50px;height:50px;font-size:16px;color:#bbb}
+input[type=range]{width:min(78vw,300px);accent-color:#b14aff;margin-top:20px;display:block;margin:18px auto 0}
+.m{font-size:11px;color:#666;margin-top:auto;padding-top:24px}
+.m .dot{color:#d6ff3a}
 </style>
 </head>
 <body>
+<div id="ambg"></div>
 <div class="logo">VOLNA</div>
-<img id="art" src="" alt="">
+<div class="cover-wrap"><div id="ring"></div><img id="art" src="" alt=""></div>
 <h3 id="t">VOLNA</h3>
 <p id="a">управляй волной отсюда</p>
 <div id="bar"><div id="pf"></div></div>
 <p id="tm">—</p>
 <div class="row">
-  <button onclick="c('prev')" title="Назад">⏮</button>
+  <button class="mini" onclick="c('prev')" title="Назад">⏮</button>
+  <button class="mini" id="like" onclick="c('like')" title="Лайк">♡</button>
   <button class="big" id="pl" onclick="c('toggle')" title="Play/Pause">▶</button>
-  <button onclick="c('next')" title="Вперёд">⏭</button>
+  <button class="mini" onclick="c('back')" title="−15 сек">↺15</button>
+  <button class="mini" onclick="c('fwd')" title="+15 сек">↻15</button>
+  <button class="mini" onclick="c('next')" title="Вперёд">⏭</button>
 </div>
 <input type="range" id="vol" min="0" max="1" step="0.05" oninput="setVol(this.value)" title="Громкость">
-<p class="m">VOLNA · пульт по локальной сети · ничего не уходит в интернет</p>
+<p class="m"><span class="dot">●</span> подключено к твоей волне · VOLNA пульт</p>
 <script>
 const tok = location.pathname.split('/').pop();
 const $ = id => document.getElementById(id);
@@ -57,13 +83,17 @@ async function poll() {
     if (!d.title) return;
     $('t').textContent = d.title;
     $('a').textContent = d.artist || '';
-    if (d.art) $('art').src = d.art;
+    if (d.art) { $('art').src = d.art; $('ambg').style.backgroundImage = 'url(' + d.art + ')'; }
     $('pl').textContent = d.isPlaying ? '⏸' : '▶';
+    document.body.classList.toggle('playing', !!d.isPlaying);
+    $('like').textContent = d.liked ? '❤' : '♡';
+    $('like').classList.toggle('liked', !!d.liked);
     if (d.dur) {
       $('pf').style.width = Math.min(100, d.pos / d.dur * 100) + '%';
       const p = Math.round(d.pos / 1000), q = Math.round(d.dur / 1000);
       $('tm').textContent = (p / 60 | 0) + ':' + ('0' + (p % 60)).slice(-2) + ' / ' + (q / 60 | 0) + ':' + ('0' + (q % 60)).slice(-2);
     }
+    if (typeof d.vol === 'number' && !document.activeElement?.matches('#vol')) $('vol').value = d.vol;
   } catch (e) {}
 }
 function c(x) { fetch('?cmd=' + x); }

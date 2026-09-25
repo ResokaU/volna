@@ -808,7 +808,8 @@ function remoteCandidateIPs() {
       ips.push(x.address);
     }
   }
-  return [...new Set(ips)];
+  // 192.168.* — домашний Wi-Fi, ставим первым; остальное — в конец
+  return [...new Set(ips)].sort((a, b) => (/^192.168./.test(b) ? 1 : 0) - (/^192.168./.test(a) ? 1 : 0));
 }
 
 function startRemoteServer() {
@@ -829,6 +830,9 @@ function startRemoteServer() {
         if (cmd === 'vol' && vol !== null && win) {
           win.webContents.send('remote:vol', Math.min(1, Math.max(0, Number(vol))));
         }
+        if (cmd === 'like' && win) win.webContents.send('remote:like');
+        if (cmd === 'back' && win) win.webContents.send('remote:seek', -15000);
+        if (cmd === 'fwd' && win) win.webContents.send('remote:seek', 15000);
         res.writeHead(204); res.end(); return;
       }
       if (u.searchParams.has('state')) {

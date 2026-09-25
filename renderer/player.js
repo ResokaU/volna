@@ -84,6 +84,8 @@ function bindMediaKeys() {
       else state.widget?.pause();
     });
     ipc.on('remote:vol', v => setVolume(v));
+    ipc.on('remote:like', () => likeCurrent());
+    ipc.on('remote:seek', ms => seekBy(ms));
   } catch (_) {}
 }
 
@@ -379,7 +381,7 @@ function saveLastTrack(posMs, durMs) {
       artwork_url: t.artwork_url, playback_count: t.playback_count, user: t.user },
     posMs: Math.round(posMs || 0), savedAt: Date.now()
   }).catch(() => {});
-  try { ipc.send('remote:state', { title: t.title, artist: displayArtist(t), art: artwork(t),
+  try { ipc.send('remote:state', { title: t.title, artist: displayArtist(t), art: artwork(t), liked: state.favorites.some(f => f.id === t.id),
     isPlaying: state.isPlaying, pos: Math.round(posMs || 0), dur: Math.round(durMs || 0), vol: state.volume }); } catch (_) {}
 }
 
