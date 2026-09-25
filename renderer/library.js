@@ -191,6 +191,21 @@ function bindLibraryUI() {
     toast(e.target.checked ? '🎮 Discord RPC включён — перезапусти трек для статуса' : 'Discord RPC выключен');
   });
 
+  $('#set-scproxy').addEventListener('change', async e => {
+    if (ipc) {
+      const ab = { ...(state.settings.antiblock || {}), proxyScOnly: e.target.checked };
+      state.settings.antiblock = ab;
+      try { await ipc.invoke('antiblock:proxy', $('#set-proxy').value.trim(), { scOnly: e.target.checked }); } catch (_) {}
+    }
+    toast(e.target.checked ? '🛡 Прокси только для SoundCloud' : 'Прокси на весь трафик приложения');
+    testNetwork();
+  });
+  $('#set-cursor').addEventListener('change', e => {
+    saveSetting('cursor', e.target.checked);
+    document.body.classList.toggle('no-cursor', !e.target.checked);
+    toast(e.target.checked ? '🖱 Кастомный курсор включён' : 'Обычный системный курсор');
+  });
+
   bindEq();
   $('#fav-filter').addEventListener('input', e => {
     state.favFilter = e.target.value;
@@ -685,7 +700,8 @@ async function wipeAll() {
 async function applyProxySetting() {
   const v = $('#set-proxy').value.trim();
   if (!ipc) { toast('Доступно только в приложении', 'error'); return; }
-  const r = await ipc.invoke('antiblock:proxy', v).catch(e => ({ ok: false, error: e.message }));
+  const scOnly = $('#set-scproxy') ? $('#set-scproxy').checked : true;
+  const r = await ipc.invoke('antiblock:proxy', v, { scOnly }).catch(e => ({ ok: false, error: e.message }));
   if (r?.ok) {
     state.settings.antiblock = { ...(state.settings.antiblock || {}), proxy: v };
     toast(v ? '🛡 Прокси применён' : 'Прокси выключен — трафик напрямую', 'success');
@@ -702,12 +718,16 @@ async function testNetwork() {
   box.innerHTML = '<div style="color:var(--dim);font-size:13px;padding:6px 0">Проверяем…</div>';
   const r = await ipc.invoke('antiblock:nettest').catch(() => null);
   if (!r) { box.innerHTML = '<div class="diag-row diag-bad"><span>Диагностика не удалась</span></div>'; return; }
+  const bypassRow = (r.bypass && r.bypass.length)
+    ? '<div class="diag-row"><span style="flex:1">🛡 Системный обход: ' + r.bypass.map(escapeHtml).join(', ') + '</span><span class="diag-ok">встроенные средства не конфликтуют</span></div>'
+    : '';
   box.innerHTML = r.results.map(x => `
     <div class="diag-row">
       <span class="${x.ok ? 'diag-ok' : 'diag-bad'}">${x.ok ? '●' : '⛔'}</span>
       <span style="flex:1">${escapeHtml(x.host)}</span>
       <span style="color:var(--muted)">${x.ok ? x.ms + ' мс' : 'блок / таймаут'}</span>
     </div>`).join('') +
+    bypassRow +
     `<div class="diag-row" style="margin-top:6px"><span style="flex:1;color:var(--dim)">Итог</span>
      <span class="${r.allOk ? 'diag-ok' : 'diag-bad'}">${r.allOk ? 'всё доступно напрямую ✓' : 'есть блокировки — нужен прокси или Запрет2'}</span></div>`;
 }
@@ -737,6 +757,8 @@ function renderAuthStatus() {
       </div>
       <div class="ac-actions">
         <button class="ac-btn ${state.favSource === 'server' ? 'active' : ''}" onclick="serverLikesToggle()" id="btn-server-likes">☁ ${state.favSource === 'server' ? 'Локальные лайки' : 'Лайки с сервера'}</button>
+        <button class="ac-btn ghost" onclick="scRefresh()">⟳ Профиль</button>
+        <button class="ac-btn ghost" onclick="scImportPlaylists()">⤵ Импорт плейлистов</button>
         <button class="ac-btn ghost" onclick="scLogout()">Выйти</button>
       </div>`;
   } else if (tokenPasteMode) {
@@ -796,6 +818,65 @@ async function scLogin() {
   renderAuthStatus();
   toast('👋 Привет, ' + (r.me.username || 'музыкант'), 'success');
   loadServerLikes(true);
+}
+
+/* обновить профиль (имя/аватарка/подписчики) */
+async function scRefresh() {
+  if (!state.scAuth) return;
+  toast('⟳ Обновляю профиль…');
+  try {
+    const me = JSON.parse(await scRaw(`${SC_API2}/me?client_id=${await ensureClientId()}`, { auth: true }));
+    if (!me?.username) throw new Error('пустой профиль');
+    state.scAuth.user = { username: me.username, avatar_url: me.avatar_url, followers: me.followers_count };
+    await saveSetting('scAuth', state.scAuth);
+    renderAuthStatus();
+    toast('👋 ' + me.username, 'success');
+  } catch (e) {
+    const msg = String(e?.message || '');
+    toast(msg.includes('401') ? 'Токен устарел — войди заново' : 'Не удалось обновить профиль', 'error');
+  }
+}
+
+/* импорт плейлистов SoundCloud в локальные (с догрузкой полных треков) */
+async function scImportPlaylists() {
+  if (!state.scAuth) { toast('Сначала войди', 'error'); return; }
+  toast('⤵ Загружаю плейлисты…');
+  try {
+    const cid = await ensureClientId();
+    const data = await scJson(`${SC_API2}/me/playlists?client_id=${cid}&limit=50`, { auth: true });
+    const pls = Array.isArray(data?.collection) ? data.collection : [];
+    let imported = 0;
+    for (const pl of pls) {
+      if (!pl || !pl.title || state.playlists.some(p => p.name === pl.title)) continue;
+      try {
+        const full = await scJson(`${SC_API2}/playlists/${pl.id}?client_id=${cid}`, { auth: true });
+        const inline = Array.isArray(full?.tracks) ? full.tracks : [];
+        const fullTracks = inline.filter(t => t && t.permalink_url && t.streamable !== false);
+        const stubIds = inline.filter(t => t && !t.permalink_url && t.id != null).map(t => t.id);
+        for (let i = 0; i < stubIds.length; i += 50) {
+          try {
+            const resp = await scJson(`${SC_API2}/tracks?ids=${stubIds.slice(i, i + 50).join(',')}&client_id=${cid}`);
+            (Array.isArray(resp) ? resp : []).forEach(t => { if (t) fullTracks.push(t); });
+          } catch (_) {}
+        }
+        const items = fullTracks.map(normalizeTrack).filter(Boolean);
+        items.forEach(rememberTrack);
+        state.playlists.push({
+          id: Date.now() + imported, name: full?.title || pl.title,
+          desc: 'Импорт из SoundCloud · ' + new Date().toLocaleDateString('ru-RU'),
+          tracks: items, createdAt: new Date().toISOString()
+        });
+        imported++;
+      } catch (_) {}
+    }
+    await persistPlaylists();
+    updateBadges();
+    if ($('#view-playlists')?.classList.contains('active')) renderPlaylists();
+    toast(imported ? `☁️ Импортировано плейлистов: ${imported}` : 'Новых плейлистов нет (или уже импортированы)', imported ? 'success' : '');
+  } catch (e) {
+    const msg = String(e?.message || '');
+    toast(msg.includes('401') ? 'Токен устарел — войди заново' : 'Импорт не удался — проверь сеть', 'error');
+  }
 }
 
 /* лайк-зеркало: ставим/снимаем лайк и на SoundCloud */
@@ -862,7 +943,7 @@ function updateFavSourceBtn() {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '3.0.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '3.1.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

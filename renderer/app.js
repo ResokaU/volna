@@ -206,18 +206,28 @@ function initCursor() {
   let mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
   window.addEventListener('mousemove', e => {
     mx = e.clientX; my = e.clientY;
-    dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+    if (!document.body.classList.contains('no-cursor')) {
+      dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+    }
   });
   (function loop() {
-    rx += (mx - rx) * .18; ry += (my - ry) * .18;
-    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    if (!document.body.classList.contains('no-cursor')) {
+      rx += (mx - rx) * .18; ry += (my - ry) * .18;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    }
     requestAnimationFrame(loop);
   })();
   document.addEventListener('mouseover', e => {
-    ring.classList.toggle('hover', !!e.target.closest(
+    const overText = !!e.target.closest?.('input,textarea,select');
+    const hover = !overText && !!e.target.closest(
       'button,.nav-item,.chip,.filter-btn,.toolbar-btn,.track-card,.queue-item,' +
-      '.accent-chip,.progress-wrap,.volume-slider,.modal-close,.artist-row,.queue-btn'
-    ));
+      '.accent-chip,.progress-wrap,.volume-slider,.modal-close,.artist-row,.queue-btn,' +
+      '.eq-chip,.lyr-cand,.trend-tab,.palette-item,.context-item,.pbtn'
+    );
+    ring.classList.toggle('text', overText);
+    dot.classList.toggle('text', overText);
+    ring.classList.toggle('hover', hover);
+    dot.classList.toggle('hover', hover);
   });
   document.addEventListener('mousemove', e => {
     const card = e.target.closest?.('.track-card');

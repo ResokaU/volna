@@ -51,12 +51,21 @@ animation:drift 22s ease-in-out infinite;will-change:transform}
 background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* ============ Cursor ============ */
-.cursor-ring{position:fixed;width:38px;height:38px;border:1.5px solid #fff;
+.cursor-ring{position:fixed;width:34px;height:34px;border:1px solid rgba(255,255,255,.85);
 border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;
-transform:translate(-50%,-50%);transition:width .25s,height .25s,background .25s}
-.cursor-dot{position:fixed;width:5px;height:5px;background:#fff;border-radius:50%;
-pointer-events:none;z-index:9999;mix-blend-mode:difference;transform:translate(-50%,-50%)}
-.cursor-ring.hover{width:70px;height:70px;background:#fff}
+transform:translate(-50%,-50%);transition:width .2s ease,height .2s ease,opacity .2s}
+.cursor-dot{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;
+pointer-events:none;z-index:9999;mix-blend-mode:difference;transform:translate(-50%,-50%);
+transition:transform .2s ease,opacity .2s}
+.cursor-ring.hover{width:48px;height:48px;border-color:#fff}
+.cursor-dot.hover{transform:translate(-50%,-50%) scale(2)}
+/* над текстовыми полями — родной каретка-курсор, кастом спит */
+.cursor-ring.text,.cursor-dot.text{opacity:0}
+/* тумблер в настройках: полностью родной курсор */
+body.no-cursor .cursor-ring,body.no-cursor .cursor-dot{display:none!important}
+body.no-cursor,body.no-cursor *{cursor:auto!important}
+input,textarea{cursor:text!important}
+select{cursor:pointer!important}
 
 /* ============ Icon system ============ */
 .ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;

@@ -374,9 +374,28 @@ const SC_ALLOWED = /^https:\/\/([a-z0-9-]+\.)*(soundcloud|sndcdn)\.com\/|^https:
 
 async function applyProxy() {
   const p = (store.get('settings.antiblock.proxy') || '').trim();
-  const rules = p
-    ? { mode: 'fixed_servers', proxyRules: p, proxyBypassRules: '<local>' }
-    : { mode: 'system' };
+  const scOnly = store.get('settings.antiblock.proxyScOnly') !== false; // по умолчанию ВКЛ
+  let rules;
+  if (p && scOnly) {
+    // сплит-режим: прокси только для доменов SoundCloud, всё остальное — напрямую.
+    // Не конфликтует с системным zapret/GoodbyeDPI: чужой трафик не трогаем.
+    const host = p.replace(/^(socks5|socks4|https?|http):\/\//i, '');
+    const pac = [
+      'function FindProxyForURL(url, host) {',
+      "  if (shExpMatch(host, 'soundcloud.com') || shExpMatch(host, '*.soundcloud.com') ||",
+      "      shExpMatch(host, 'sndcdn.com') || shExpMatch(host, '*.sndcdn.com') ||",
+      "      shExpMatch(host, 'lrclib.net') || shExpMatch(host, 'api-v2.soundcloud.com')) {",
+      `    return '${/^socks/i.test(p) ? 'SOCKS5' : 'PROXY'} ${host}';`,
+      '  }',
+      "  return 'DIRECT';",
+      '}'
+    ].join('\n');
+    rules = { mode: 'pac_script', pacScript: { data: pac, mandatory: false } };
+  } else if (p) {
+    rules = { mode: 'fixed_servers', proxyRules: p, proxyBypassRules: '<local>' };
+  } else {
+    rules = { mode: 'system' };
+  }
   try {
     await session.defaultSession.setProxy(rules);
     await session.fromPartition('persist:sc-auth').setProxy(rules); // окно входа тоже
@@ -384,13 +403,32 @@ async function applyProxy() {
   } catch (e) { return false; }
 }
 
-ipcMain.handle('antiblock:proxy', async (_e, str) => {
+/* обнаружение системных обходчиков (zapret/GoodbyeDPI и т.п.) — чтобы честно
+   сказать пользователю, что встроенные средства им не мешают */
+ipcMain.handle('antiblock:detect', async () => {
+  try {
+    const { exec } = require('child_process');
+    const out = await new Promise(res => {
+      exec('tasklist /fo csv /nh', { encoding: 'utf8', windowsHide: true },
+        (e, stdout) => res(e ? '' : String(stdout)));
+    });
+    const low = out.toLowerCase();
+    const found = [];
+    if (low.includes('winws.exe')) found.push('zapret (winws)');
+    else if (low.includes('zapret')) found.push('zapret');
+    if (low.includes('goodbyedpi')) found.push('GoodbyeDPI');
+    return found;
+  } catch (_) { return []; }
+});
+
+ipcMain.handle('antiblock:proxy', async (_e, str, opts) => {
   if (typeof str !== 'string') return false;
   const s = str.trim();
   if (s && !/^(socks5|socks4|http|https):\/\//i.test(s) && !/^[\w.-]+:\d+$/.test(s)) {
     return { ok: false, error: 'Формат: socks5://127.0.0.1:10808 или http://host:port' };
   }
   store.set('settings.antiblock.proxy', s);
+  if (opts && typeof opts.scOnly === 'boolean') store.set('settings.antiblock.proxyScOnly', opts.scOnly);
   const ok = await applyProxy();
   return { ok, error: ok ? '' : 'Не удалось применить прокси' };
 });
@@ -422,7 +460,18 @@ ipcMain.handle('antiblock:nettest', async () => {
     }
   }
   const allOk = results.every(r => r.ok);
-  return { results, allOk, proxy: (store.get('settings.antiblock.proxy') || '').trim() };
+  const bypass = await new Promise(res => {
+    const { exec } = require('child_process');
+    exec('tasklist /fo csv /nh', { encoding: 'utf8', windowsHide: true }, (e, stdout) => {
+      if (e) return res([]);
+      const low = String(stdout).toLowerCase();
+      const f = [];
+      if (low.includes('winws.exe') || low.includes('zapret')) f.push('zapret');
+      if (low.includes('goodbyedpi')) f.push('GoodbyeDPI');
+      res(f);
+    });
+  });
+  return { results, allOk, bypass, proxy: (store.get('settings.antiblock.proxy') || '').trim() };
 });
 
 

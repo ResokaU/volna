@@ -425,6 +425,7 @@
           <label class="toggle-row"><input type="checkbox" id="set-minimize"><span>Запускать свёрнутым</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-awake" checked><span>Держать экран включённым при воспроизведении</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-cursor" checked><span>Кастомный курсор (точка + кольцо, в полях ввода — обычный)</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-discord" checked><span>Discord Rich Presence — статус «слушает…» с обложкой</span></label>
           <div class="setting-row" style="margin-top:10px">
             <button class="toolbar-btn" onclick="resetDislikes()">🚫 Скрытых артистов из Radio: <strong id="dislike-count">0</strong> — сбросить</button>
@@ -456,6 +457,7 @@
             <input type="text" id="set-proxy" placeholder="Прокси: socks5://127.0.0.1:10808 или http://host:port" style="flex:1;margin-bottom:0">
             <button class="toolbar-btn" onclick="applyProxySetting()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Применить</button>
           </div>
+          <label class="toggle-row"><input type="checkbox" id="set-scproxy" checked><span>Прокси только для SoundCloud — остальной трафик, приложения и системный zapret не затрагиваются</span></label>
           <div style="margin-bottom:10px">
             <button class="toolbar-btn" onclick="testNetwork()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Проверить доступность SoundCloud</button>
           </div>
