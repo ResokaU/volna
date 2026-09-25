@@ -257,6 +257,36 @@ function mediaSessionPosition(posSec, durSec) {
   } catch (_) {}
 }
 
+/* клик-перемотка по прогрессу Now Playing */
+function bindNpProgress() {
+  const bar = $('#np-progress-wrap');
+  if (!bar) return;
+  const pctOf = e => {
+    const r = bar.getBoundingClientRect();
+    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  };
+  bar.addEventListener('pointerdown', e => {
+    const pct = pctOf(e);
+    if (state.engine === 'audio' && state.audio?.duration) {
+      state.audio.currentTime = pct * state.audio.duration;
+    } else if (state.widget) {
+      state.widget.getDuration(d => { if (d) state.widget.seekTo(pct * d); });
+    }
+    updateNpUI(pct * (state.currentTrack?.duration || 0), state.currentTrack?.duration || 0);
+  });
+}
+
+/* синк прогресса/времени Now Playing из тика плеера */
+function updateNpUI(posMs, durMs) {
+  if (!$('#view-nowplaying')?.classList.contains('active')) return;
+  const pw = $('#np-progress');
+  if (pw && durMs) pw.style.width = (posMs / durMs * 100) + '%';
+  const tc = $('#np-time-cur');
+  if (tc) tc.textContent = formatTime(posMs / 1000);
+  const td = $('#np-time-dur');
+  if (td && durMs) td.textContent = formatTime(durMs / 1000);
+}
+
 /* ---------- воспроизведение ---------- */
 async function playTrack(track, listKey = null) {
   if (!track || !track.permalink_url) { toast('Трек недоступен', 'error'); return; }
@@ -334,7 +364,7 @@ function togglePlay() {
 
 function updatePlayIcon() {
   const ref = state.isPlaying ? '#i-pause' : '#i-play';
-  ['#play-icon', '#mini-play-icon'].forEach(id => {
+  ['#play-icon', '#mini-play-icon', '#np-play-icon'].forEach(id => {
     const u = $(id);
     if (u) u.setAttribute('href', ref);
   });
@@ -424,6 +454,7 @@ function updateProgressUI() {
     handleListenThreshold(pos, dur);
     if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
     mediaSessionPosition(pos / 1000, dur / 1000);
+    updateNpUI(pos, dur);
     sendMiniSync();
     return;
   }
@@ -435,6 +466,7 @@ function updateProgressUI() {
       $('#time-cur').textContent = formatTime(pos / 1000);
       handleListenThreshold(pos, dur);
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
+      updateNpUI(pos, dur);
       sendMiniSync();
     });
   });
@@ -792,6 +824,13 @@ function startVizLoop() {
         const bin = Math.floor(Math.pow(i / bars, 1.4) * (state.vizData.length - 1));
         return Math.max(.12, state.vizData[bin] / 255);
       };
+    }
+    // бас-уровень для пульсации интерфейса (только на реальном спектре)
+    if (state.engine === 'audio' && state.analyser && state.vizData) {
+      const bass = state.vizData.slice(0, 6).reduce((a, v) => a + v, 0) / 6 / 255;
+      document.body.style.setProperty('--beat', bass.toFixed(3));
+    } else {
+      document.body.style.setProperty('--beat', '0');
     }
     const [r, g, b] = hexToRgb(getComputedStyle(document.body).getPropertyValue('--accent'));
     for (let i = 0; i < bars; i++) {

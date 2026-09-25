@@ -452,6 +452,10 @@
           <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-awake" checked><span>Держать экран включённым при воспроизведении</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-cursor" checked><span>Кастомный курсор (точка + кольцо, в полях ввода — обычный)</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-updates" checked><span>Проверять обновления при запуске</span></label>
+          <div class="setting-row" style="margin-top:10px">
+            <button class="toolbar-btn" onclick="checkUpdate(true)">📦 Проверить обновления сейчас</button>
+          </div>
           <label class="toggle-row"><input type="checkbox" id="set-discord" checked><span>Discord Rich Presence — статус «слушает…» с обложкой</span></label>
           <div class="setting-row" style="margin-top:10px">
             <button class="toolbar-btn" onclick="resetDislikes()">🚫 Скрытых артистов из Radio: <strong id="dislike-count">0</strong> — сбросить</button>

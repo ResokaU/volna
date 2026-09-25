@@ -448,6 +448,7 @@ async function init() {
   bindMediaKeys();          // player.js
   defaultSearch();          // search.js
   switchView('home');       // новое лицо: приземляемся на главную
+  if (state.settings.checkUpdates !== false) setTimeout(() => checkUpdate(), 8000);
 }
 
 /* ---------- динамичные волны (canvas внизу экрана) ---------- */
@@ -557,10 +558,24 @@ function renderNp() {
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(t.user?.username || '—')}</div>
       <div class="np-meta">${state.isPlaying ? '▶ играет' : '⏸ пауза'} · ${formatTime((t.duration || 0) / 1000)}${state.rate !== 1 ? ` · ${state.rate}×` : ''}${L.status === 'synced' ? ' · ⏱ караоке' : ''}</div>
+      <div class="np-controls">
+        <button class="pbtn ${state.shuffle ? 'active' : ''}" onclick="toggleShuffle();renderNp()" title="Shuffle"><svg class="ic" viewBox="0 0 24 24"><use href="#i-shuffle"/></svg></button>
+        <button class="pbtn" onclick="playPrev()" title="Previous"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
+        <button class="pbtn main" onclick="togglePlay()" title="Play/Pause"><svg class="ic fill" viewBox="0 0 24 24"><use id="np-play-icon" href="${state.isPlaying ? '#i-pause' : '#i-play'}"/></svg></button>
+        <button class="pbtn" onclick="playNext()" title="Next"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
+        <button class="pbtn ${state.repeat ? 'active' : ''}" onclick="toggleRepeat();renderNp()" title="Repeat"><svg class="ic" viewBox="0 0 24 24"><use href="#i-repeat"/></svg></button>
+        <button class="pbtn rate" onclick="cycleRate();renderNp()" title="Скорость">${state.rate === 1 ? '1' : state.rate}×</button>
+      </div>
+      <div class="np-progress-row">
+        <span id="np-time-cur">0:00</span>
+        <div class="np-progress-wrap" id="np-progress-wrap" title="Перемотка"><div class="np-progress" id="np-progress"></div></div>
+        <span id="np-time-dur">${formatTime((t.duration || 0) / 1000)}</span>
+      </div>
       ${L.status === 'synced'
         ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`
         : (L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
     </div>`;
+  bindNpProgress();
   highlightPlaying();
 }
 

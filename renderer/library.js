@@ -151,6 +151,8 @@ function applySettings() {
   setZoom(state.settings.uiScale || 1, true);
   restoreEqUI();
   updateDislikeCount();
+  const su = $('#set-updates');
+  if (su) su.checked = state.settings.checkUpdates !== false;
   $$('.accent-chip').forEach(c => c.classList.toggle('active', c.dataset.accent === (state.settings.accent || 'neon')));
 }
 
@@ -205,6 +207,7 @@ function bindLibraryUI() {
     document.body.classList.toggle('no-cursor', !e.target.checked);
     toast(e.target.checked ? '🖱 Кастомный курсор включён' : 'Обычный системный курсор');
   });
+  $('#set-updates').addEventListener('change', e => saveSetting('checkUpdates', e.target.checked));
 
   bindEq();
   $('#fav-filter').addEventListener('input', e => {
@@ -941,9 +944,33 @@ function updateFavSourceBtn() {
   renderAuthStatus(); // кнопка живёт в плашке аккаунта
 }
 
+/* ---------- проверка обновлений (GitHub Releases) ---------- */
+function compareSemver(a, b) {
+  const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x !== y) return x - y;
+  }
+  return 0;
+}
+
+async function checkUpdate(manual) {
+  if (!ipc) return;
+  try {
+    const r = await ipc.invoke('app:check-update');
+    if (!r.ok) { if (manual) toast('Не удалось проверить обновления', 'error'); return; }
+    if (compareSemver(r.latest, r.current) > 0) {
+      toast(`📦 Доступна VOLNA v${r.latest} (у тебя v${r.current}) — открываю релиз`, 'success');
+      await ipc.invoke('shell:openExternal', r.assetUrl || r.url).catch(() => {});
+    } else if (manual) {
+      toast(`✓ У тебя последняя версия v${r.current}`, 'success');
+    }
+  } catch (_) { if (manual) toast('Не удалось проверить обновления', 'error'); }
+}
+
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '3.2.4', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '3.3.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

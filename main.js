@@ -721,6 +721,25 @@ ipcMain.handle('app:version', () => ({
   platform: process.platform
 }));
 
+ipcMain.handle('app:check-update', async () => {
+  try {
+    const res = await net.fetch('https://api.github.com/repos/ResokaU/volna/releases/latest', {
+      headers: { 'User-Agent': 'VOLNA-app', Accept: 'application/vnd.github+json' },
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!res.ok) return { ok: false };
+    const j = await res.json();
+    const asset = (j.assets || []).find(x => /Setup.*.exe$/.test(x.name || '')) || null;
+    return {
+      ok: true,
+      latest: String(j.tag_name || '').replace(/^v/, ''),
+      current: app.getVersion(),
+      url: j.html_url,
+      assetUrl: asset ? asset.browser_download_url : null
+    };
+  } catch (_) { return { ok: false }; }
+});
+
 ipcMain.handle('app:quit', () => {
   app.isQuitting = true;
   app.quit();
