@@ -383,6 +383,8 @@ function bindChrome() {
   bindContextMenu();
   bindPalette();
   bindCopyGuard();
+  const logo = document.querySelector('.nav-label');
+  logo?.addEventListener('click', logoEgg); // 7 кликов…
 }
 
 /* копировать можно только названия треков, артистов и подписи */
@@ -558,7 +560,7 @@ function renderNp() {
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(t.user?.username || '—')}</div>
-      <div class="np-meta">${state.isPlaying ? '▶ играет' : '⏸ пауза'} · ${formatTime((t.duration || 0) / 1000)}${state.rate !== 1 ? ` · ${state.rate}×` : ''}${L.status === 'synced' ? ' · ⏱ караоке' : ''}</div>
+      <div class="np-meta">${state.isPlaying ? '▶ играет' : '⏸ пауза'} · ${formatTime((t.duration || 0) / 1000)}${state.rate !== 1 ? ` · ${state.rate}×` : ''}${L.status === 'synced' ? ' · ⏱ караоке' : ''}${state.egg ? ` · ${state.egg.emoji}` : ''}</div>
       <div class="np-controls">
         <button class="pbtn ${state.shuffle ? 'active' : ''}" onclick="toggleShuffle();renderNp()" title="Shuffle"><svg class="ic" viewBox="0 0 24 24"><use href="#i-shuffle"/></svg></button>
         <button class="pbtn" onclick="playPrev()" title="Previous"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
@@ -591,6 +593,43 @@ function renderNp() {
 
 function collapseNp() {
   switchView(state.npBack || 'home');
+}
+
+/* ---------- пасхалки (тихие, свои) ---------- */
+const EASTER_EGGS = [
+  { match: ['стиралка', 'voskresenskii'], emoji: '🌀', toast: '🌀 Стиралка: 530.6K оборотов', spin: 6 },
+  { match: ['дырки в штанах'], emoji: '👖', toast: '👖 Осторожно — дырки в штанах' },
+  { match: ['засосы'], emoji: '💋', toast: '💋 Засосы засчитаны' },
+  { match: ['мориарти'], emoji: '🎩', toast: '🎩 «Miss me?»' },
+  { match: ['танцор'], emoji: '🕺', toast: '🕺 Танцор танцор танцор', spin: 2 },
+  { match: ['sexyswag2010'], emoji: '📼', toast: '📼 Добро пожаловать в 2010' },
+  { match: ['барыга'], emoji: '📦', toast: '📦 Сделка прошла тихо' },
+  { match: ['летник'], emoji: '🌤️', toast: '🌤️ Летник открыт' },
+  { match: ['последним летом'], emoji: '🌞', toast: '🌞 Последним летом… но волны вечны' },
+  { match: ['династия'], emoji: '👑', toast: '👑 Династия продолжается' },
+  { match: ['сдяг'], emoji: '🌃', toast: '🌃 СДЯГ. Волна не спит.' }
+];
+function triggerEgg(track) {
+  const s = ((track?.title || '') + ' ' + (track?.user?.username || '')).toLowerCase();
+  const egg = EASTER_EGGS.find(e => e.match.some(m => s.includes(m))) || null;
+  state.egg = egg;
+  document.body.style.setProperty('--egg-spin-speed', (egg?.spin || 6) + 's');
+  document.body.classList.toggle('egg-spin', !!egg?.spin);
+  if (egg && state._eggToastFor !== track.id) {
+    state._eggToastFor = track.id;
+    setTimeout(() => toast(egg.toast), 1200);
+  }
+}
+
+/* секрет: 7 кликов по «VOLNA» в сайдбаре */
+let _logoClicks = 0, _logoTimer = null;
+function logoEgg() {
+  clearTimeout(_logoTimer);
+  _logoTimer = setTimeout(() => { _logoClicks = 0; }, 2500);
+  if (++_logoClicks < 7) return;
+  _logoClicks = 0;
+  toast('🌊 Скрытая волна от создателя…', 'success');
+  setTimeout(() => searchArtist('madk1d'), 900);
 }
 
 function clearWallpaper() {

@@ -332,6 +332,7 @@ async function playTrack(track, listKey = null) {
 
   highlightPlaying();
   updateMediaSession(track);
+  triggerEgg(track); // пасхалки
   loadLyrics(track); // караоке-текст
 
   // виджет — отдельный iframe, глушим сразу; аудио догрузится новым src без паузы
@@ -384,6 +385,7 @@ function togglePlay() {
 }
 
 function updatePlayIcon() {
+  document.body.classList.toggle('playing', state.isPlaying); // для спин-анимаций пасхалок
   const ref = state.isPlaying ? '#i-pause' : '#i-play';
   ['#play-icon', '#mini-play-icon', '#np-play-icon'].forEach(id => {
     const u = $(id);

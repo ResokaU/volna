@@ -754,3 +754,11 @@ width:3px;height:60%;background:var(--acid);border-radius:99px;box-shadow:0 0 12
 
 /* ============ v3.3.3: каретка текста в NP мерится от своего контейнера ============ */
 #np-lyrics{position:relative}
+
+/* ============ v3.3.4: пасхалки ============ */
+@keyframes eggSpin{to{transform:rotate(360deg)}}
+body.egg-spin #player-cover img,
+body.egg-spin .np-cover-wrap img{animation:eggSpin var(--egg-spin-speed,6s) linear infinite}
+body.egg-spin:not(.playing) #player-cover img,
+body.egg-spin:not(.playing) .np-cover-wrap img{animation-play-state:paused}
+.nav-label{cursor:pointer;user-select:none}
