@@ -58,10 +58,13 @@ async function loadLyrics(track, force) {
 
   try {
     // три запроса параллельно — берём лучший: точное совпадение → по имени → общий q=
-    const [rExact, rByName, rByQ] = await Promise.allSettled([
+    // 4-й запрос: только название, без исполнителя — спасает треки от лейблов
+    // и репостов, где в поле «артист» записан кто угодно, кроме настоящего автора
+    const [rExact, rByName, rByQ, rByTitle] = await Promise.allSettled([
       scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`),
       scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`, { timeout: 25000 }),
-      scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((artist + ' ' + title).trim())}`, { timeout: 25000 })
+      scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((artist + ' ' + title).trim())}`, { timeout: 25000 }),
+      title ? scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(title)}`, { timeout: 25000 }) : Promise.reject(new Error('empty'))
     ]);
     const val = r => r.status === 'fulfilled' ? r.value : null;
     const pick = list => {
@@ -72,7 +75,8 @@ async function loadLyrics(track, force) {
     };
     const exact = val(rExact);
     const rec = (exact && (exact.syncedLyrics || exact.plainLyrics)) ? exact
-      : pick(val(rByName)) || pick(val(rByQ)) || (exact && (exact.syncedLyrics || exact.plainLyrics) ? exact : null);
+      : pick(val(rByName)) || pick(val(rByQ)) || pick(val(rByTitle))
+      || (exact && (exact.syncedLyrics || exact.plainLyrics) ? exact : null);
     // пока ждали LRCLIB, могли переключить трек — старый ответ не применяем
     if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
     if (rec) {
