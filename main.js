@@ -495,7 +495,7 @@ ipcMain.handle('sc:fetch', async (_e, url, opts = {}) => {
     const res = await net.fetch(url, {
       session: reqSession,
       method: opts.method || 'GET',
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(Math.min(60000, Math.max(5000, Number(opts.timeout) || 15000))),
       headers
     });
     const text = await res.text();

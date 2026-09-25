@@ -71,7 +71,7 @@ async function loadLyrics(track, force) {
   const cached = state.lyricsCache[track.id];
   if (cached && !force) { applyRecord(cached, track); return; }
 
-  state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null, candidates: null };
+  state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null, candidates: null, reason: null };
   renderLyrics();
 
   const dur = Math.round((track.duration || 0) / 1000);
@@ -89,44 +89,55 @@ async function loadLyrics(track, force) {
     }
 
     const variants = lyricsVariants(track);
-    // параллельно: точные get по вариантам + нечёткий search по имени + q-поиски.
-    // search?track_name=&artist_name= — ключевой: находит при неполном совпадении.
-    const requests = [];
-    for (const v of variants) {
-      requests.push(
-        scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(v.artist)}&track_name=${encodeURIComponent(v.title)}&album_name=&duration=${dur}`)
-          .then(r => { if (r) r.__exact = true; return r; })
-      );
-      requests.push(
-        scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(v.title)}&artist_name=${encodeURIComponent(v.artist)}`)
-      );
-    }
     const clean = cleanTitleForLyrics(track?.title || '');
     const uploader = (track?.user?.username || '').trim();
-    if (uploader && clean) requests.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((uploader + ' ' + clean).trim())}`));
     const raw = (track?.title || '').trim();
-    if (raw && raw.toLowerCase() !== (uploader + ' ' + clean).trim().toLowerCase()) {
-      requests.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(raw)}`));
-    }
-    const results = await Promise.allSettled(requests);
-    const pool = [];
-    for (const r of results) {
-      if (r.status !== 'fulfilled' || !r.value) continue;
-      if (Array.isArray(r.value)) pool.push(...r.value.slice(0, 20));
-      else pool.push(r.value);
-    }
-    const rec = pickLyricsRecord(pool, dur);
-    if (isConfidentMatch(rec, dur)) {
+    const qs = new Set();
+    if (uploader && clean) qs.add((uploader + ' ' + clean).trim());
+    if (raw) qs.add(raw);
+
+    const applyBest = (rec) => {
       lyricsChoiceSet(track.id, { artist: rec.artist_name || '', title: rec.track_name || '' });
       state.lyricsCache[track.id] = rec;
       const keys = Object.keys(state.lyricsCache);
-      if (keys.length > 40) delete state.lyricsCache[keys[0]]; // не раздуваем память
+      if (keys.length > 40) delete state.lyricsCache[keys[0]];
       applyRecord(rec, track);
-      return;
+    };
+    const collect = (results, pool) => {
+      for (const r of results) {
+        if (r.status !== 'fulfilled' || !r.value) continue;
+        if (Array.isArray(r.value)) pool.push(...r.value.slice(0, 20));
+        else pool.push(r.value);
+      }
+    };
+
+    // Фаза 1: точные get-запросы — они быстрые
+    let pool = [];
+    const getReqs = variants.map(v =>
+      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(v.artist)}&track_name=${encodeURIComponent(v.title)}&album_name=&duration=${dur}`, { timeout: 12000 })
+        .then(r => { if (r) r.__exact = true; return r; })
+    );
+    collect(await Promise.allSettled(getReqs), pool);
+    let rec = pickLyricsRecord(pool, dur);
+    if (isConfidentMatch(rec, dur)) { applyBest(rec); return; }
+
+    // Фаза 2: поиски — LRCLIB бывает медленным, даём им 30 секунд
+    const searchReqs = [];
+    for (const v of variants) {
+      searchReqs.push(scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(v.title)}&artist_name=${encodeURIComponent(v.artist)}`, { timeout: 30000 }));
     }
+    for (const q of qs) {
+      searchReqs.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(q)}`, { timeout: 30000 }));
+    }
+    const sres = await Promise.allSettled(searchReqs);
+    const searchFailed = sres.every(r => r.status === 'rejected');
+    collect(sres, pool);
+    rec = pickLyricsRecord(pool, dur);
+    if (isConfidentMatch(rec, dur)) { applyBest(rec); return; }
     // неуверенный или пустой результат — предлагаем 2-3 кандидата по названию
     let cands = pool.filter(r => r && (r.syncedLyrics || r.plainLyrics));
     if (cands.length < 2) cands = cands.concat(await titleCandidates(track, dur));
+    state.lyrics.reason = searchFailed ? 'timeout' : null;
     if (cands.length) {
       cands = cands
         .sort((a, b) => matchScore(b, dur) - matchScore(a, dur))
@@ -139,6 +150,7 @@ async function loadLyrics(track, force) {
       state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
     } else {
       state.lyrics.status = 'none';
+      state.lyrics.reason = searchFailed ? 'timeout' : null;
       state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
     }
     renderLyrics();
@@ -242,8 +254,14 @@ function renderLyrics() {
       </div>`;
   } else if (L.status === 'none') {
     const q = L.query || {};
+    const why = L.reason === 'timeout'
+      ? 'LRCLIB не ответил вовремя (сервер тормозил) — попробуй ещё раз<br>'
+      : '';
     box.innerHTML = emptyHTML('i-search', 'Текст не нашёлся',
-      `${escapeHtml(q.artist || '')} — ${escapeHtml(q.title || '')}<br>Попробуй найти вручную или через Genius`) +
+      `${escapeHtml(q.artist || '')} — ${escapeHtml(q.title || '')}<br>${why}Попробуй найти вручную или через Genius`) +
+      `<div class="lyr-manual" style="margin-bottom:10px">
+        <button onclick="loadLyrics(state.currentTrack, true)">🔄 Повторить поиск</button>
+      </div>` +
       `<div class="lyr-manual">
         <input type="text" id="lyrics-manual-input" placeholder="исполнитель — название…" value="${escapeHtml([q.artist, q.title].filter(Boolean).join(' '))}">
         <button onclick="lyricsManualSearch()">Найти</button>

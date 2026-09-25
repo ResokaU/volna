@@ -17,7 +17,7 @@ async function scRaw(url, opts = {}) {
     if (!r || !r.ok) throw new Error(r?.error || ('HTTP ' + (r?.status ?? '?')));
     return r.text;
   }
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000), ...opts });
+  const res = await fetch(url, { signal: AbortSignal.timeout(Math.min(60000, Math.max(5000, Number(opts.timeout) || 15000))), ...opts });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.text();
 }
