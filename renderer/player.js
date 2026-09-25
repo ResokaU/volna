@@ -11,6 +11,7 @@ function resolveList(key) {
     case 'trending': return state.trending;
     case 'fav': return state.favoritesView || state.favorites;   // рендер-список (сортировка/фильтр)
     case 'hist': return state.history;
+    case 'home': return state.homeContinue || state.history; // отфильтрованный «Продолжить» с главной
     case 'queue': return state.queue;
     case 'pl': return state.currentPlaylistTracks;
     case 'sv': return state.serverLikesView || state.serverLikes;
@@ -196,6 +197,8 @@ async function tryNativePlay(track) {
   const corsOk = await hostAllowsCors(url);
   const el = ensureAudioEl(corsOk);
   state.engine = 'audio';
+  // глушим виджет: без этого играли две песни одновременно
+  try { state.widget?.pause(); } catch (_) {}
   el.src = url;
   el.volume = state.muted ? 0 : state.volume;
   el.playbackRate = state.rate || 1;
@@ -272,6 +275,7 @@ function bindNpProgress() {
     } else if (state.widget) {
       state.widget.getDuration(d => { if (d) state.widget.seekTo(pct * d); });
     }
+    if (state.lyrics) state.lyrics.lastIdx = null; // подсветка строки сразу перескочит
     updateNpUI(pct * (state.currentTrack?.duration || 0), state.currentTrack?.duration || 0);
   });
 }
@@ -317,8 +321,13 @@ async function playTrack(track, listKey = null) {
   updateMediaSession(track);
   loadLyrics(track); // караоке-текст
 
+  // глушим ОБА движка перед стартом нового — иначе предыдущий трек доигрывает поверх
+  try { state.widget?.pause(); } catch (_) {}
+  try { state.audio?.pause(); } catch (_) {}
+
   const native = await tryNativePlay(track);
-  if (!native && state.engine !== 'widget') startWidget(track);
+  // пока резолвили стрим, могли переключить трек — не стартуем старый
+  if (!native && state.engine !== 'widget' && state.currentTrack?.id === track.id) startWidget(track);
   updateTitle(true);
 }
 
@@ -490,6 +499,7 @@ function bindPlayerControls() {
     if (!seeking) return;
     seeking = false; seekDragging = false;
     const pct = pctOf(e);
+    if (state.lyrics) state.lyrics.lastIdx = null; // подсветка строки сразу перескочит
     if (state.engine === 'audio' && state.audio) {
       if (state.audio.duration) state.audio.currentTime = pct * state.audio.duration;
       updateTitle();

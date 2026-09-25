@@ -192,6 +192,7 @@ function updateLyricsSync(posMs) {
 
 /* ---------- действия ---------- */
 function seekLyric(t) {
+  if (state.lyrics) state.lyrics.lastIdx = null; // подсветка сразу прыгнет на новую позицию
   if (state.engine === 'audio' && state.audio) {
     state.audio.currentTime = Math.max(0, t - (state.lyrics.offset || 0));
     state.audio.play().catch(() => {});

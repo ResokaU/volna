@@ -523,9 +523,10 @@ function renderHome() {
   const sub = $('#home-sub');
   if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
   const cont = state.history.filter(x => x.id !== state.currentTrack?.id).slice(0, 8);
+  state.homeContinue = cont; // плеер играет строго по этому списку
   const cEl = $('#home-continue');
   if (cEl) cEl.innerHTML = cont.length
-    ? cont.map((t, i) => trackCardHTML(t, i, 'hist')).join('')
+    ? cont.map((t, i) => trackCardHTML(t, i, 'home')).join('')
     : emptyHTML('i-spark', 'Начни с чего-нибудь', 'Включи трек — и он появится здесь');
   const pEl = $('#home-popular');
   if (pEl) {
