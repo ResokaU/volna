@@ -1,5 +1,5 @@
 /* ============================================================
-   GrindoApp · search.js — расширенный поиск (треки/артисты/
+   VOLNA · search.js — расширенный поиск (треки/артисты/
    плейлисты, сортировки, фильтры), русские тренды, недавние
    Работает через api-v2.soundcloud.com: client_id динамически
    извлекается из JS-бандлов, запросы идут через IPC-прокси.
@@ -74,7 +74,6 @@ const CHIPS = [
   { label: 'jazz', q: 'jazz' },
   { label: 'hip hop', q: 'hip hop underground' },
   { label: 'ambient', q: 'ambient' },
-  { label: 'dota 2', q: 'dota 2 music' },
   { label: 'cyberpunk', q: 'cyberpunk' }
 ];
 

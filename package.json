@@ -1,8 +1,8 @@
 {
-  "name": "grindoapp",
+  "name": "volna",
   "productName": "VOLNA",
   "version": "2.0.0",
-  "description": "Beautiful SoundCloud desktop player with Dota 2 vibes",
+  "description": "Beautiful SoundCloud desktop player — waves, lyrics, neon",
   "author": "meerp",
   "license": "MIT",
   "main": "main.js",

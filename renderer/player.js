@@ -1,5 +1,5 @@
 /* ============================================================
-   GrindoApp · player.js — SoundCloud widget, воспроизведение,
+   VOLNA · player.js — SoundCloud widget, воспроизведение,
    очередь (drag & drop), sleep timer, radio, визуализатор, mini
    ============================================================ */
 'use strict';

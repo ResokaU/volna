@@ -1,5 +1,5 @@
 /* ============================================================
-   GrindoApp · library.js — данные, лайки, плейлисты, история,
+   VOLNA · library.js — данные, лайки, плейлисты, история,
    статистика, настройки, backup
    ============================================================ */
 'use strict';
@@ -247,7 +247,7 @@ async function exportFavorites() {
   const blob = new Blob([JSON.stringify(state.favorites, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'grindoapp-favorites.json';
+  a.download = 'volna-favorites.json';
   a.click();
   URL.revokeObjectURL(a.href);
   toast('Экспортировано ✓', 'success');

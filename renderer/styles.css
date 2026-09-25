@@ -5,7 +5,6 @@
   --accent:#b14aff;--accent2:#ff3d7f;--accent3:#d6ff3a;
   --neon:var(--accent);--hot:var(--accent2);--acid:var(--accent3);--cyan:var(--accent3);
   --grad:linear-gradient(90deg,var(--neon),var(--acid));
-  --gold:#e2b714;--dota:#c23c2a
 }
 
 /* Индирекция на body — чтобы темы реально перекрашивали всё */
@@ -122,37 +121,6 @@ margin-bottom:24px;flex-wrap:wrap;gap:16px}
 .section-title{font-family:'Unbounded','Golos Text',sans-serif;font-size:30px;font-weight:800;
 letter-spacing:-.02em;line-height:1.1}
 .section-sub{font-size:13px;color:var(--dim);margin-top:6px}
-
-/* ============ Hero banner (Dota) ============ */
-.hero-banner{position:relative;height:260px;border-radius:28px;overflow:hidden;
-margin-bottom:28px;border:1px solid var(--border);cursor:none;isolation:isolate}
-.hero-banner img{width:100%;height:100%;object-fit:cover;object-position:center 20%;
-filter:brightness(.55) saturate(1.3) contrast(1.05);
-animation:kenBurns 30s ease-in-out infinite;transform-origin:center}
-@keyframes kenBurns{0%,100%{transform:scale(1) translate(0,0)}
-50%{transform:scale(1.08) translate(-1%,-1%)}}
-.hero-banner .ov{position:absolute;inset:0;
-background:linear-gradient(90deg,rgba(7,7,13,.95) 0%,rgba(7,7,13,.4) 55%,transparent 100%);
-display:flex;flex-direction:column;justify-content:center;padding:0 48px;z-index:2}
-.hero-banner .tg{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--acid);
-font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.hero-banner .tg::before{content:'';width:20px;height:1px;background:var(--acid)}
-.hero-banner h2{font-family:'Unbounded',sans-serif;font-size:46px;font-weight:900;letter-spacing:-1.5px;margin-bottom:8px;
-text-shadow:0 2px 30px rgba(0,0,0,.5)}
-.hero-banner .qt{color:#ccc;font-size:15px;font-style:italic;max-width:560px;margin-bottom:20px;line-height:1.5}
-.hero-banner .cta{display:inline-flex;align-items:center;gap:10px;padding:13px 26px;
-background:var(--ink);color:#000;border:1px solid transparent;
-border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.08em;
-text-transform:uppercase;transition:.3s;width:fit-content}
-.hero-banner:hover .cta{background:var(--acid);transform:translateX(4px)}
-.reroll{position:absolute;top:20px;right:20px;padding:10px 20px;
-background:rgba(0,0,0,.5);backdrop-filter:blur(12px);
-border:1px solid color-mix(in srgb,var(--acid) 35%,transparent);border-radius:999px;color:var(--acid);
-font-size:12px;font-weight:700;cursor:none;transition:.3s;z-index:3;
-letter-spacing:.1em;text-transform:uppercase;font-family:inherit;
-display:inline-flex;align-items:center;gap:8px}
-.reroll .ic{width:14px;height:14px}
-.reroll:hover{background:var(--acid);color:#000;transform:scale(1.05)}
 
 /* ============ Search ============ */
 .search-wrap{position:relative;margin-bottom:16px}
@@ -530,7 +498,6 @@ input[type=range]{accent-color:var(--acid)}
 filter:drop-shadow(0 10px 30px color-mix(in srgb,var(--neon) 45%,transparent))}
 .pl-art{color:var(--acid)}
 .pl-art .ic{width:54px;height:54px;stroke-width:1.5}
-.hero-card .track-art{background:#0d0d14}
 
 /* ============ Hidden widget ============ */
 .sc-widget{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
