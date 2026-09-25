@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VOLNA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="lgo" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#b14aff"/><stop offset="0.5" stop-color="#ff3d7f"/><stop offset="1" stop-color="#d6ff3a"/>
+    </linearGradient>
+    <linearGradient id="lgo2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b14aff"/><stop offset="1" stop-color="#ff3d7f"/>
+    </linearGradient>
+    <filter id="lgoglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <symbol id="i-logo" viewBox="0 0 512 512">
+    <g filter="url(#lgoglow)">
+      <path d="M 351 91.5 A 190 190 0 1 0 443.2 289" fill="none" stroke="url(#lgo)" stroke-width="64" stroke-linecap="round"/>
+      <rect x="312" y="224" width="132" height="64" rx="18" fill="url(#lgo)"/>
+      <path d="M208 208 L208 304 Q208 316 219 310 L302 262 Q312 256 302 250 L219 202 Q208 196 208 208 Z" fill="url(#lgo2)"/>
+      <rect x="180" y="368" width="30" height="110" rx="15" fill="url(#lgo)"/>
+      <rect x="224" y="308" width="30" height="170" rx="15" fill="url(#lgo)"/>
+      <rect x="268" y="268" width="30" height="210" rx="15" fill="url(#lgo)"/>
+      <rect x="312" y="338" width="30" height="140" rx="15" fill="url(#lgo)"/>
+    </g>
+    <path d="M 91.5 161 A 190 190 0 0 1 191 77.5" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="18" stroke-linecap="round"/>
+    <circle cx="222" cy="72" r="11" fill="rgba(255,255,255,.5)"/>
+  </symbol>
+
+  <symbol id="i-head" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2c.8 3.5-1.2 5.4-2.6 7C7.8 10.8 6 12.6 6 15.5 6 19.1 8.7 22 12 22s6-2.9 6-6.5c0-2.2-1-4-2.2-5.6-.3 1.2-.9 2.2-1.9 2.8.3-3.2-.4-7.5-1.9-10.7z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2l8 3.5V12c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V5.5L12 2z"/><path d="M12 8v5M12 16h.01"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><path d="M4 6h11M4 12h11M4 18h7"/><path fill="currentColor" stroke="none" d="M16 9.5l6 4-6 4z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M7 4.5v15a1 1 0 0 0 1.54.84l11.2-7.5a1 1 0 0 0 0-1.68L8.54 3.66A1 1 0 0 0 7 4.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M6 5h2.5v14H6zM20 5.8v12.4a1 1 0 0 1-1.55.83L9.5 12.83a1 1 0 0 1 0-1.66l8.95-6.2A1 1 0 0 1 20 5.8z"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M15.5 5H18v14h-2.5zM4 5.8v12.4a1 1 0 0 0 1.55.83l8.95-6.2a1 1 0 0 0 0-1.66L5.55 4.97A1 1 0 0 0 4 5.8z"/></symbol>
+  <symbol id="i-play-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path fill="currentColor" stroke="none" d="M10 8.2l6 3.8-6 3.8z"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></symbol>
+  <symbol id="i-mini" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M12 18v4M8 22h8"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-volume-off" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></symbol>
+  <symbol id="i-bomb" viewBox="0 0 24 24"><circle cx="10.5" cy="13.5" r="6.5"/><path d="M15.5 8.5L19 5M19 5l-2.2-.4M19 5l.4 2.2M21 3h.01"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3.5-3.5M7 20l3.5-3.5M17 20V4M17 4l-3.5 3.5M17 4l3.5 3.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-1.5-1.2-2.5-2.5-2.5H16a2 2 0 0 1-2-2c0-.8.3-1 .3-1.8C14.3 4.5 13.5 3 12 3z"/><path d="M7.5 10.5h.01M10 7h.01M14.5 7.5h.01M7 14.5h.01"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-quote" viewBox="0 0 24 24"><path d="M10 11H6.5a1.5 1.5 0 0 1-1.5-1.5V7a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 10 7v8a4 4 0 0 1-4 4"/><path d="M20 11h-3.5A1.5 1.5 0 0 1 15 9.5V7a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 20 7v8a4 4 0 0 1-4 4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2zM19 15l.9 3.1L23 19l-3.1.9L19 23l-.9-3.1L15 19l3.1-.9L19 15z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59c-.02.14-.03.28-.04.42L2 17.5A2.5 2.5 0 0 0 4.5 20c.7 0 1.37-.29 1.85-.82l1.9-2.18h5.5l1.9 2.18c.48.53 1.15.82 1.85.82A2.5 2.5 0 0 0 20 17.5l-.66-8.49c-.01-.14-.02-.28-.04-.42A4 4 0 0 0 15.32 5z"/></symbol>
+  <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59c-.02.14-.03.28-.04.42L2 17.5A2.5 2.5 0 0 0 4.5 20c.7 0 1.37-.29 1.85-.82l1.9-2.18h5.5l1.9 2.18c.48.53 1.15.82 1.85.82A2.5 2.5 0 0 0 20 17.5l-.66-8.49c-.01-.14-.02-.28-.04-.42A4 4 0 0 0 15.32 5z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 7 7 0 0 0-13.55 1.9A4 4 0 0 0 6 19.9h11.5z"/></symbol>
+</svg>
+
+<div class="cursor-ring"></div>
+<div class="cursor-dot"></div>
+
+<div class="aurora">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="blob b4"></div>
+</div>
+<div class="grain"></div>
+<canvas id="waves" class="waves-canvas"></canvas>
+<div id="wallpaper" class="wallpaper"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo-block">
+      <img class="logo-mark" src="logo.svg" alt="VOLNA">
+      <div>
+        <div class="logo">VOLNA</div>
+        <div class="logo-sub">слушай волну</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Discover</div>
+      <div class="nav-item active" data-view="discover"><svg class="ic" viewBox="0 0 24 24"><use href="#i-head"/></svg>Поиск</div>
+      <div class="nav-item" data-view="foryou"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Для вас</div>
+      <div class="nav-item" data-view="trending"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Trending</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Library</div>
+      <div class="nav-item" data-view="favorites"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Лайки<span class="badge" id="fav-badge">0</span></div>
+      <div class="nav-item" data-view="playlists"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>Плейлисты<span class="badge" id="pl-badge">0</span></div>
+      <div class="nav-item" data-view="history"><svg class="ic" viewBox="0 0 24 24"><use href="#i-history"/></svg>История</div>
+      <div class="nav-item" data-view="lyrics"><svg class="ic" viewBox="0 0 24 24"><use href="#i-quote"/></svg>Текст</div>
+      <div class="nav-item" data-view="queue"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>Очередь<span class="badge badge-muted" id="queue-badge">0</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item" data-view="stats"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chart"/></svg>Статистика</div>
+      <div class="nav-item" data-view="settings"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sliders"/></svg>Настройки</div>
+      <div class="nav-item" onclick="openShortcuts()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-keyboard"/></svg>Шорткаты</div>
+      <div class="nav-item" onclick="openAbout()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-info"/></svg>О приложении</div>
+    </div>
+
+    <div class="account-card">
+      <div class="ac-label">Аккаунт</div>
+      <div id="sc-auth-status"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="donate-btn" onclick="openDonation()" title="DonationAlerts">
+        <svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Поддержать автора
+      </button>
+      Powered by <strong>SoundCloud</strong><br>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="drag-region"></div>
+    <div class="content">
+
+      <section class="view active" id="view-discover">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Discover</h2>
+            <div class="section-sub">Звуки со всего SoundCloud</div>
+          </div>
+        </div>
+        <div class="search-wrap">
+          <div class="search-row">
+            <div class="search-field">
+              <svg class="ic search-ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>
+              <input type="text" class="search-input" id="search-input" placeholder="Поиск треков, артистов, жанров..." autocomplete="off">
+            </div>
+            <button class="search-btn" onclick="doSearch()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Найти</button>
+          </div>
+          <div class="recent-searches" id="recent-searches" style="display:none"></div>
+        </div>
+        <div class="search-extras">
+          <div class="seg" id="mode-seg">
+            <button class="seg-btn active" data-mode="tracks">Треки</button>
+            <button class="seg-btn" data-mode="artists">Артисты</button>
+            <button class="seg-btn" data-mode="playlists">Плейлисты</button>
+          </div>
+          <div class="seg" id="sort-seg">
+            <button class="seg-btn active" data-sort="relevance">Релевант</button>
+            <button class="seg-btn" data-sort="popular">Популярные</button>
+            <button class="seg-btn" data-sort="new">Новые</button>
+          </div>
+          <div class="seg" id="dur-seg">
+            <button class="seg-btn active" data-dur="any">Любая длина</button>
+            <button class="seg-btn" data-dur="short">&lt; 3 мин</button>
+            <button class="seg-btn" data-dur="mid">3–6 мин</button>
+            <button class="seg-btn" data-dur="long">&gt; 6 мин</button>
+          </div>
+          <button class="toolbar-btn" onclick="feelingLucky()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-dice"/></svg>Мне повезёт</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="toolbar" id="toolbar" style="display:none">
+          <div class="result-count">Найдено: <strong id="result-count">0</strong></div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadMore()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>Ещё</button>
+            <button class="toolbar-btn" onclick="addToQueueAll()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>В очередь</button>
+            <button class="toolbar-btn" onclick="playAllResults()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
+          </div>
+        </div>
+        <div class="tracks" id="tracks"></div>
+
+        <div class="marquee">
+          <div class="marquee-track">
+            <span>РУССКИЙ РЭП <i class="star">✦</i> ФОНК <i class="star">✦</i> ЛО-ФАЙ <i class="star">✦</i> ТЕХНО <i class="star">✦</i> ДРАМ-Н-БЕЙС <i class="star">✦</i> ДЖАЗЗ <i class="star">✦</i> ИНДИ <i class="star">✦</i> ХИП-ХОП <i class="star">✦</i>&nbsp;</span>
+            <span>РУССКИЙ РЭП <i class="star">✦</i> ФОНК <i class="star">✦</i> ЛО-ФАЙ <i class="star">✦</i> ТЕХНО <i class="star">✦</i> ДРАМ-Н-БЕЙС <i class="star">✦</i> ДЖАЗЗ <i class="star">✦</i> ИНДИ <i class="star">✦</i> ХИП-ХОП <i class="star">✦</i>&nbsp;</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-foryou">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Для вас</h2>
+            <div class="section-sub" id="foryou-sub">Персональный поток твоего аккаунта</div>
+          </div>
+          <button class="toolbar-btn" onclick="loadForyou(true)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Обновить</button>
+        </div>
+        <div class="tracks" id="foryou-tracks"></div>
+      </section>
+
+      <section class="view" id="view-trending">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Trending</h2>
+            <div class="section-sub">Мировые чарты и русские тренды</div>
+          </div>
+          <button class="toolbar-btn" onclick="loadTrending(true)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Обновить</button>
+        </div>
+        <div class="trend-tabs" id="trend-tabs"></div>
+        <div class="tracks" id="trending-tracks"></div>
+      </section>
+
+      <section class="view" id="view-favorites">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Liked Tracks</h2>
+            <div class="section-sub">Твои избранные треки</div>
+          </div>
+        </div>
+        <div class="toolbar" id="fav-toolbar">
+          <div class="result-count"><strong id="fav-count">0</strong> треков</div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" id="sort-btn" onclick="toggleSort()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sort"/></svg><span id="sort-label">По дате</span></button>
+            <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
+            <button class="toolbar-btn" onclick="exportFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-download"/></svg>Экспорт</button>
+            <button class="toolbar-btn" onclick="importFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-upload"/></svg>Импорт</button>
+            <button class="toolbar-btn danger" onclick="clearFavs()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Очистить</button>
+          </div>
+        </div>
+        <div class="tracks" id="favorites-list"></div>
+      </section>
+
+      <section class="view" id="view-playlists">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Playlists</h2>
+            <div class="section-sub">Твои плейлисты</div>
+          </div>
+          <button class="search-btn" style="padding:10px 20px;font-size:13px" onclick="openNewPlaylistModal()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>Новый</button>
+        </div>
+        <div class="tracks" id="playlists-grid"></div>
+      </section>
+
+      <section class="view" id="view-playlist-detail">
+        <div class="section-head">
+          <div>
+            <button class="toolbar-btn" onclick="switchView('playlists')" style="margin-bottom:8px"><svg class="ic" viewBox="0 0 24 24"><use href="#i-back"/></svg>Назад</button>
+            <h2 class="section-title" id="pl-detail-name">Playlist</h2>
+            <div class="section-sub" id="pl-detail-desc"></div>
+          </div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="playCurrentPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
+            <button class="toolbar-btn danger" onclick="deleteCurrentPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Удалить</button>
+          </div>
+        </div>
+        <div class="tracks" id="pl-detail-tracks"></div>
+      </section>
+
+      <section class="view" id="view-history">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">History</h2>
+            <div class="section-sub">Последние 100 прослушанных треков</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="result-count"><strong id="hist-count">0</strong> треков</div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn danger" onclick="clearHistory()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Очистить</button>
+          </div>
+        </div>
+        <div class="tracks" id="history-list"></div>
+      </section>
+
+      <section class="view" id="view-queue">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Queue</h2>
+            <div class="section-sub">Очередь воспроизведения (drag & drop)</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="result-count"><strong id="queue-count">0</strong> треков</div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="shuffleQueue()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-shuffle"/></svg>Перемешать</button>
+            <button class="toolbar-btn" onclick="saveQueueAsPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-save"/></svg>Как плейлист</button>
+            <button class="toolbar-btn danger" onclick="clearQueue()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Очистить</button>
+          </div>
+        </div>
+        <div class="queue-list" id="queue-list"></div>
+      </section>
+
+      <section class="view" id="view-lyrics">
+        <div class="mascot" id="mascot" onclick="cycleMascot()" title="Сменить маскота"><img id="mascot-img" src="" alt="маскот"></div>
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Текст</h2>
+            <div class="section-sub" id="lyrics-sub">Караоке-режим · источник LRCLIB</div>
+          </div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="nudgeLyrics(-0.5)">−0.5с</button>
+            <button class="toolbar-btn" onclick="nudgeLyrics(0.5)">+0.5с</button>
+            <button class="toolbar-btn" onclick="openGenius()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Genius</button>
+          </div>
+        </div>
+        <div class="lyrics-wrap" id="lyrics-wrap"><div class="lyrics-lines" id="lyrics-lines"></div></div>
+      </section>
+
+      <section class="view" id="view-stats">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Statistics</h2>
+            <div class="section-sub">Твоя статистика</div>
+          </div>
+          <button class="toolbar-btn danger" onclick="resetStats()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Сбросить</button>
+        </div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="section-head" style="margin-top:40px">
+          <div>
+            <h2 class="section-title" style="font-size:22px">Активность</h2>
+            <div class="section-sub">Последние 14 недель — как у разработчиков, только про музыку</div>
+          </div>
+        </div>
+        <div class="heatmap" id="heatmap"></div>
+        <div class="section-head" style="margin-top:40px">
+          <div><h2 class="section-title" style="font-size:22px">Топ артисты</h2></div>
+        </div>
+        <div class="top-artists" id="top-artists"></div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Настройки</h2>
+            <div class="section-sub">Персонализируй приложение</div>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-palette"/></svg>Акцент</h3>
+          <div class="accent-picker" id="accent-picker">
+            <button class="accent-chip" data-accent="neon" style="--ac:#b14aff" title="Неон"></button>
+            <button class="accent-chip" data-accent="acid" style="--ac:#d6ff3a" title="Кислота"></button>
+            <button class="accent-chip" data-accent="hot" style="--ac:#ff3d7f" title="Хот"></button>
+            <button class="accent-chip" data-accent="cyan" style="--ac:#3af0ff" title="Кибер"></button>
+            <button class="accent-chip" data-accent="orange" style="--ac:#ff5500" title="Оранж"></button>
+            <button class="accent-chip" data-accent="red" style="--ac:#ff3d3d" title="Красный"></button>
+            <button class="accent-chip" data-accent="gold" style="--ac:#e2b714" title="Золото"></button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-volume"/></svg>Громкость по умолчанию</h3>
+          <div class="setting-row">
+            <input type="range" id="default-volume" min="0" max="1" step="0.05" style="flex:1">
+            <span id="default-volume-val">100%</span>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Поведение</h3>
+          <label class="toggle-row"><input type="checkbox" id="set-notify"><span>Уведомления при лайке</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-savewin"><span>Запоминать позицию/размер окна</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-minimize"><span>Запускать свёрнутым</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Фон и волны</h3>
+          <label class="toggle-row"><input type="checkbox" id="set-waves" checked><span>Динамичные волны внизу экрана</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-mascot" checked><span>Танцующий маскот в караоке (клик по нему — сменить)</span></label>
+          <div class="setting-row" style="margin:8px 0 10px;flex-wrap:wrap">
+            <button class="toolbar-btn" onclick="document.getElementById('wallpaper-input').click()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Свои обои…</button>
+            <button class="toolbar-btn" onclick="clearWallpaper()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg>Убрать обои</button>
+            <input type="file" id="wallpaper-input" accept="image/*" hidden>
+          </div>
+          <div class="setting-row">
+            <span style="font-size:13px;color:var(--dim);flex-shrink:0">Затемнение обоев</span>
+            <input type="range" id="wallpaper-dim" min="0" max="100" value="55" style="flex:1">
+          </div>
+          <p style="color:var(--muted);font-size:12px;margin-top:10px">Обои хранятся локально в приложении и никуда не отправляются.</p>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-shield"/></svg>Антиблок — доступ в РФ</h3>
+          <label class="toggle-row"><input type="checkbox" id="set-doh" checked><span>DoH: DNS через Cloudflare — обходит DNS-блокировки <em style="color:var(--muted);font-style:normal">(применится после перезапуска)</em></span></label>
+          <div class="setting-row" style="margin:6px 0 12px">
+            <input type="text" id="set-proxy" placeholder="Прокси: socks5://127.0.0.1:10808 или http://host:port" style="flex:1;margin-bottom:0">
+            <button class="toolbar-btn" onclick="applyProxySetting()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Применить</button>
+          </div>
+          <div style="margin-bottom:10px">
+            <button class="toolbar-btn" onclick="testNetwork()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Проверить доступность SoundCloud</button>
+          </div>
+          <div id="net-diagnostics"></div>
+          <p style="color:var(--muted);font-size:12px;line-height:1.6;margin-top:12px">
+            Прокси совместим с v2rayN / Xray, Outline, AmneziaVPN и любым локальным SOCKS5/HTTP.
+            ECH включён всегда — прячет SNI на Cloudflare-хостах (обложки и медиа).
+            Если запущен Запрет2/zapret — он работает системно, и VOLNA ходит через него автоматически.
+          </p>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-database"/></svg>Данные</h3>
+          <div class="toolbar-actions" style="flex-wrap:wrap">
+            <button class="toolbar-btn" onclick="exportFullBackup()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-box"/></svg>Полный backup</button>
+            <button class="toolbar-btn" onclick="importFullBackup()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-upload"/></svg>Восстановить backup</button>
+            <button class="toolbar-btn danger" onclick="wipeAll()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bomb"/></svg>Стереть всё</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="player" id="player">
+  <div class="sleep-timer" id="sleep-timer">😴 <span id="sleep-countdown">00:00</span></div>
+  <div class="player-cover">
+    <canvas class="viz" id="viz" width="100" height="100"></canvas>
+    <img id="player-cover" src="" alt="">
+  </div>
+  <div class="player-info">
+    <div class="player-title" id="player-title">—</div>
+    <div class="player-artist" id="player-artist">—</div>
+    <div class="player-source"><span class="dot"></span>SoundCloud</div>
+  </div>
+  <div class="player-controls">
+    <button class="pbtn" id="btn-shuffle" onclick="toggleShuffle()" title="Shuffle">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-shuffle"/></svg>
+    </button>
+    <button class="pbtn" onclick="playPrev()" title="Previous">
+      <svg class="ic fill" viewBox="0 0 24 24"><use href="#i-prev"/></svg>
+    </button>
+    <button class="pbtn main" id="btn-play" onclick="togglePlay()">
+      <svg class="ic fill" viewBox="0 0 24 24"><use id="play-icon" href="#i-play"/></svg>
+    </button>
+    <button class="pbtn" onclick="playNext()" title="Next">
+      <svg class="ic fill" viewBox="0 0 24 24"><use href="#i-next"/></svg>
+    </button>
+    <button class="pbtn" id="btn-repeat" onclick="toggleRepeat()" title="Repeat">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-repeat"/></svg>
+    </button>
+    <button class="pbtn" onclick="enableRadio()" title="Radio">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-radio"/></svg>
+    </button>
+    <button class="pbtn" onclick="switchView('lyrics')" title="Текст песни">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-quote"/></svg>
+    </button>
+    <button class="pbtn" onclick="toggleMiniPlayer()" title="Mini">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>
+    </button>
+    <button class="pbtn" onclick="openSleepModal()" title="Sleep">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-moon"/></svg>
+    </button>
+  </div>
+  <div class="mini-title" id="mini-title">—</div>
+  <div class="mini-controls">
+    <button class="pbtn main" style="width:40px;height:40px" onclick="togglePlay()" title="Play/Pause">
+      <svg class="ic fill" viewBox="0 0 24 24"><use id="mini-play-icon" href="#i-play"/></svg>
+    </button>
+    <button class="pbtn" style="width:40px;height:40px" onclick="toggleMiniPlayer()" title="Развернуть">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-expand"/></svg>
+    </button>
+  </div>
+  <div class="volume-wrap">
+    <button class="pbtn" onclick="toggleMute()" style="width:32px;height:32px">
+      <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><use id="vol-icon" href="#i-volume"/></svg>
+    </button>
+    <div class="volume-slider" id="vol-slider"><div class="volume-fill" id="vol-fill"></div></div>
+  </div>
+  <div class="progress-wrap" id="progress-wrap"><div class="progress" id="progress"></div></div>
+  <div class="time-row"><span id="time-cur">0:00</span><span id="time-dur">0:00</span></div>
+</div>
+
+<div class="modal" id="shortcuts_modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('shortcuts_modal')">×</button>
+    <h2>Горячие клавиши</h2>
+    <ul class="shortcut-list">
+      <li><span>Палитра поиска и команд</span><span class="kbd">Ctrl + K</span></li>
+      <li><span>Play / Pause</span><span class="kbd">Space</span></li>
+      <li><span>Next</span><span class="kbd">→</span></li>
+      <li><span>Prev</span><span class="kbd">←</span></li>
+      <li><span>Volume</span><span class="kbd">↑ ↓</span></li>
+      <li><span>Seek ±5s</span><span class="kbd">Shift + ← →</span></li>
+      <li><span>Focus search</span><span class="kbd">F</span></li>
+      <li><span>Like current</span><span class="kbd">L</span></li>
+      <li><span>Mini player</span><span class="kbd">M</span></li>
+      <li><span>Разделы</span><span class="kbd">1–8</span></li>
+      <li><span>Shortcuts</span><span class="kbd">F1</span></li>
+      <li><span>Quit</span><span class="kbd">Ctrl+Q</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="modal" id="sleep_modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('sleep_modal')">×</button>
+    <h2>Sleep Timer</h2>
+    <p style="color:var(--dim);margin-bottom:20px;font-size:14px">Остановить через:</p>
+    <select id="sleep-duration">
+      <option value="0">Выключить</option>
+      <option value="5">5 минут</option>
+      <option value="15">15 минут</option>
+      <option value="30">30 минут</option>
+      <option value="45">45 минут</option>
+      <option value="60">1 час</option>
+      <option value="90">1.5 часа</option>
+      <option value="120">2 часа</option>
+    </select>
+    <button class="modal-btn" onclick="setSleepTimer()">Установить</button>
+  </div>
+</div>
+
+<div class="modal" id="playlist_modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('playlist_modal')">×</button>
+    <h2>Новый плейлист</h2>
+    <input type="text" id="playlist-name" placeholder="Название">
+    <input type="text" id="playlist-desc" placeholder="Описание (опционально)">
+    <button class="modal-btn" onclick="createPlaylist()">Создать</button>
+  </div>
+</div>
+
+<div class="modal" id="about_modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('about_modal')">×</button>
+    <h2>О приложении</h2>
+    <img class="about-logo" src="logo.svg" alt="VOLNA">
+    <div id="about-info" style="color:var(--dim);font-size:14px;line-height:1.8;text-align:center"></div>
+    <button class="modal-btn" style="margin-top:18px" onclick="openDonation()"><svg class="ic" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:6px"><use href="#i-heart"/></svg>Поддержать автора 💜</button>
+  </div>
+</div>
+
+<div class="palette" id="palette">
+  <div class="palette-box">
+    <input class="palette-input" id="palette-input" type="text" placeholder="Найти трек или команду… (Ctrl+K)" autocomplete="off">
+    <div class="palette-list" id="palette-list"></div>
+  </div>
+</div>
+
+<div class="context-menu" id="context-menu"></div>
+
+<iframe id="sc-widget" class="sc-widget" allow="autoplay"
+  src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2F&amp;auto_play=false&amp;hide_related=true&amp;show_comments=false&amp;show_user=false&amp;show_reposts=false"></iframe>
+<input type="file" id="file-input" accept=".json" hidden>
+
+<script src="app.js"></script>
+<script src="search.js"></script>
+<script src="player.js"></script>
+<script src="library.js"></script>
+<script src="lyrics.js"></script>
+<script>init();</script>
+</body>
+</html>
