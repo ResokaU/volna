@@ -12,6 +12,16 @@
 </head>
 <body>
 
+<div class="titlebar" id="titlebar">
+  <img class="tb-icon" src="logo.png" alt="">
+  <div class="tb-title" id="tb-title">VOLNA</div>
+  <div class="tb-controls">
+    <button class="tb-btn" onclick="winMin()" title="Свернуть">─</button>
+    <button class="tb-btn" onclick="winMax()" title="Развернуть (двойной клик по шапке)">▢</button>
+    <button class="tb-btn tb-close" onclick="winClose()" title="Закрыть в трей">✕</button>
+  </div>
+</div>
+
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="lgo" x1="0" y1="0" x2="0.25" y2="1">
@@ -161,7 +171,6 @@
   </aside>
 
   <main class="main">
-    <div class="drag-region"></div>
     <div class="content">
 
       <section class="view active" id="view-discover">

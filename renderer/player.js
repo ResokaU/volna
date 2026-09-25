@@ -348,6 +348,8 @@ async function playTrack(track, listKey = null) {
 function updateTitle(freshTrack) {
   const t = state.currentTrack;
   document.title = t ? (state.isPlaying ? '▶ ' : '⏸ ') + t.title + ' — VOLNA' : 'VOLNA';
+  const tbTitle = document.getElementById('tb-title');
+  if (tbTitle) tbTitle.textContent = t ? t.title : 'VOLNA';
   if (ipc && t) {
     ipc.invoke('tray:nowplaying', { title: t.title, artist: t.user?.username || '', isPlaying: state.isPlaying }).catch(() => {});
     // Discord Rich Presence: позиция трека для таймстампов (у нового трека — 0)

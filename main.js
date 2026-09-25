@@ -242,6 +242,7 @@ function createWindow() {
     height: bounds.height,
     minWidth: 900,
     minHeight: 600,
+    frame: false, // кастомный тайтлбар в renderer
     show: false,
     backgroundColor: '#07070d',
     title: 'VOLNA',
@@ -272,8 +273,16 @@ function createWindow() {
       if (win) store.set('settings.windowBounds', win.getBounds());
     }, 500);
   };
-  win.on('resize', saveBounds);
+  win.on('resize', () => { if (!win.isMaximized()) saveBounds(); });
   win.on('move', saveBounds);
+  win.on('maximize', () => store.set('settings.windowMax', true));
+  win.on('unmaximize', () => store.set('settings.windowMax', false));
+  if (store.get('settings.windowMax')) win.maximize();
+
+  // контролы кастомного тайтлбара
+  ipcMain.on('win:minimize', () => win?.minimize());
+  ipcMain.on('win:maximize', () => { if (!win) return; win.isMaximized() ? win.unmaximize() : win.maximize(); });
+  ipcMain.on('win:close', () => win?.close());
 
   // F12 — DevTools
   win.webContents.on('before-input-event', (_e, input) => {

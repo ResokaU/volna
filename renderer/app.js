@@ -385,6 +385,10 @@ function bindChrome() {
   bindCopyGuard();
   const logo = document.querySelector('.nav-label');
   logo?.addEventListener('click', logoEgg); // 7 кликов…
+  const tb = $('#titlebar');
+  if (tb && ipc) {
+    tb.addEventListener('dblclick', e => { if (!e.target.closest('.tb-btn')) winMax(); });
+  }
 }
 
 /* копировать можно только названия треков, артистов и подписи */
@@ -620,6 +624,11 @@ function triggerEgg(track) {
     setTimeout(() => toast(egg.toast), 1200);
   }
 }
+
+/* ---------- кастомный тайтлбар ---------- */
+function winMin() { ipc?.send('win:minimize'); }
+function winMax() { ipc?.send('win:maximize'); }
+function winClose() { ipc?.send('win:close'); } // как и раньше: крестик прячет в трей
 
 /* секрет: 7 кликов по «VOLNA» в сайдбаре */
 let _logoClicks = 0, _logoTimer = null;

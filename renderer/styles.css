@@ -75,7 +75,7 @@ stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .ic.sm{width:14px;height:14px}
 
 /* ============ Layout ============ */
-.app{position:relative;z-index:2;display:grid;grid-template-columns:264px 1fr;height:100vh;gap:1px}
+.app{position:relative;z-index:2;display:grid;grid-template-columns:264px 1fr;height:calc(100vh - 36px);margin-top:36px;gap:1px}
 
 /* ============ Sidebar ============ */
 .sidebar{background:rgba(10,10,16,.6);backdrop-filter:blur(30px) saturate(1.4);
@@ -118,7 +118,20 @@ box-shadow:0 12px 28px -8px color-mix(in srgb,var(--hot) 60%,transparent)}
 
 /* ============ Main ============ */
 .main{height:100vh;overflow-y:auto;overflow-x:hidden;position:relative}
-.drag-region{-webkit-app-region:drag;height:40px;position:fixed;top:0;left:265px;right:0;z-index:100}
+.titlebar{position:fixed;top:0;left:0;right:0;height:36px;z-index:400;
+display:flex;align-items:center;padding:0 0 0 12px;gap:8px;
+-webkit-app-region:drag;user-select:none;
+background:rgba(10,10,16,.55);backdrop-filter:blur(20px)}
+.tb-icon{width:16px;height:16px;border-radius:4px;pointer-events:none}
+.tb-title{flex:1;font-size:12px;font-weight:600;color:var(--dim);letter-spacing:.05em;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.tb-controls{display:flex;height:100%;-webkit-app-region:no-drag}
+.tb-btn{width:46px;height:100%;border:none;background:transparent;color:var(--dim);
+font-size:13px;font-family:inherit;cursor:none;display:flex;align-items:center;justify-content:center;
+transition:background .15s,color .15s}
+.tb-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.tb-close:hover{background:#ff3d55;color:#fff}
+body.no-cursor .tb-btn{cursor:pointer}
 .content{padding:24px 40px 200px;max-width:1600px;margin:0 auto}
 .view{display:none;animation:fadeIn .4s ease}
 .view.active{display:block}
