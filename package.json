@@ -1,7 +1,7 @@
 {
   "name": "volna",
   "productName": "VOLNA",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Beautiful SoundCloud desktop player — waves, lyrics, neon",
   "author": "ResokaU",
   "license": "MIT",
@@ -25,8 +25,18 @@
     "win": {
       "icon": "renderer/logo.png",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -40,6 +50,7 @@
     }
   },
   "dependencies": {
+    "discord-rpc": "^4.0.1",
     "electron-store": "^8.1.0"
   },
   "devDependencies": {

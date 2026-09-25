@@ -99,6 +99,7 @@ function playTrack(track, listKey = null) {
   // ambient: размытая обложка светится фоном за плеером
   $('#player').style.setProperty('--ambient', art ? `url(${art})` : 'none');
   $('#player').classList.toggle('no-ambient', !art);
+  updateTitle(true);
   $('#time-dur').textContent = formatTime((track.duration || 0) / 1000);
   $('#progress').style.width = '0%';
   $('#time-cur').textContent = '0:00';
@@ -120,15 +121,25 @@ function playTrack(track, listKey = null) {
   loadLyrics(track); // караоке-текст
 }
 
-/* заголовок окна = now playing */
-function updateTitle() {
+/* заголовок окна = now playing (+ трей + Discord RPC) */
+function updateTitle(freshTrack) {
   const t = state.currentTrack;
   document.title = t ? (state.isPlaying ? '▶ ' : '⏸ ') + t.title + ' — VOLNA' : 'VOLNA';
-  // трей: название трека в меню и тултипе
-  if (ipc) {
-    ipc.invoke('tray:nowplaying', t
-      ? { title: t.title, artist: t.user?.username || '', isPlaying: state.isPlaying }
-      : null).catch(() => {});
+  if (ipc && t) {
+    ipc.invoke('tray:nowplaying', { title: t.title, artist: t.user?.username || '', isPlaying: state.isPlaying }).catch(() => {});
+    // Discord Rich Presence: позиция трека для таймстампов (у нового трека — 0)
+    state.widget?.getPosition(pos => {
+      ipc.invoke('rpc:update', {
+        title: t.title,
+        artist: t.user?.username || '',
+        artwork: artwork(t),
+        durationMs: t.duration || 0,
+        positionMs: freshTrack ? 0 : (pos || 0),
+        isPlaying: state.isPlaying,
+        liked: state.favorites.some(f => f.id === t.id),
+        permalink: t.permalink_url
+      }).catch(() => {});
+    });
   }
   if (typeof updateMascot === 'function') updateMascot();
 }

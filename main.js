@@ -65,6 +65,93 @@ if (store.get('settings.antiblock.doh') !== false) {
 features.push('EncryptedClientHello');
 app.commandLine.appendSwitch('enable-features', features.join(','));
 
+// ---------- Discord Rich Presence ----------
+// client_id приложения Discord (создаётся в Developer Portal)
+const DISCORD_ID = '1552786913016942634';
+let rpc = null;            // клиент discord-rpc
+let rpcReady = false;      // рукопожатие с Discord прошло
+let rpcPending = null;     // последний статус, ждущий ready
+let rpcRetryTimer = null;
+const rpcAssets = new Map(); // url обложки -> mp:external-ключ
+
+// Discord не берёт картинки по URL напрямую — маппим обложку через external-assets API.
+// Если API недоступен, статус работает без картинки.
+async function rpcExternalAsset(url) {
+  if (!url) return undefined;
+  if (rpcAssets.has(url)) return rpcAssets.get(url);
+  try {
+    const res = await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/external-assets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urls: [url] }),
+      signal: AbortSignal.timeout(8000)
+    });
+    if (res.ok) {
+      const arr = await res.json();
+      const mapped = Array.isArray(arr) && arr[0]?.external_asset_path;
+      if (mapped) { rpcAssets.set(url, mapped); return mapped; }
+    }
+  } catch (_) {}
+  return undefined;
+}
+
+async function initRpc() {
+  if (rpc || store.get('settings.discordRpc') === false) return;
+  try {
+    const DiscordRpc = require('discord-rpc');
+    rpc = new DiscordRpc.Client({ transport: 'ipc' });
+    rpc.on('ready', () => {
+      rpcReady = true;
+      console.info('[RPC] Discord: подключено');
+      if (rpcPending) { const p = rpcPending; rpcPending = null; setRpcActivity(p).catch(() => {}); }
+    });
+    rpc.on('disconnected', () => { rpcReady = false; });
+    await rpc.login({ clientId: DISCORD_ID });
+  } catch (_) {
+    // Discord не запущен — тихо пробуем позже
+    try { rpc?.destroy(); } catch (_) {}
+    rpc = null; rpcReady = false;
+    clearTimeout(rpcRetryTimer);
+    rpcRetryTimer = setTimeout(initRpc, 120000);
+  }
+}
+
+async function setRpcActivity(info) {
+  if (!rpc || !rpcReady) { rpcPending = info; return; }
+  if (!info || !info.title) {
+    try { await rpc.clearActivity(); } catch (_) {}
+    return;
+  }
+  let start, end;
+  if (info.isPlaying) {
+    const pos = Math.max(0, info.positionMs || 0);
+    start = Date.now() - pos;
+    if ((info.durationMs || 0) > pos) end = Date.now() + (info.durationMs - pos);
+  }
+  const art = await rpcExternalAsset(info.artwork);
+  try {
+    await rpc.setActivity({
+      details: String(info.title).slice(0, 128),
+      state: ((info.liked ? '❤️ ' : '') + (info.artist || '')).slice(0, 128) || undefined,
+      startTimestamp: start,
+      endTimestamp: end,
+      largeImageKey: art,
+      largeImageText: String(info.title).slice(0, 128),
+      buttons: info.permalink ? [{ label: 'Слушать на SoundCloud', url: info.permalink }] : undefined,
+      instance: false
+    });
+  } catch (_) {}
+}
+
+ipcMain.handle('rpc:update', (_e, info) => { setRpcActivity(info).catch(() => {}); return true; });
+ipcMain.handle('rpc:enable', () => { clearTimeout(rpcRetryTimer); return initRpc(); });
+ipcMain.handle('rpc:disable', async () => {
+  clearTimeout(rpcRetryTimer);
+  rpcPending = null;
+  if (rpc) { try { await rpc.destroy(); } catch (_) {} rpc = null; rpcReady = false; }
+  return true;
+});
+
 // ---------- Single instance ----------
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) { app.quit(); }
@@ -536,6 +623,7 @@ app.whenReady().then(async () => {
   await applyProxy(); // применяем прокси (если задан) ко всему трафику приложения
   createWindow();
   createTray();
+  initRpc(); // Discord Rich Presence (если включён и Discord запущен)
 
   // Global media keys
   try {
@@ -567,4 +655,5 @@ app.on('will-quit', () => {
   if (blockerId !== null) {
     try { powerSaveBlocker.stop(blockerId); } catch (_) {}
   }
+  if (rpc) { try { rpc.destroy(); } catch (_) {} }
 });

@@ -62,6 +62,7 @@ function applySettings() {
   renderAuthStatus();
   $('#set-autoload').checked = state.settings.autoLyrics !== false;
   $('#set-awake').checked = state.settings.keepAwake !== false;
+  $('#set-discord').checked = state.settings.discordRpc !== false;
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
@@ -102,6 +103,11 @@ function bindLibraryUI() {
 
   $('#set-autoload').addEventListener('change', e => saveSetting('autoLyrics', e.target.checked));
   $('#set-awake').addEventListener('change', e => saveSetting('keepAwake', e.target.checked));
+  $('#set-discord').addEventListener('change', e => {
+    saveSetting('discordRpc', e.target.checked);
+    if (ipc) ipc.invoke(e.target.checked ? 'rpc:enable' : 'rpc:disable').catch(() => {});
+    toast(e.target.checked ? '🎮 Discord RPC включён — перезапусти трек для статуса' : 'Discord RPC выключен');
+  });
   $('#fav-filter').addEventListener('input', e => {
     state.favFilter = e.target.value;
     if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
@@ -168,6 +174,7 @@ async function toggleLike(track) {
   await persistFavorites();
   updateBadges();
   updateLikeButtons();
+  if (state.currentTrack?.id === track.id) updateTitle(); // обновить ❤️ в Discord RPC
   if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
   mirrorLikeToServer(track, !isFav); // двойной лайк: локально + на SoundCloud
 }
@@ -763,7 +770,7 @@ function updateFavSourceBtn() {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '2.2.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '2.3.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>
