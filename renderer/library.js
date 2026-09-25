@@ -155,6 +155,7 @@ function applySettings() {
   updateDislikeCount();
   state.visualMode = state.settings.visualMode !== false;
   $$('.bit-chip').forEach(x => x.classList.toggle('active', x.dataset.bit === (state.settings.bitrate || 'best')));
+  $$('.bit-chip[data-vcat]').forEach(x => x.classList.toggle('active', x.dataset.vcat === (state.settings.vibeCat || 'anime')));
   const su = $('#set-updates');
   if (su) su.checked = state.settings.checkUpdates !== false;
   $$('.accent-chip').forEach(c => c.classList.toggle('active', c.dataset.accent === (state.settings.accent || 'neon')));
@@ -215,10 +216,16 @@ function bindLibraryUI() {
 
   bindEq();
   bindPlaylistDnD();
-  $$('.bit-chip').forEach(ch => ch.addEventListener('click', async () => {
+  $$('.bit-chip[data-bit]').forEach(ch => ch.addEventListener('click', async () => {
     await saveSetting('bitrate', ch.dataset.bit);
-    $$('.bit-chip').forEach(x => x.classList.toggle('active', x.dataset.bit === ch.dataset.bit));
+    $$('.bit-chip[data-bit]').forEach(x => x.classList.toggle('active', x.dataset.bit === ch.dataset.bit));
     toast(ch.dataset.bit === 'best' ? '🎚 Качество: лучшее' : '🎚 Качество: экономия трафика (перезапусти трек)', 'success');
+  }));
+  $$('.bit-chip[data-vcat]').forEach(ch => ch.addEventListener('click', async () => {
+    await saveSetting('vibeCat', ch.dataset.vcat);
+    state.visual = null; // сбросить фон — новая категория
+    if ($('#view-vibe')?.classList.contains('active')) renderVibe();
+    toast('🖼 Стиль фонов: ' + ch.textContent.trim(), 'success');
   }));
   $('#fav-filter').addEventListener('input', e => {
     state.favFilter = e.target.value;

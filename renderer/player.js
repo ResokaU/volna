@@ -528,15 +528,23 @@ function updateTitle(freshTrack) {
 }
 
 /* 🖼 Визуал: тикток-стиль — атмосферный фон + гигантский текст строки */
-const VIS_THEMES = ['dark forest night','anime scenery night','night city rain','moonlight mountains',
-  'cyberpunk city neon','storm ocean dark','cherry blossom night','desert night stars','snow forest anime'];
+const VIBE_CATS = {
+  anime:     ['dark forest night','anime scenery night','cherry blossom night','snow forest anime','anime city rain'],
+  night:     ['night city rain','city lights night','starry night sky','moonlight street','dark bedroom window night'],
+  forest:    ['foggy forest','pine forest mist','forest path sunlight','autumn forest road','dark forest night'],
+  mountains: ['mountains fog','snowy mountains','mountain valley sunset','alpine lake','himalayas night'],
+  city:      ['neon city night','cyberpunk city','city skyline night','tokyo street night','rainy city window'],
+  nature:    ['ocean waves storm','waterfall jungle','desert dunes night','flower field sunset','lake reflection night']
+};
 function hashStr(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
 
 async function ensureVisual(t) {
   if (!t || !state.visualMode) return;
   if (state.visual && state.visual.trackId === t.id) return;
   const h = hashStr(String(t.id));
-  const theme = VIS_THEMES[h % VIS_THEMES.length];
+  const cat = VIBE_CATS[state.settings.vibeCat] ? state.settings.vibeCat : 'anime';
+  const themes = VIBE_CATS[cat];
+  const theme = themes[h % themes.length];
   const clean = String(t.title || '').replace(/[^p{L}p{N} ]/gu, '').trim();
   const q0 = clean.split(/s+/).slice(0, 2).join(' ');
   const queries = [];
