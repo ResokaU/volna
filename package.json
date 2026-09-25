@@ -1,0 +1,49 @@
+{
+  "name": "grindoapp",
+  "productName": "VOLNA",
+  "version": "2.0.0",
+  "description": "Beautiful SoundCloud desktop player with Dota 2 vibes",
+  "author": "meerp",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.meerphys.volna",
+    "productName": "VOLNA",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "renderer/logo.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "VOLNA-Setup-${version}.${ext}",
+      "shortcutName": "VOLNA"
+    },
+    "portable": {
+      "artifactName": "VOLNA-Portable-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^26.15.3"
+  }
+}
