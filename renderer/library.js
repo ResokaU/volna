@@ -766,23 +766,23 @@ function renderAuthStatus() {
       </div>`;
   } else if (tokenPasteMode) {
     box.innerHTML = `
-      <div class="ac-hint" style="text-align:left">
-        <strong>Почему так:</strong> окно входа из РФ зацикливается на «проверке устройства» — это антибот SoundCloud, его не обойти. Поэтому берём токен из своего браузера:<br><br>
-        1️⃣ Зайди на soundcloud.com в обычном браузере (если сайт не открывается — включи VPN только на время входа)<br>
-        2️⃣ Войди в аккаунт<br>
-        3️⃣ Нажми <strong>F12</strong> → «Хранилище/Storage» → «Куки» → soundcloud.com<br>
-        4️⃣ Найди куку <strong>oauth_token</strong> и скопируй её значение<br>
-        5️⃣ Вставь сюда — VPN больше не нужен
+      <div class="ac-hint">
+        <strong>Как достать токен:</strong> зайди на soundcloud.com в обычном браузере (при блокировках — VPN на время входа), войди, затем
+        <strong>F12 → Хранилище → Куки → soundcloud.com</strong> и скопируй значение куки <strong>oauth_token</strong>. Вставь сюда — VPN больше не нужен.
       </div>
-      <input type="text" id="paste-token" placeholder="oauth_token с сайта…" style="width:100%;margin:10px 0 8px">
+      <input type="text" id="paste-token" placeholder="oauth_token с сайта…" class="ac-token-input">
       <div class="ac-actions">
         <button class="ac-btn primary" onclick="scTokenSave()">Проверить и войти</button>
         <button class="ac-btn ghost" onclick="tokenPasteMode = false; renderAuthStatus();">Отмена</button>
       </div>`;
   } else {
     box.innerHTML = `
-      <button class="ac-btn primary" onclick="tokenPasteMode = true; renderAuthStatus();"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Войти по токену</button>
-      <button class="ac-link" onclick="scLogin()">Или войти в окне (может зациклиться из РФ) →</button>`;
+      <button class="ac-btn primary ac-full" onclick="tokenPasteMode = true; renderAuthStatus();" title="Надёжно из РФ: oauth_token из браузера">
+        <svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Войти по токену
+      </button>
+      <button class="ac-btn ghost ac-full" onclick="scLogin()" title="Вход через окно SoundCloud — из РФ может зациклиться на проверке устройства">
+        <svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Через окно сайта
+      </button>`;
   }
 }
 
@@ -970,7 +970,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '3.3.5', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '3.3.6', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

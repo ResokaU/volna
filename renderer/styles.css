@@ -775,3 +775,18 @@ body.egg-spin .np-cover-wrap img{animation:eggSpin var(--egg-spin-speed,6s) line
 body.egg-spin:not(.playing) #player-cover img,
 body.egg-spin:not(.playing) .np-cover-wrap img{animation-play-state:paused}
 .nav-label{cursor:pointer;user-select:none}
+
+/* ============ v3.3.6: плашка входа ============ */
+.ac-btn.ac-full{width:100%;padding:9px 12px;font-size:12px;margin-bottom:7px}
+.ac-btn.ac-full:last-child{margin-bottom:0}
+.ac-btn.primary{background:var(--grad);color:#000;border-color:transparent;
+box-shadow:0 4px 18px -6px color-mix(in srgb,var(--accent) 55%,transparent)}
+.ac-btn.primary:hover{filter:brightness(1.12);color:#000}
+.ac-btn.primary .ic{stroke:#000}
+.ac-hint{font-size:10.5px;color:var(--muted);line-height:1.55;text-align:left}
+.ac-hint strong{color:var(--text)}
+.ac-token-input{width:100%;margin:9px 0;background:rgba(255,255,255,.06);
+border:1px solid var(--border);border-radius:10px;padding:8px 11px;color:var(--text);
+font-size:11px;outline:none;font-family:inherit;cursor:text;transition:border-color .2s}
+.ac-token-input:focus{border-color:var(--acid)}
+.ac-actions{display:flex;gap:6px;margin-top:2px}
