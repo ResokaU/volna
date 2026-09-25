@@ -381,6 +381,28 @@
           </div>
         </div>
         <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Эквалайзер <span style="opacity:.5;font-weight:400">(нативный звук)</span></h3>
+          <div class="eq-presets">
+            <button class="eq-chip active" data-eq="flat">Ровный</button>
+            <button class="eq-chip" data-eq="bass">Басы</button>
+            <button class="eq-chip" data-eq="vocal">Вокал</button>
+            <button class="eq-chip" data-eq="rock">Рок</button>
+            <button class="eq-chip" data-eq="electronic">Электроника</button>
+          </div>
+          <div class="eq-sliders" id="eq-sliders">
+            <div class="eq-col"><input type="range" id="eq-0" min="-12" max="12" step="1" value="0"><span>31</span></div>
+            <div class="eq-col"><input type="range" id="eq-1" min="-12" max="12" step="1" value="0"><span>62</span></div>
+            <div class="eq-col"><input type="range" id="eq-2" min="-12" max="12" step="1" value="0"><span>125</span></div>
+            <div class="eq-col"><input type="range" id="eq-3" min="-12" max="12" step="1" value="0"><span>250</span></div>
+            <div class="eq-col"><input type="range" id="eq-4" min="-12" max="12" step="1" value="0"><span>500</span></div>
+            <div class="eq-col"><input type="range" id="eq-5" min="-12" max="12" step="1" value="0"><span>1k</span></div>
+            <div class="eq-col"><input type="range" id="eq-6" min="-12" max="12" step="1" value="0"><span>2k</span></div>
+            <div class="eq-col"><input type="range" id="eq-7" min="-12" max="12" step="1" value="0"><span>4k</span></div>
+            <div class="eq-col"><input type="range" id="eq-8" min="-12" max="12" step="1" value="0"><span>8k</span></div>
+            <div class="eq-col"><input type="range" id="eq-9" min="-12" max="12" step="1" value="0"><span>16k</span></div>
+          </div>
+        </div>
+        <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Масштаб интерфейса</h3>
           <div class="setting-row ui-scale-row">
             <button class="sc-btn" onclick="nudgeZoom(-.1)" title="Меньше (Ctrl+-)">−</button>
@@ -404,6 +426,9 @@
           <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-awake" checked><span>Держать экран включённым при воспроизведении</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-discord" checked><span>Discord Rich Presence — статус «слушает…» с обложкой</span></label>
+          <div class="setting-row" style="margin-top:10px">
+            <button class="toolbar-btn" onclick="resetDislikes()">🚫 Скрытых артистов из Radio: <strong id="dislike-count">0</strong> — сбросить</button>
+          </div>
           <div class="setting-row">
             <input type="text" id="set-discord-token" placeholder="Bot-токен для обложек (портал → Bot → Reset Token)" style="flex:1;margin-bottom:0">
             <button class="toolbar-btn" onclick="saveDiscordToken()">Сохранить</button>

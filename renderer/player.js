@@ -74,6 +74,7 @@ function bindMediaKeys() {
       if (state.engine === 'audio' && state.audio) state.audio.pause();
       else state.widget?.pause();
     });
+    ipc.on('mini:closed', () => { state.mini = false; });
   } catch (_) {}
 }
 
@@ -119,12 +120,32 @@ function setupAudioGraph() {
   try {
     const ctx = new AudioContext();
     const src = ctx.createMediaElementSource(state.audio);
+    // 10-полосный эквалайзер: цепочка peaking-фильтров перед анализатором
+    const freqs = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+    let node = src;
+    state.eqNodes = freqs.map((f, i) => {
+      const b = ctx.createBiquadFilter();
+      b.type = 'peaking';
+      b.frequency.value = f;
+      b.Q.value = 1.1;
+      b.gain.value = state.eqGains[i] || 0;
+      node.connect(b);
+      node = b;
+      return b;
+    });
     const an = ctx.createAnalyser();
     an.fftSize = 128; an.smoothingTimeConstant = .8;
-    src.connect(an); an.connect(ctx.destination);
+    node.connect(an); an.connect(ctx.destination);
     state.audioCtx = ctx; state.analyser = an;
     state.vizData = new Uint8Array(an.frequencyBinCount);
-  } catch (_) { state.analyser = null; }
+  } catch (_) { state.analyser = null; state.eqNodes = null; }
+}
+
+/* применить текущие ползунки EQ к фильтрам (плавно) */
+function applyEqGains() {
+  if (!state.eqNodes || !state.audioCtx) return;
+  const t = state.audioCtx.currentTime;
+  state.eqNodes.forEach((n, i) => n.gain.setTargetAtTime(state.eqGains[i] || 0, t, .05));
 }
 
 /* CORS-проба по origin (кэш в сессии) — можно ли включить анализатор */
@@ -292,6 +313,7 @@ function updateTitle(freshTrack) {
     if (state.engine === 'audio' && state.audio) sendRpc((state.audio.currentTime || 0) * 1000);
     else state.widget?.getPosition(pos => sendRpc(pos || 0));
   }
+  sendMiniSync(true); // мгновенное обновление мини-окна (play/pause/трек)
   if (typeof updateMascot === 'function') updateMascot();
 }
 
@@ -401,6 +423,7 @@ function updateProgressUI() {
     handleListenThreshold(pos, dur);
     if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
     mediaSessionPosition(pos / 1000, dur / 1000);
+    sendMiniSync();
     return;
   }
   if (!state.widget) return;
@@ -411,6 +434,7 @@ function updateProgressUI() {
       $('#time-cur').textContent = formatTime(pos / 1000);
       handleListenThreshold(pos, dur);
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
+      sendMiniSync();
     });
   });
 }
@@ -631,30 +655,66 @@ function bindQueueDnD() {
 async function enableRadio() {
   const cur = state.currentTrack;
   if (!cur) { toast('Сначала включи трек', 'error'); return; }
-  const q = cur.user?.username || cur.genre || 'lofi';
   toast('📻 Ищем похожие треки…');
   try {
     const cid = await ensureClientId();
-    const data = await scJson(
-      `${SC_API2}/search/tracks?q=${encodeURIComponent(q)}&client_id=${cid}&limit=50`
-    );
-    const similar = (Array.isArray(data?.collection) ? data.collection : [])
-      .map(normalizeTrack)
-      .filter(t => t && t.id !== cur.id);
+    const auth = state.scAuth?.token ? { auth: true } : {};
+    // 1) официальный эндпоинт похожих треков — качественнее поиска
+    let similar = [];
+    try {
+      const data = await scJson(`${SC_API2}/tracks/${cur.id}/related?client_id=${cid}&limit=50`, auth);
+      similar = (Array.isArray(data?.collection) ? data.collection : []).map(normalizeTrack).filter(Boolean);
+    } catch (_) {}
+    // 2) добиваем старым способом, если related слабый/недоступен
+    if (similar.length < 10) {
+      const q = cur.user?.username || cur.genre || 'lofi';
+      const data = await scJson(`${SC_API2}/search/tracks?q=${encodeURIComponent(q)}&client_id=${cid}&limit=50`);
+      const extra = (Array.isArray(data?.collection) ? data.collection : []).map(normalizeTrack).filter(Boolean);
+      similar = similar.concat(extra);
+    }
+    // дедуп + скрытые артисты + сам трек
+    similar = [...new Map(similar.map(t => [t.id, t])).values()]
+      .filter(t => t.id !== cur.id && !state.dislikes.includes(t.user?.username));
     if (!similar.length) { toast('Похожие треки не найдены', 'error'); return; }
     similar.forEach(rememberTrack);
     state.queue = similar;
     updateBadges(); renderQueue();
     playTrack(similar[0], 'queue');
-    toast(`📻 Radio: ${similar.length} треков`, 'success');
+    toast(`📻 Radio: ${similar.length} треков${state.dislikes.length ? ' (скрытые артисты вырезаны)' : ''}`, 'success');
   } catch (_) { toast('Radio: ошибка сети', 'error'); }
 }
 
 /* ---------- mini player ---------- */
-function toggleMiniPlayer() {
+/* в Electron — отдельное окно поверх всех окон; в браузере — CSS-мини */
+async function toggleMiniPlayer() {
+  if (ipc) {
+    try {
+      const opened = await ipc.invoke('mini:toggle');
+      state.mini = opened;
+      toast(opened ? '📱 Мини-плеер открыт (поверх всех окон)' : 'Мини-плеер закрыт');
+      sendMiniSync(true);
+      return;
+    } catch (_) {}
+  }
   state.mini = !state.mini;
   $('#player').classList.toggle('mini', state.mini);
   toast(state.mini ? '📱 Mini player: ON' : 'Mini player: OFF');
+}
+
+/* снапшот плеера для мини-окна */
+function sendMiniSync(force) {
+  if (!ipc || !state.mini) return;
+  const now = Date.now();
+  if (!force && now - (state._lastMiniSync || 0) < 400) return;
+  state._lastMiniSync = now;
+  const t = state.currentTrack;
+  if (!t) return;
+  let pos = 0, dur = t.duration || 0;
+  if (state.engine === 'audio' && state.audio) {
+    pos = (state.audio.currentTime || 0) * 1000;
+    dur = (state.audio.duration || 0) * 1000 || dur;
+  }
+  try { ipc.send('mini:sync', { title: t.title, artist: t.user?.username || '', art: artwork(t), isPlaying: state.isPlaying, pos, dur }); } catch (_) {}
 }
 
 /* ---------- sleep timer ---------- */

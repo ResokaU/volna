@@ -8,6 +8,52 @@ const fs = require('fs');
 const os = require('os');
 const Store = require('electron-store');
 
+// ---------- Мини-плеер: отдельное окно поверх всех окон ----------
+let miniWin = null;
+let miniBoundsTimer = null;
+
+ipcMain.handle('mini:toggle', () => {
+  if (miniWin) { miniWin.close(); return false; }
+  if (!win) return false;
+  miniWin = new BrowserWindow({
+    width: 340, height: 120,
+    minWidth: 300, maxWidth: 520, minHeight: 100, maxHeight: 160,
+    frame: false, alwaysOnTop: true, show: false,
+    backgroundColor: '#0a0a12', autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'renderer', 'preload-mini.js'),
+      contextIsolation: true, nodeIntegration: false
+    }
+  });
+  const mb = store.get('settings.miniBounds');
+  if (mb && typeof mb.x === 'number') miniWin.setPosition(mb.x, mb.y);
+  miniWin.setAlwaysOnTop(true, 'floating');
+  miniWin.loadFile(path.join(__dirname, 'renderer', 'mini.html'));
+  miniWin.once('ready-to-show', () => miniWin.show());
+  miniWin.on('move', () => {
+    clearTimeout(miniBoundsTimer);
+    miniBoundsTimer = setTimeout(() => {
+      if (miniWin) store.set('settings.miniBounds', miniWin.getBounds());
+    }, 500);
+  });
+  miniWin.on('closed', () => {
+    miniWin = null;
+    win?.webContents.send('mini:closed');
+  });
+  return true;
+});
+
+ipcMain.on('mini:sync', (_e, data) => {
+  if (miniWin && !miniWin.isDestroyed()) miniWin.webContents.send('mini:sync', data);
+});
+
+ipcMain.on('mini:action', (_e, a) => {
+  if (!win) return;
+  const map = { toggle: 'media:toggle', next: 'media:next', prev: 'media:prev' };
+  if (map[a]) win.webContents.send(map[a]);
+  if (a === 'close' && miniWin) miniWin.close();
+});
+
 // ---------- Миграция хранилища после ренейма (GrindoApp → VOLNA) ----------
 // electron-store лежит в %APPDATA%/<имя приложения>/ — переносим старый файл данных,
 // чтобы лайки, история и плейлисты не потерялись.

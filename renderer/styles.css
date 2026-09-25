@@ -659,3 +659,16 @@ cursor:none;transition:.2s;text-align:left}
 .lyr-cand-txt{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lyr-cand-txt strong{color:var(--acid)}
 .lyr-cand-meta{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ============ v3.0: эквалайзер ============ */
+.eq-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.eq-chip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+border-radius:999px;padding:7px 16px;color:var(--text);font-size:12px;font-weight:600;
+cursor:none;transition:.2s;font-family:inherit}
+.eq-chip:hover{border-color:var(--acid)}
+.eq-chip.active{background:var(--acid);color:#000;border-color:transparent}
+.eq-sliders{display:flex;gap:10px;justify-content:space-between;max-width:560px}
+.eq-col{display:flex;flex-direction:column;align-items:center;gap:6px}
+.eq-col span{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.eq-col input[type=range]{writing-mode:vertical-lr;direction:rtl;width:20px;height:110px;
+accent-color:var(--acid);cursor:none}

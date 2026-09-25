@@ -22,6 +22,7 @@ async function loadAllData() {
     state.settings = { ...state.settings, ...lsGet('settings', {}) };
   }
   state.scAuth = state.settings.scAuth || null;
+  state.dislikes = Array.isArray(state.settings.dislikes) ? state.settings.dislikes : [];
   [...state.favorites, ...state.history].forEach(rememberTrack);
 }
 
@@ -42,6 +43,83 @@ async function saveSetting(key, val) {
   state.settings[key] = val;
   if (ipc) { try { await ipc.invoke('settings:set', key, val); return; } catch (_) {} }
   lsSet('settings', state.settings);
+}
+
+/* ---------- эквалайзер ---------- */
+const EQ_PRESETS = {
+  flat:       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  bass:       [8, 7, 5, 3, 1, 0, 0, 0, 0, 0],
+  vocal:      [-2, -1, 0, 2, 4, 4, 3, 1, 0, -1],
+  rock:       [5, 4, 2, 0, -1, -1, 0, 2, 3, 4],
+  electronic: [6, 5, 1, 0, -2, 1, 1, 3, 4, 5]
+};
+
+async function saveEq(preset) {
+  await saveSetting('eq', { gains: state.eqGains, preset: preset || 'custom' });
+  state.eqPreset = preset || 'custom';
+  $$('.eq-chip').forEach(c => c.classList.toggle('active', c.dataset.eq === state.eqPreset));
+}
+
+function applyEqPreset(name) {
+  const g = EQ_PRESETS[name];
+  if (!g) return;
+  state.eqGains = [...g];
+  g.forEach((v, i) => { const el = $('#eq-' + i); if (el) el.value = v; });
+  applyEqGains(); // из player.js: действует при нативном движке
+  saveEq(name);
+  toast(name === 'flat' ? '🎚 Эквалайзер: ровный' : '🎚 Эквалайзер: ' + name, 'success');
+}
+
+function bindEq() {
+  for (let i = 0; i < 10; i++) {
+    const el = $('#eq-' + i);
+    if (!el) continue;
+    el.addEventListener('input', () => {
+      state.eqGains[i] = +el.value;
+      applyEqGains();
+      saveEq();
+    });
+  }
+  $$('.eq-chip').forEach(c => c.addEventListener('click', () => applyEqPreset(c.dataset.eq)));
+}
+
+function restoreEqUI() {
+  const eq = state.settings.eq;
+  if (eq && Array.isArray(eq.gains) && eq.gains.length === 10) {
+    state.eqGains = [...eq.gains];
+    state.eqPreset = eq.preset || 'custom';
+  }
+  state.eqGains.forEach((v, i) => { const el = $('#eq-' + i); if (el) el.value = v; });
+  $$('.eq-chip').forEach(c => c.classList.toggle('active', c.dataset.eq === state.eqPreset));
+  applyEqGains();
+}
+
+/* ---------- скрытые артисты (Radio их вырезает) ---------- */
+async function addDislike(track) {
+  const n = track.user?.username;
+  if (!n) return;
+  if (state.dislikes.includes(n)) { toast('Уже скрыт'); return; }
+  state.dislikes.push(n);
+  await saveSetting('dislikes', state.dislikes);
+  const before = state.queue.length;
+  state.queue = state.queue.filter(t => t.user?.username !== n);
+  if (state.queue.length !== before) { updateBadges(); renderQueue(); highlightPlaying(); }
+  updateDislikeCount();
+  toast(`🚫 «${n}» скрыт из Radio`);
+}
+
+async function resetDislikes() {
+  if (!state.dislikes.length) { toast('Список скрытых пуст'); return; }
+  if (!confirm(`Показать снова всех скрытых артистов (${state.dislikes.length})?`)) return;
+  state.dislikes = [];
+  await saveSetting('dislikes', []);
+  updateDislikeCount();
+  toast('Список скрытых очищен');
+}
+
+function updateDislikeCount() {
+  const el = $('#dislike-count');
+  if (el) el.textContent = state.dislikes.length;
 }
 
 /* ---------- применение настроек ---------- */
@@ -71,6 +149,8 @@ function applySettings() {
   const usv = $('#ui-scale-val');
   if (usv) usv.textContent = Math.round((state.settings.uiScale || 1) * 100) + '%';
   setZoom(state.settings.uiScale || 1, true);
+  restoreEqUI();
+  updateDislikeCount();
   $$('.accent-chip').forEach(c => c.classList.toggle('active', c.dataset.accent === (state.settings.accent || 'neon')));
 }
 
@@ -110,6 +190,8 @@ function bindLibraryUI() {
     if (ipc) ipc.invoke(e.target.checked ? 'rpc:enable' : 'rpc:disable').catch(() => {});
     toast(e.target.checked ? '🎮 Discord RPC включён — перезапусти трек для статуса' : 'Discord RPC выключен');
   });
+
+  bindEq();
   $('#fav-filter').addEventListener('input', e => {
     state.favFilter = e.target.value;
     if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
@@ -780,7 +862,7 @@ function updateFavSourceBtn() {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '2.6.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '3.0.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

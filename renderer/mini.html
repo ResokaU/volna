@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>VOLNA mini</title>
+<style>
+*{margin:0;box-sizing:border-box;user-select:none}
+body{background:#0a0a12;color:#eee;font-family:'Golos Text','Segoe UI',sans-serif;
+overflow:hidden;height:100vh;display:flex;align-items:center;gap:12px;padding:14px 46px 14px 14px;
+-webkit-app-region:drag}
+body::before{content:'';position:fixed;inset:-40px;background:var(--amb,none) center/cover no-repeat;
+filter:blur(50px) saturate(1.8);opacity:.25;z-index:0;pointer-events:none}
+#cov{width:72px;height:72px;border-radius:12px;object-fit:cover;flex-shrink:0;background:#181820;z-index:1}
+.info{flex:1;min-width:0;z-index:1}
+#t{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#a{font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 8px}
+#p{height:3px;background:rgba(255,255,255,.12);border-radius:9px}
+#pf{height:100%;background:linear-gradient(90deg,#b14aff,#d6ff3a);border-radius:9px;width:0%}
+.btns{display:flex;gap:6px;-webkit-app-region:no-drag;z-index:1}
+button{background:rgba(255,255,255,.08);border:none;color:#eee;width:38px;height:38px;
+border-radius:50%;cursor:pointer;font-size:14px;transition:.2s}
+button:hover{background:#b14aff}
+#close{position:fixed;top:5px;right:5px;width:22px;height:22px;border-radius:50%;
+font-size:11px;opacity:.4;-webkit-app-region:no-drag}
+#close:hover{background:#ff3d7f;opacity:1}
+</style>
+</head>
+<body>
+<img id="cov" src="" alt="">
+<div class="info">
+  <div id="t">—</div>
+  <div id="a">—</div>
+  <div id="p"><div id="pf"></div></div>
+</div>
+<div class="btns">
+  <button onclick="window.mini.action('prev')" title="Previous">⏮</button>
+  <button id="pl" onclick="window.mini.action('toggle')" title="Play/Pause">▶</button>
+  <button onclick="window.mini.action('next')" title="Next">⏭</button>
+</div>
+<button id="close" onclick="window.mini.action('close')" title="Закрыть">✕</button>
+<script>
+window.mini.sync(d => {
+  if (!d) return;
+  document.getElementById('t').textContent = d.title || '—';
+  document.getElementById('a').textContent = d.artist || '—';
+  if (d.art) document.getElementById('cov').src = d.art;
+  document.getElementById('pl').textContent = d.isPlaying ? '⏸' : '▶';
+  if (d.dur) document.getElementById('pf').style.width = Math.min(100, d.pos / d.dur * 100) + '%';
+  document.body.style.setProperty('--amb', d.art ? 'url(' + d.art + ')' : 'none');
+});
+</script>
+</body>
+</html>

@@ -36,6 +36,9 @@ const state = {
   corsCache: new Map(),      // origin -> доступен ли Web Audio
   rate: 1,                   // скорость воспроизведения
   listenedCounted: false,    // честная статистика: засчитан ли текущий трек
+  eqGains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10 полос, дБ
+  eqPreset: 'flat', eqNodes: null,
+  dislikes: [],              // артисты, скрытые из Radio
   volume: 1, muted: false,
   filter: 'all', sortFavs: 'date',
   widget: null, mini: false,
@@ -142,7 +145,8 @@ function showTrackMenu(e, trackId) {
     <div class="context-item" data-act="playlist"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>В плейлист…</div>
     <div class="context-sep"></div>
     <div class="context-item" data-act="copy"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Копировать ссылку</div>
-    <div class="context-item" data-act="open"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Открыть на SoundCloud</div>`;
+    <div class="context-item" data-act="open"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Открыть на SoundCloud</div>
+    <div class="context-item" data-act="dislike">🚫 Скрывать «${escapeHtml(track.user?.username || '')}» из Radio</div>`;
   menu.dataset.trackId = trackId;
   menu.classList.add('show');
   menu.style.left = Math.min(e.clientX, innerWidth - menu.offsetWidth - 12) + 'px';
@@ -190,6 +194,7 @@ function bindContextMenu() {
         }
         break;
       case 'topl': addToPlaylist(track.id, Number(item.dataset.pl)); break;
+      case 'dislike': addDislike(track); break;
     }
   });
 }
