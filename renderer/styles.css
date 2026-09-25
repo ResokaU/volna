@@ -725,3 +725,29 @@ cursor:none;position:relative}
 .np-cover-wrap img{box-shadow:0 30px 80px -20px rgba(0,0,0,.85),
   0 0 calc(var(--beat, 0) * 90px) color-mix(in srgb, var(--accent) 55%, transparent)}
 .viz{opacity:calc(.85 + var(--beat, 0) * .15)}
+
+/* ============ v3.3.2: скроллбары + читаемый текст в NP ============ */
+/* тонкий аккуратный скроллбар по всему приложению вместо системного */
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:99px;
+border:2.5px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.32);border:2.5px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-corner{background:transparent}
+
+/* в полноэкранном Now Playing текст читается на любом фоне:
+   строки белые с тенью, активная — подсвечена, past — приглушены */
+#np-lyrics .lyr{color:rgba(255,255,255,.5);text-shadow:0 1px 10px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.9);
+font-size:21px;line-height:1.45;padding:10px 14px}
+#np-lyrics .lyr:hover{color:rgba(255,255,255,.75);background:rgba(0,0,0,.18)}
+#np-lyrics .lyr.past{color:rgba(255,255,255,.22);opacity:1}
+#np-lyrics .lyr.on{color:#fff;font-size:26px;font-weight:800;
+text-shadow:0 2px 16px rgba(0,0,0,.85),0 0 30px color-mix(in srgb,var(--acid) 55%,transparent);
+background:rgba(0,0,0,.22);transform:translateX(10px)}
+#np-lyrics .lyr.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+width:3px;height:60%;background:var(--acid);border-radius:99px;box-shadow:0 0 12px var(--acid)}
+#np-lyrics .lyr{position:relative}
+/* karaoke-скролл в NP без видимой полосы (автоскролл сам ведёт) */
+#np-lyrics-wrap{scrollbar-width:none}
+#np-lyrics-wrap::-webkit-scrollbar{width:0}
+/* и в обычном караоке полосу тоже прячем — уже так, дублируем для надёжности */

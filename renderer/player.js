@@ -23,6 +23,9 @@ function resolveList(key) {
 function currentTrack() { return state.currentTrack; }
 
 function playFromCard(card) {
+  // по id из index-карты — индексы массивов могут расходиться с отрисовкой
+  const byId = state.trackIndex.get(Number(card.dataset.id));
+  if (byId) { playTrack(byId, card.dataset.list); return; }
   const list = resolveList(card.dataset.list);
   const idx = +card.dataset.idx;
   if (!list || !list[idx]) return;
@@ -297,8 +300,11 @@ async function playTrack(track, listKey = null) {
   rememberTrack(track);
 
   const list = listKey ? resolveList(listKey) : null;
-  if (list && list.length) state.currentIdx = Math.max(0, list.findIndex(t => t.id === track.id));
-  else { state.currentIdx = 0; listKey = 'single'; }
+  if (list && list.length) {
+    const idx = list.findIndex(t => t.id === track.id);
+    if (idx >= 0) state.currentIdx = idx;
+    else { state.currentIdx = 0; listKey = 'single'; } // трек выпал из списка
+  } else { state.currentIdx = 0; listKey = 'single'; }
   state.currentListKey = listKey;
   state.currentTrack = track;
   state.listenedCounted = false; // честная статистика: счёт после 30с прослушивания
