@@ -626,15 +626,19 @@ function renderNp() {
 /* 📱 пульт с телефона */
 async function showRemoteQR() {
   if (!ipc) return;
-  const url = await ipc.invoke('remote:info').catch(() => null);
-  if (!url) { toast('Не удалось поднять сервер пульта', 'error'); return; }
+  const urls = await ipc.invoke('remote:info').catch(() => null);
+  if (!urls || !urls.length) { toast('Не удалось поднять сервер пульта', 'error'); return; }
   try {
     const QR = require('qrcode');
-    const dataUrl = await new Promise(res => QR.toDataURL(url, { width: 220, margin: 1 }, (e, d) => res(e ? null : d)));
+    const dataUrl = await new Promise(res => QR.toDataURL(urls[0], { width: 220, margin: 1 }, (e, d) => res(e ? null : d)));
     const box = $('#remote-box');
-    if (box) box.innerHTML = '<img class="remote-qr" src="' + dataUrl + '" alt="QR">'
-      + '<div class="remote-url">' + escapeHtml(url) + '</div>'
-      + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Телефон — в той же Wi-Fi сети. Пауза, треки, громкость, позиция.</div>';
+    if (!box) return;
+    box.innerHTML = '<img class="remote-qr" src="' + dataUrl + '" alt="QR">'
+      + (urls.length > 1
+        ? '<div class="remote-alt">Если QR не открывается — попробуй адреса:<br>' + urls.slice(1).map(u => '<b>' + escapeHtml(u) + '</b>').join('<br>') + '</div>'
+        : '')
+      + '<div class="remote-url">' + escapeHtml(urls[0]) + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:8px">Телефон — в той же Wi-Fi сети. Если не открывается: разреши VOLNA в брандмауэре Windows (Сеть = частная) и проверь, что VPN-адаптер не перехватывает трафик.</div>';
   } catch (_) { toast('QR не собрался', 'error'); }
 }
 

@@ -792,129 +792,63 @@ ipcMain.handle('lastTrack:set', (_e, obj) => {
 ipcMain.handle('lastTrack:get', () => store.get('lastTrack') || null);
 
 // ---------- 📱 пульт с телефона (LAN, адрес с токеном) ----------
-let remoteSrv = null, remoteUrl = null, remoteLastState = {};
+let remoteSrv = null, remoteLastState = {}, remoteUrls = [];
 ipcMain.on('remote:state', (_e, d) => { remoteLastState = d || {}; });
-ipcMain.handle('remote:info', () => {
-  startRemoteServer();
-  return remoteUrl;
-});
+ipcMain.handle('remote:info', () => startRemoteServer());
+
+function remoteCandidateIPs() {
+  const nets = require('os').networkInterfaces();
+  const ips = [];
+  for (const k of Object.keys(nets)) {
+    for (const x of nets[k] || []) {
+      if (x.family !== 'IPv4' || x.internal) continue;
+      // отсекаем виртуальные/VPN-адреса: zapret-туннели (198.18.x), апилинки (169.254.x)
+      if (/^169.254./.test(x.address) || /^198.1[89]./.test(x.address)) continue;
+      if (/virtual|vmware|virtualbox|hyper-v|vethernet|wsl|tun|tap|loopback/i.test(k)) continue;
+      ips.push(x.address);
+    }
+  }
+  return [...new Set(ips)];
+}
+
 function startRemoteServer() {
-  if (remoteSrv) return;
+  if (remoteSrv) return Promise.resolve(remoteUrls);
   const http = require('http');
   const crypto = require('crypto');
   let token = store.get('settings.remoteToken');
   if (!token) { token = crypto.randomBytes(8).toString('hex'); store.set('settings.remoteToken', token); }
-  const page = `<!doctype html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>VOLNA пульт</title>
-<style>body{background:#0a0a12;color:#eee;font-family:system-ui,sans-serif;margin:0;padding:20px;text-align:center}
-img{width:140px;height:140px;border-radius:16px;object-fit:cover;background:#181820}
-h3{margin:10px 0 2px;font-size:16px}p{margin:2px 0;color:#999;font-size:13px}
-button{background:rgba(255,255,255,.08);border:none;color:#eee;width:64px;height:64px;border-radius:50%;
-font-size:22px;margin:8px 6px;cursor:pointer}button:active{background:#b14aff}
-#bar{height:4px;background:rgba(255,255,255,.15);border-radius:9px;margin:14px auto;max-width:280px}
-#pf{height:100%;background:linear-gradient(90deg,#b14aff,#d6ff3a);border-radius:9px;width:0%}
-input{width:240px;accent-color:#b14aff}.m{font-size:11px;color:#666;margin-top:14px}</style></head><body>
-<img id="art" src=""><h3 id="t">VOLNA</h3><p id="a">—</p>
-<div id="bar"><div id="pf"></div></div><p id="tm"></p>
-<div><button onclick="c('prev')">⏮</button><button onclick="c('toggle')" id="pl">▶</button><button onclick="c('next')">⏭</button></div>
-<input type="range" id="vol" min="0" max="1" step="0.05" oninput="setVol(this.value)">
-<p class="m">VOLNA · пульт по локальной сети</p>
-<script>
-const tok = location.pathname.split('/').pop();
-async function poll(){ try{ const r=await fetch('?state'); const d=await r.json();
- if(d.title){document.getElementById('t').textContent=d.title;document.getElementById('a').textContent=d.artist||'';
- if(d.art)document.getElementById('art').src=d.art;
- document.getElementById('pl').textContent=d.isPlaying?'⏸':'▶';
- if(d.dur){document.getElementById('pf').style.width=Math.min(100,d.pos/d.dur*100)+'%';
- document.getElementById('tm').textContent=(d.pos/1000|0)+':'+('0'+((d.pos/1000|0)%60)).slice(-2)+' / '+(d.dur/1000|0|0)+'с';}
- } }catch(e){}
-}
-function c(x){fetch('?cmd='+x)}
-function setVol(v){fetch('?cmd=vol&vol='+v)}
-setInterval(poll,1500);poll();
-</script></body></html>`;
-  const srv = http.createServer((req, res) => {
-    const u = new URL(req.url, 'http://local');
-    if (u.pathname !== '/ctrl/' + token) { res.writeHead(404); res.end(); return; }
-    const cmd = u.searchParams.get('cmd');
-    if (cmd) {
-      const map = { toggle: 'media:toggle', next: 'media:next', prev: 'media:prev', pause: 'media:pause' };
-      if (map[cmd] && win) win.webContents.send(map[cmd]);
-      const vol = u.searchParams.get('vol');
-      if (cmd === 'vol' && vol !== null && win) {
-        win.webContents.send('remote:vol', Math.min(1, Math.max(0, Number(vol))));
+  return new Promise(resolve => {
+    const srv = http.createServer((req, res) => {
+      const u = new URL(req.url, 'http://local');
+      if (u.pathname !== '/ctrl/' + token) { res.writeHead(404); res.end(); return; }
+      const cmd = u.searchParams.get('cmd');
+      if (cmd) {
+        const map = { toggle: 'media:toggle', next: 'media:next', prev: 'media:prev', pause: 'media:pause' };
+        if (map[cmd] && win) win.webContents.send(map[cmd]);
+        const vol = u.searchParams.get('vol');
+        if (cmd === 'vol' && vol !== null && win) {
+          win.webContents.send('remote:vol', Math.min(1, Math.max(0, Number(vol))));
+        }
+        res.writeHead(204); res.end(); return;
       }
-      res.writeHead(204); res.end(); return;
-    }
-    if (u.searchParams.has('state')) {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(remoteLastState || {}));
-      return;
-    }
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(page);
+      if (u.searchParams.has('state')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(remoteLastState || {}));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(fs.readFileSync(path.join(__dirname, 'renderer', 'remote.html'), 'utf8'));
+    });
+    srv.on("error", () => resolve([]));
+    srv.listen(0, "0.0.0.0", () => {
+      const port = srv.address().port;
+      const ips = remoteCandidateIPs();
+      if (!ips.length) ips.push('127.0.0.1');
+      remoteUrls = ips.map(ip => "http://" + ip + ":" + port + "/ctrl/" + token);
+      resolve(remoteUrls);
+    });
   });
-  let port = 8777;
-  const tryListen = p => {
-    srv.listen(p, '0.0.0.0', () => {
-      const nets = require('os').networkInterfaces();
-      let ip = '127.0.0.1';
-      for (const k of Object.keys(nets)) {
-        const found = (nets[k] || []).find(x => x.family === 'IPv4' && !x.internal);
-        if (found) { ip = found.address; break; }
-      }
-      remoteUrl = `http://${ip}:${p}/ctrl/${token}`;
-    });
-  };
-  srv.on('error', () => { if (port < 8790) { port++; tryListen(port); } else { remoteUrl = null; } });
-  tryListen(port);
 }
-
-ipcMain.handle('app:version', () => ({
-  version: app.getVersion(),
-  name: app.getName(),
-  electron: process.versions.electron,
-  chrome: process.versions.chrome,
-  node: process.versions.node,
-  platform: process.platform
-}));
-
-ipcMain.handle('app:check-update', async () => {
-  try {
-    const res = await net.fetch('https://api.github.com/repos/ResokaU/volna/releases/latest', {
-      headers: { 'User-Agent': 'VOLNA-app', Accept: 'application/vnd.github+json' },
-      signal: AbortSignal.timeout(10000)
-    });
-    if (!res.ok) return { ok: false };
-    const j = await res.json();
-    const asset = (j.assets || []).find(x => /Setup.*.exe$/.test(x.name || '')) || null;
-    return {
-      ok: true,
-      latest: String(j.tag_name || '').replace(/^v/, ''),
-      current: app.getVersion(),
-      url: j.html_url,
-      assetUrl: asset ? asset.browser_download_url : null
-    };
-  } catch (_) { return { ok: false }; }
-});
-
-ipcMain.handle('app:quit', () => {
-  app.isQuitting = true;
-  app.quit();
-});
-
-ipcMain.handle('powerSave:enable', () => {
-  if (blockerId !== null) powerSaveBlocker.stop(blockerId);
-  blockerId = powerSaveBlocker.start('prevent-display-sleep');
-  return blockerId;
-});
-ipcMain.handle('powerSave:disable', () => {
-  if (blockerId !== null) {
-    powerSaveBlocker.stop(blockerId);
-    blockerId = null;
-  }
-  return true;
-});
 
 // ---------- Lifecycle ----------
 // app:// — собственный origin для renderer. YouTube-плеер отказывается работать

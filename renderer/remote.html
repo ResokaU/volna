@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VOLNA · пульт</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:#eee;font-family:system-ui,-apple-system,sans-serif;
+padding:28px 20px;text-align:center;
+background:#0a0a12;
+background-image:radial-gradient(600px 400px at 50% -10%,rgba(177,74,255,.4),transparent),
+radial-gradient(500px 300px at 90% 110%,rgba(214,255,58,.16),transparent),
+radial-gradient(400px 300px at 10% 100%,rgba(255,61,127,.14),transparent)}
+.logo{font-weight:900;font-size:24px;letter-spacing:.08em;margin-bottom:18px;
+background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+#art{width:min(62vw,240px);aspect-ratio:1;border-radius:22px;object-fit:cover;
+background:#181820;box-shadow:0 24px 70px -14px rgba(0,0,0,.85)}
+h3{margin:16px 0 2px;font-size:19px;line-height:1.35;word-break:break-word}
+p{margin:2px 0;color:#999;font-size:14px}
+#bar{height:5px;background:rgba(255,255,255,.14);border-radius:9px;margin:20px auto;max-width:320px}
+#pf{height:100%;background:linear-gradient(90deg,#b14aff,#d6ff3a);border-radius:9px;width:0%}
+#tm{font-size:12px;color:#777;font-variant-numeric:tabular-nums}
+.row{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:8px}
+button{background:rgba(255,255,255,.09);border:none;color:#eee;width:66px;height:66px;
+border-radius:50%;font-size:22px;margin:6px 4px;cursor:pointer;
+transition:transform .1s,background .15s;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.9);background:#b14aff}
+button.big{width:84px;height:84px;font-size:30px;background:rgba(255,255,255,.15)}
+input[type=range]{width:min(78vw,300px);accent-color:#b14aff;margin-top:18px;display:block;margin-left:auto;margin-right:auto}
+.m{font-size:11px;color:#666;margin-top:26px}
+@media (min-width:500px){#art{width:220px}}
+</style>
+</head>
+<body>
+<div class="logo">VOLNA</div>
+<img id="art" src="" alt="">
+<h3 id="t">VOLNA</h3>
+<p id="a">управляй волной отсюда</p>
+<div id="bar"><div id="pf"></div></div>
+<p id="tm">—</p>
+<div class="row">
+  <button onclick="c('prev')" title="Назад">⏮</button>
+  <button class="big" id="pl" onclick="c('toggle')" title="Play/Pause">▶</button>
+  <button onclick="c('next')" title="Вперёд">⏭</button>
+</div>
+<input type="range" id="vol" min="0" max="1" step="0.05" oninput="setVol(this.value)" title="Громкость">
+<p class="m">VOLNA · пульт по локальной сети · ничего не уходит в интернет</p>
+<script>
+const tok = location.pathname.split('/').pop();
+const $ = id => document.getElementById(id);
+async function poll() {
+  try {
+    const r = await fetch('?state');
+    const d = await r.json();
+    if (!d.title) return;
+    $('t').textContent = d.title;
+    $('a').textContent = d.artist || '';
+    if (d.art) $('art').src = d.art;
+    $('pl').textContent = d.isPlaying ? '⏸' : '▶';
+    if (d.dur) {
+      $('pf').style.width = Math.min(100, d.pos / d.dur * 100) + '%';
+      const p = Math.round(d.pos / 1000), q = Math.round(d.dur / 1000);
+      $('tm').textContent = (p / 60 | 0) + ':' + ('0' + (p % 60)).slice(-2) + ' / ' + (q / 60 | 0) + ':' + ('0' + (q % 60)).slice(-2);
+    }
+  } catch (e) {}
+}
+function c(x) { fetch('?cmd=' + x); }
+function setVol(v) { fetch('?cmd=vol&vol=' + v); }
+setInterval(poll, 1000);
+poll();
+</script>
+</body>
+</html>
