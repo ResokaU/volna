@@ -834,3 +834,15 @@ border-radius:12px;padding:9px 13px;color:var(--text);font-family:inherit;font-s
 outline:none;cursor:text;max-width:520px;transition:border-color .2s}
 .settings-group input[type=text]:focus{border-color:var(--acid)}
 .settings-group input[type=text]::placeholder{color:var(--muted)}
+
+/* ============ v5.0.5: чипы качества + склеенные инпут-группы ============ */
+.bit-chip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+border-radius:999px;padding:9px 18px;color:var(--text);font-size:12.5px;font-weight:700;
+cursor:none;transition:.2s;font-family:inherit;display:inline-flex;align-items:center;gap:7px}
+.bit-chip:hover{border-color:var(--acid);transform:translateY(-1px)}
+.bit-chip.active{background:var(--grad);color:#000;border-color:transparent;
+box-shadow:0 4px 18px -6px color-mix(in srgb,var(--accent) 55%,transparent)}
+.input-group{display:flex;gap:8px;align-items:stretch;max-width:640px}
+.input-group input{flex:1;height:40px;margin-bottom:0}
+.input-group .ig-btn{height:40px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center}
+.setting-row .toolbar-btn{border-radius:12px}

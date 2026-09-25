@@ -452,8 +452,10 @@
         <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Качество аудио (нативный движок)</h3>
           <div class="eq-presets">
-            <button class="bit-chip active" data-bit="best">Лучшее</button>
-            <button class="bit-chip" data-bit="small">Экономия трафика</button>
+            <div class="eq-presets">
+              <button class="bit-chip active" data-bit="best">🎧 Лучшее</button>
+              <button class="bit-chip" data-bit="small">📉 Экономия трафика</button>
+            </div>
           </div>
         </div>
         <div class="settings-group">
@@ -486,9 +488,9 @@
           <div class="setting-row" style="margin-top:10px">
             <button class="toolbar-btn" onclick="resetDislikes()">🚫 Скрытых артистов из Radio: <strong id="dislike-count">0</strong> — сбросить</button>
           </div>
-          <div class="setting-row">
-            <input type="text" id="set-discord-token" placeholder="Bot-токен для обложек (портал → Bot → Reset Token)" style="flex:1;margin-bottom:0">
-            <button class="toolbar-btn" onclick="saveDiscordToken()">Сохранить</button>
+          <div class="setting-row input-group">
+            <input type="text" id="set-discord-token" placeholder="Bot-токен для обложек (портал → Bot → Reset Token)">
+            <button class="toolbar-btn ig-btn" onclick="saveDiscordToken()">Сохранить</button>
           </div>
         </div>
         <div class="settings-group">
@@ -510,8 +512,8 @@
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-shield"/></svg>Антиблок — доступ в РФ</h3>
           <label class="toggle-row"><input type="checkbox" id="set-doh" checked><span>DoH: DNS через Cloudflare — обходит DNS-блокировки <em style="color:var(--muted);font-style:normal">(применится после перезапуска)</em></span></label>
           <div class="setting-row" style="margin:6px 0 12px">
-            <input type="text" id="set-proxy" placeholder="Прокси: socks5://127.0.0.1:10808 или http://host:port" style="flex:1;margin-bottom:0">
-            <button class="toolbar-btn" onclick="applyProxySetting()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Применить</button>
+            <input type="text" id="set-proxy" placeholder="Прокси: socks5://127.0.0.1:10808 или http://host:port">
+            <button class="toolbar-btn ig-btn" onclick="applyProxySetting()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Применить</button>
           </div>
           <label class="toggle-row"><input type="checkbox" id="set-scproxy" checked><span>Прокси только для SoundCloud — остальной трафик, приложения и системный zapret не затрагиваются</span></label>
           <div style="margin-bottom:10px">
