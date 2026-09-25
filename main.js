@@ -75,14 +75,19 @@ let rpcRetryTimer = null;
 const rpcAssets = new Map(); // url обложки -> mp:external-ключ
 
 // Discord не берёт картинки по URL напрямую — маппим обложку через external-assets API.
-// Если API недоступен, статус работает без картинки.
+// API требует bot-токен приложения (портал → Bot → Reset Token); токен хранится
+// только локально в настройках. Без токена (или если API не ответил) — фолбэк
+// на загруженный в портал ассет volna_logo, статус работает в любом случае.
 async function rpcExternalAsset(url) {
-  if (!url) return undefined;
+  if (!url) return 'volna_logo';
   if (rpcAssets.has(url)) return rpcAssets.get(url);
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    const tok = (store.get('settings.discordBotToken') || '').trim();
+    if (tok) headers.Authorization = 'Bot ' + tok;
     const res = await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/external-assets`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ urls: [url] }),
       signal: AbortSignal.timeout(8000)
     });
@@ -92,7 +97,7 @@ async function rpcExternalAsset(url) {
       if (mapped) { rpcAssets.set(url, mapped); return mapped; }
     }
   } catch (_) {}
-  return undefined;
+  return 'volna_logo';
 }
 
 async function initRpc() {
@@ -144,6 +149,7 @@ async function setRpcActivity(info) {
 }
 
 ipcMain.handle('rpc:update', (_e, info) => { setRpcActivity(info).catch(() => {}); return true; });
+ipcMain.handle('rpc:assets-clear', () => { rpcAssets.clear(); return true; });
 ipcMain.handle('rpc:enable', () => { clearTimeout(rpcRetryTimer); return initRpc(); });
 ipcMain.handle('rpc:disable', async () => {
   clearTimeout(rpcRetryTimer);

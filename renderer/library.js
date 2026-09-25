@@ -63,6 +63,8 @@ function applySettings() {
   $('#set-autoload').checked = state.settings.autoLyrics !== false;
   $('#set-awake').checked = state.settings.keepAwake !== false;
   $('#set-discord').checked = state.settings.discordRpc !== false;
+  const dt = $('#set-discord-token');
+  if (dt) dt.value = state.settings.discordBotToken || '';
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
@@ -231,6 +233,14 @@ function renderFavorites() {
   }
   grid.innerHTML = list.map((t, i) => trackCardHTML(t, i, 'fav')).join('');
   highlightPlaying();
+}
+
+/* bot-токен Discord для обложек в статусе (хранится только локально) */
+async function saveDiscordToken() {
+  const v = $('#set-discord-token').value.trim();
+  await saveSetting('discordBotToken', v);
+  if (ipc) ipc.invoke('rpc:assets-clear').catch(() => {});
+  toast(v ? '🖼 Токен сохранён — включи трек, обложки появятся' : 'Токен стёрт — статус без обложек');
 }
 
 /* переименование плейлиста */
@@ -770,7 +780,7 @@ function updateFavSourceBtn() {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '2.3.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '2.3.1', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

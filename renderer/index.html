@@ -404,6 +404,10 @@
           <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-awake" checked><span>Держать экран включённым при воспроизведении</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-discord" checked><span>Discord Rich Presence — статус «слушает…» с обложкой</span></label>
+          <div class="setting-row">
+            <input type="text" id="set-discord-token" placeholder="Bot-токен для обложек (портал → Bot → Reset Token)" style="flex:1;margin-bottom:0">
+            <button class="toolbar-btn" onclick="saveDiscordToken()">Сохранить</button>
+          </div>
         </div>
         <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Фон и волны</h3>
