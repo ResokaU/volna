@@ -139,50 +139,75 @@ function createWindow() {
 }
 
 // ---------- Tray ----------
+let trayNow = null; // { title, artist, isPlaying } — что сейчас играет
+
+function buildTrayMenu() {
+  const template = [
+    { label: 'VOLNA', enabled: false },
+    { type: 'separator' },
+    {
+      label: '▶ / ❚❚  Play / Pause',
+      click: () => win?.webContents.send('media:toggle')
+    },
+    {
+      label: '⏭  Next',
+      click: () => win?.webContents.send('media:next')
+    },
+    {
+      label: '⏮  Previous',
+      click: () => win?.webContents.send('media:prev')
+    },
+    { type: 'separator' },
+    {
+      label: 'Show Window',
+      click: () => { if (win) { win.show(); win.focus(); } }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuitting = true;
+        app.quit();
+      }
+    }
+  ];
+  // now playing — первой строкой после заголовка
+  if (trayNow) {
+    template.splice(2, 0, {
+      label: `${trayNow.isPlaying ? '▶' : '⏸'} ${trayNow.title}${trayNow.artist ? ' — ' + trayNow.artist : ''}`,
+      enabled: false
+    }, { type: 'separator' });
+  }
+  tray.setContextMenu(Menu.buildFromTemplate(template));
+}
+
 function createTray() {
   const trayIcon = nativeImage
     .createFromPath(path.join(__dirname, 'renderer', 'logo.png'))
     .resize({ width: 16, height: 16 });
   tray = new Tray(trayIcon);
 
-  const buildMenu = () => {
-    const template = [
-      { label: 'VOLNA', enabled: false },
-      { type: 'separator' },
-      {
-        label: '▶ / ❚❚  Play / Pause',
-        click: () => win?.webContents.send('media:toggle')
-      },
-      {
-        label: '⏭  Next',
-        click: () => win?.webContents.send('media:next')
-      },
-      {
-        label: '⏮  Previous',
-        click: () => win?.webContents.send('media:prev')
-      },
-      { type: 'separator' },
-      {
-        label: 'Show Window',
-        click: () => { if (win) { win.show(); win.focus(); } }
-      },
-      { type: 'separator' },
-      {
-        label: 'Quit',
-        click: () => {
-          app.isQuitting = true;
-          app.quit();
-        }
-      }
-    ];
-    tray.setContextMenu(Menu.buildFromTemplate(template));
-    tray.setToolTip('VOLNA');
-    tray.on('double-click', () => {
-      if (win) { win.show(); win.focus(); }
-    });
-  };
-  buildMenu();
+  buildTrayMenu();
+  tray.setToolTip('VOLNA');
+  tray.on('double-click', () => {
+    if (win) { win.show(); win.focus(); }
+  });
 }
+
+ipcMain.handle('tray:nowplaying', (_e, info) => {
+  trayNow = info && info.title
+    ? {
+        title: String(info.title).slice(0, 60),
+        artist: String(info.artist || '').slice(0, 40),
+        isPlaying: !!info.isPlaying
+      }
+    : null;
+  if (tray) {
+    buildTrayMenu();
+    tray.setToolTip(trayNow ? `${trayNow.isPlaying ? '▶' : '⏸'} ${trayNow.title} — VOLNA` : 'VOLNA');
+  }
+  return true;
+});
 
 // ---------- IPC Handlers ----------
 // SoundCloud API proxy: net.fetch не ограничен CORS, а браузерный fetch

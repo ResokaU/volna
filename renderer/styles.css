@@ -636,3 +636,10 @@ cursor:none;transition:.2s;font-family:inherit}
 .ui-scale-row .sc-btn:hover{background:var(--acid);color:#000;border-color:transparent}
 .ui-scale-val{min-width:52px;text-align:center;font-weight:700;color:var(--acid);
 font-variant-numeric:tabular-nums}
+
+/* ============ v2.2: фильтр лайков ============ */
+.fav-filter{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+border-radius:12px;padding:8px 14px;color:var(--text);font-family:inherit;font-size:13px;
+outline:none;width:200px;cursor:text;transition:.25s}
+.fav-filter:focus{border-color:var(--acid);width:270px}
+.fav-filter::placeholder{color:var(--muted)}

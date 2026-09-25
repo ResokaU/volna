@@ -61,6 +61,7 @@ function applySettings() {
   $('#set-proxy').value = ab.proxy || '';
   renderAuthStatus();
   $('#set-autoload').checked = state.settings.autoLyrics !== false;
+  $('#set-awake').checked = state.settings.keepAwake !== false;
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
@@ -100,6 +101,11 @@ function bindLibraryUI() {
   });
 
   $('#set-autoload').addEventListener('change', e => saveSetting('autoLyrics', e.target.checked));
+  $('#set-awake').addEventListener('change', e => saveSetting('keepAwake', e.target.checked));
+  $('#fav-filter').addEventListener('input', e => {
+    state.favFilter = e.target.value;
+    if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
+  });
 
   $('#set-waves').addEventListener('change', e => {
     saveSetting('waves', e.target.checked);
@@ -183,24 +189,78 @@ function updateLikeButtons() {
 
 function renderFavorites() {
   const grid = $('#favorites-list');
+  const flt = (state.favFilter || '').trim().toLowerCase();
+  const match = t => !flt
+    || (t.title || '').toLowerCase().includes(flt)
+    || (t.user?.username || '').toLowerCase().includes(flt);
+
   if (state.favSource === 'server') {
-    $('#fav-count').textContent = state.serverLikes.length;
-    grid.innerHTML = state.serverLikes.length
-      ? state.serverLikes.map((t, i) => trackCardHTML(t, i, 'sv')).join('')
-      : emptyHTML('i-heart', 'На сервере лайков нет', 'Лайкай на SoundCloud — они появятся здесь');
+    const list = state.serverLikes.filter(match);
+    state.serverLikesView = list;
+    $('#fav-count').textContent = list.length;
+    grid.innerHTML = list.length
+      ? list.map((t, i) => trackCardHTML(t, i, 'sv')).join('')
+      : (state.serverLikes.length
+        ? emptyHTML('i-search', 'Не нашлось', 'Под фильтр «' + escapeHtml(state.favFilter) + '» треков нет')
+        : emptyHTML('i-heart', 'На сервере лайков нет', 'Лайкай на SoundCloud — они появятся здесь'));
     highlightPlaying();
     return;
   }
+
   $('#fav-count').textContent = state.favorites.length;
   if (!state.favorites.length) {
     grid.innerHTML = emptyHTML('i-heart', 'Пока нет лайков', 'Жми сердечко на треке или клавишу L — треки появятся здесь');
     return;
   }
-  const list = state.sortFavs === 'date'
+  // рендерим отфильтрованный/отсортированный список и играем строго по нему
+  let list = state.sortFavs === 'date'
     ? [...state.favorites]
     : [...state.favorites].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  list = list.filter(match);
+  state.favoritesView = list;
+  if (!list.length) {
+    grid.innerHTML = emptyHTML('i-search', 'Не нашлось', 'Под фильтр «' + escapeHtml(state.favFilter) + '» лайков нет');
+    return;
+  }
   grid.innerHTML = list.map((t, i) => trackCardHTML(t, i, 'fav')).join('');
   highlightPlaying();
+}
+
+/* переименование плейлиста */
+function openRenamePlaylist(id) {
+  const pl = state.playlists.find(p => p.id === id);
+  if (!pl) return;
+  state._renameId = id;
+  $('#rename-name').value = pl.name;
+  $('#rename-desc').value = pl.desc || '';
+  openModal('rename_modal');
+  setTimeout(() => { $('#rename-name').focus(); $('#rename-name').select(); }, 50);
+}
+
+async function saveRename() {
+  const pl = state.playlists.find(p => p.id === state._renameId);
+  if (!pl) { closeModal('rename_modal'); return; }
+  const name = $('#rename-name').value.trim();
+  if (!name) { toast('Введи название', 'error'); return; }
+  pl.name = name;
+  pl.desc = $('#rename-desc').value.trim();
+  await persistPlaylists();
+  closeModal('rename_modal');
+  if ($('#view-playlist-detail')?.classList.contains('active') && state.currentPlaylistId === pl.id) openPlaylist(pl.id);
+  if ($('#view-playlists')?.classList.contains('active')) renderPlaylists();
+  toast('✏️ Переименовано: ' + pl.name, 'success');
+}
+
+/* убрать трек из плейлиста (крестик на карточке в детальном виде) */
+async function removeFromPlaylist(idx) {
+  const pl = state.playlists.find(p => p.id === state.currentPlaylistId);
+  if (!pl || !pl.tracks[idx]) return;
+  const [removed] = pl.tracks.splice(idx, 1);
+  await persistPlaylists();
+  openPlaylist(pl.id); // перерисовка детального вида
+  updateBadges();
+  highlightPlaying();
+  toast('Убрано: ' + (removed.title || ''), '');
 }
 
 function toggleSort() {
@@ -703,7 +763,7 @@ function updateFavSourceBtn() {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '2.1.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '2.2.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

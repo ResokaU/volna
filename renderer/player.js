@@ -9,11 +9,11 @@ function resolveList(key) {
   switch (key) {
     case 'search': return state.visibleTracks;
     case 'trending': return state.trending;
-    case 'fav': return state.favorites;
+    case 'fav': return state.favoritesView || state.favorites;   // рендер-список (сортировка/фильтр)
     case 'hist': return state.history;
     case 'queue': return state.queue;
     case 'pl': return state.currentPlaylistTracks;
-    case 'sv': return state.serverLikes;
+    case 'sv': return state.serverLikesView || state.serverLikes;
     case 'foryou': return state.foryouTracks;
     default: return null;
   }
@@ -76,6 +76,7 @@ function bindMediaKeys() {
 
 function setPowerSave(on) {
   if (!ipc) return;
+  if (on && state.settings.keepAwake === false) return; // разрешаем экрану гаснуть
   ipc.invoke(on ? 'powerSave:enable' : 'powerSave:disable').catch(() => {});
 }
 
@@ -123,6 +124,12 @@ function playTrack(track, listKey = null) {
 function updateTitle() {
   const t = state.currentTrack;
   document.title = t ? (state.isPlaying ? '▶ ' : '⏸ ') + t.title + ' — VOLNA' : 'VOLNA';
+  // трей: название трека в меню и тултипе
+  if (ipc) {
+    ipc.invoke('tray:nowplaying', t
+      ? { title: t.title, artist: t.user?.username || '', isPlaying: state.isPlaying }
+      : null).catch(() => {});
+  }
   if (typeof updateMascot === 'function') updateMascot();
 }
 

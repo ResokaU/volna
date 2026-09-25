@@ -392,6 +392,8 @@ function trackCardHTML(track, idx, listKey) {
       <div class="track-artist" title="${escapeHtml(track.user?.username || '')}">${escapeHtml(track.user?.username || '—')}</div>
       <div class="track-meta">
         <span class="track-duration">${dur}</span>
+        ${listKey === 'pl' ? `<button class="like-btn" title="Убрать из плейлиста"
+          onclick="event.stopPropagation();removeFromPlaylist(${idx})"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>` : ''}
         <button class="like-btn ${isFav ? 'liked' : ''}" data-id="${track.id}" title="Лайк"
           onclick="event.stopPropagation();toggleLikeById(${track.id})"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg></button>
       </div>

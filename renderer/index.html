@@ -248,6 +248,7 @@
         <div class="toolbar" id="fav-toolbar">
           <div class="result-count"><strong id="fav-count">0</strong> треков</div>
           <div class="toolbar-actions">
+            <input type="text" id="fav-filter" class="fav-filter" placeholder="Фильтр по названию/артисту…">
             <button class="toolbar-btn" id="sort-btn" onclick="toggleSort()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sort"/></svg><span id="sort-label">По дате</span></button>
             <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
             <button class="toolbar-btn" onclick="exportFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-download"/></svg>Экспорт</button>
@@ -277,6 +278,7 @@
             <div class="section-sub" id="pl-detail-desc"></div>
           </div>
           <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="openRenamePlaylist(state.currentPlaylistId)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Переименовать</button>
             <button class="toolbar-btn" onclick="playCurrentPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
             <button class="toolbar-btn danger" onclick="deleteCurrentPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Удалить</button>
           </div>
@@ -400,6 +402,7 @@
           <label class="toggle-row"><input type="checkbox" id="set-savewin"><span>Запоминать позицию/размер окна</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-minimize"><span>Запускать свёрнутым</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-awake" checked><span>Держать экран включённым при воспроизведении</span></label>
         </div>
         <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Фон и волны</h3>
@@ -553,6 +556,16 @@
     <input type="text" id="playlist-name" placeholder="Название">
     <input type="text" id="playlist-desc" placeholder="Описание (опционально)">
     <button class="modal-btn" onclick="createPlaylist()">Создать</button>
+  </div>
+</div>
+
+<div class="modal" id="rename_modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('rename_modal')">×</button>
+    <h2>Переименовать плейлист</h2>
+    <input type="text" id="rename-name" placeholder="Название">
+    <input type="text" id="rename-desc" placeholder="Описание (опционально)">
+    <button class="modal-btn" onclick="saveRename()">Сохранить</button>
   </div>
 </div>
 
