@@ -17,22 +17,18 @@ function cleanTitleForLyrics(t) {
     .trim();
 }
 
-/* «Artist - Title» / «Artist — Title» / «Artist | Title» → пара */
+/* «Artist - Title» / «Artist — Title» / «Artist | Title» → пара.
+   Формат «Артист - Песня» верим ВСЕГДА (репосты: ник загрузчика ≠ исполнитель),
+   ник загрузчика используем только если в заголовке нет разделителя. */
 function splitArtistTitle(track) {
-  let raw = (track?.title || '').trim();
-  let artist = (track?.user?.username || '').trim();
-  let title = raw;
+  const raw = (track?.title || '').trim();
+  const uploader = (track?.user?.username || '').trim();
   const m = raw.match(/^(.{2,60}?)\s+[-–—|]\s+(.+)$/);
   if (m) {
     const a = m[1].trim(), t = m[2].trim();
-    const norm = s => s.toLowerCase().replace(/[^a-zа-яё0-9]/g, '');
-    const uname = norm(artist), uname6 = uname.slice(0, 6);
-    if (!artist || uname6 && (norm(a).includes(uname6) || uname.includes(norm(a).slice(0, 6)))) {
-      artist = a;
-      title = t;
-    }
+    if (a && t) return { artist: a, title: cleanTitleForLyrics(t) || t };
   }
-  return { title: cleanTitleForLyrics(title) || title, artist };
+  return { title: cleanTitleForLyrics(raw) || raw, artist: uploader };
 }
 
 /* ---------- загрузка ---------- */
@@ -106,8 +102,8 @@ function applyRecord(rec, track) {
   state.lyrics.lastIdx = null;
   renderLyrics();
   resetLyricsScroll(); // новая песня — текст всегда сверху
-  if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false
-    && !$('#view-nowplaying')?.classList.contains('active')) switchView('lyrics'); // не выдёргиваем из полноэкранки
+  if ($('#view-nowplaying')?.classList.contains('active')) renderNp(); // текст доехал — обновить полноэкранку
+  else if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false) switchView('lyrics');
 }
 
 function resetLyricsScroll() {
@@ -135,8 +131,9 @@ function renderLyrics() {
   const box = $('#lyrics-lines');
   if (!box) return;
   const L = state.lyrics;
-  $('#lyrics-sub').textContent = state.currentTrack
-    ? `${state.currentTrack.user?.username || ''} — ${state.currentTrack.title} · источник LRCLIB`
+  const st = state.currentTrack ? splitArtistTitle(state.currentTrack) : null;
+  $('#lyrics-sub').textContent = st
+    ? `${st.artist} — ${st.title} · источник LRCLIB`
     : 'Караоке-режим · источник LRCLIB';
 
   if (L.status === 'idle') {

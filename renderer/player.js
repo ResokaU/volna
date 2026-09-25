@@ -379,7 +379,7 @@ function saveLastTrack(posMs, durMs) {
       artwork_url: t.artwork_url, playback_count: t.playback_count, user: t.user },
     posMs: Math.round(posMs || 0), savedAt: Date.now()
   }).catch(() => {});
-  try { ipc.send('remote:state', { title: t.title, artist: t.user?.username || '', art: artwork(t),
+  try { ipc.send('remote:state', { title: t.title, artist: displayArtist(t), art: artwork(t),
     isPlaying: state.isPlaying, pos: Math.round(posMs || 0), dur: Math.round(durMs || 0), vol: state.volume }); } catch (_) {}
 }
 
@@ -414,7 +414,7 @@ async function playTrack(track, listKey = null) {
   state.listenedCounted = false; // честная статистика: счёт после 30с прослушивания
 
   $('#player-title').textContent = track.title;
-  $('#player-artist').textContent = track.user?.username || '—';
+  $('#player-artist').textContent = displayArtist(track);
   $('#mini-title').textContent = track.title;
   const art = artwork(track);
   if (art) $('#player-cover').src = art;
@@ -448,12 +448,12 @@ function updateTitle(freshTrack) {
   const tbTitle = document.getElementById('tb-title');
   if (tbTitle) tbTitle.textContent = t ? t.title : 'VOLNA';
   if (ipc && t) {
-    ipc.invoke('tray:nowplaying', { title: t.title, artist: t.user?.username || '', isPlaying: state.isPlaying }).catch(() => {});
+    ipc.invoke('tray:nowplaying', { title: t.title, artist: displayArtist(t), isPlaying: state.isPlaying }).catch(() => {});
     // Discord Rich Presence: позиция трека для таймстампов (у нового трека — 0)
     const sendRpc = posMs => {
       ipc.invoke('rpc:update', {
         title: t.title,
-        artist: t.user?.username || '',
+        artist: displayArtist(t),
         artwork: artwork(t),
         durationMs: t.duration || 0,
         positionMs: freshTrack ? 0 : (posMs || 0),
@@ -466,7 +466,17 @@ function updateTitle(freshTrack) {
     else state.widget?.getPosition(pos => sendRpc(pos || 0));
   }
   sendMiniSync(true); // мгновенное обновление мини-окна (play/pause/трек)
+  if ($('#view-nowplaying')?.classList.contains('active') && t) {
+    if (state._npRt !== t.id) renderNp(); // сменился трек — перерисовать полноэкранку
+    else { const m = $('#np-meta'); if (m) m.innerHTML = npMetaHTML(t); }
+  }
   if (typeof updateMascot === 'function') updateMascot();
+}
+
+/* артист для показа: из «Артист - Песня» в заголовке, иначе ник */
+function displayArtist(t) {
+  try { const st = splitArtistTitle(t); if (st.artist) return st.artist; } catch (_) {}
+  return t.user?.username || '—';
 }
 
 function togglePlay() {
@@ -875,7 +885,7 @@ function sendMiniSync(force) {
     pos = (state.audio.currentTime || 0) * 1000;
     dur = (state.audio.duration || 0) * 1000 || dur;
   }
-  try { ipc.send('mini:sync', { title: t.title, artist: t.user?.username || '', art: artwork(t), isPlaying: state.isPlaying, pos, dur }); } catch (_) {}
+  try { ipc.send('mini:sync', { title: t.title, artist: displayArtist(t), art: artwork(t), isPlaying: state.isPlaying, pos, dur }); } catch (_) {}
 }
 
 /* ---------- sleep timer ---------- */

@@ -587,8 +587,8 @@ function renderNp() {
       : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`}
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
-      <div class="np-artist">${escapeHtml(t.user?.username || '—')}</div>
-      <div class="np-meta">${state.isPlaying ? '▶ играет' : '⏸ пауза'} · ${formatTime((t.duration || 0) / 1000)}${state.rate !== 1 ? ` · ${state.rate}×` : ''}${L.status === 'synced' ? ' · ⏱ караоке' : ''}${state.egg ? ` · ${state.egg.emoji}` : ''}</div>
+      <div class="np-artist">${escapeHtml(displayArtist(t))}</div>
+      <div class="np-meta" id="np-meta">${npMetaHTML(t)}</div>
       <div class="np-controls">
         <button class="pbtn ${state.shuffle ? 'active' : ''}" onclick="toggleShuffle();renderNp()" title="Shuffle"><svg class="ic" viewBox="0 0 24 24"><use href="#i-shuffle"/></svg></button>
         <button class="pbtn" onclick="playPrev()" title="Previous"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
@@ -611,6 +611,7 @@ function renderNp() {
     </div>`;
   bindNpProgress();
   bindNpWave();
+  state._npRt = t.id;
   // при открытии сразу показать текущую строку, а не начало текста
   const L2 = state.lyrics;
   if (L2.status === 'synced' && L2.lastIdx != null) {
@@ -640,6 +641,12 @@ async function showRemoteQR() {
       + '<div class="remote-url">' + escapeHtml(urls[0]) + '</div>'
       + '<div style="font-size:11px;color:var(--muted);margin-top:8px">Телефон — в той же Wi-Fi сети. Если не открывается: разреши VOLNA в брандмауэре Windows (Сеть = частная) и проверь, что VPN-адаптер не перехватывает трафик.</div>';
   } catch (_) { toast('QR не собрался', 'error'); }
+}
+
+/* строка меты Now Playing (обновляется без полной перерисовки) */
+function npMetaHTML(t) {
+  const L = state.lyrics;
+  return `${state.isPlaying ? '▶ играет' : '⏸ пауза'} · ${formatTime((t.duration || 0) / 1000)}${state.rate !== 1 ? ` · ${state.rate}×` : ''}${L.status === 'synced' ? ' · ⏱ караоке' : ''}${state.egg ? ` · ${state.egg.emoji}` : ''}`;
 }
 
 function resumeLast() {
