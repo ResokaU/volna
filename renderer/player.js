@@ -142,7 +142,7 @@ async function hostAllowsCors(url) {
   return ok;
 }
 
-/* прямой mp3-URL через публичный поток api-v2 */
+/* прямой mp3-URL через публичный поток api-v2; берём лучший доступный битрейт */
 async function resolveStreamUrl(track) {
   const cid = await ensureClientId();
   const opts = state.scAuth?.token ? { auth: true } : {};
@@ -150,6 +150,8 @@ async function resolveStreamUrl(track) {
   const trans = (t?.media?.transcodings || [])
     .filter(x => x?.format?.protocol === 'progressive' && x.url);
   if (!trans.length) return null;
+  // предпочтение старшим пресетам (mp3_1_0 ≈ 128-320, mp3_0_0 ≈ 64)
+  trans.sort((a, b) => presetRank(b.preset) - presetRank(a.preset));
   for (const tr of trans) {
     try {
       const sep = tr.url.includes('?') ? '&' : '?';
@@ -158,6 +160,13 @@ async function resolveStreamUrl(track) {
     } catch (_) {}
   }
   return null;
+}
+function presetRank(p) {
+  const s = String(p || '');
+  if (s.includes('aac_1_0') || s.includes('mp3_2_0')) return 3;
+  if (s.includes('mp3_1_0')) return 2;
+  if (s.includes('mp3_0_0')) return 1;
+  return 0;
 }
 
 async function tryNativePlay(track) {

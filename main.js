@@ -117,7 +117,7 @@ async function initRpc() {
     try { rpc?.destroy(); } catch (_) {}
     rpc = null; rpcReady = false;
     clearTimeout(rpcRetryTimer);
-    rpcRetryTimer = setTimeout(initRpc, 120000);
+    rpcRetryTimer = setTimeout(initRpc, 30000); // Discord могли просто запустить позже
   }
 }
 
@@ -148,7 +148,11 @@ async function setRpcActivity(info) {
   } catch (_) {}
 }
 
-ipcMain.handle('rpc:update', (_e, info) => { setRpcActivity(info).catch(() => {}); return true; });
+ipcMain.handle('rpc:update', (_e, info) => {
+  if (!rpc) initRpc(); // играем, а связи нет — коннектимся сразу, не ждём ретраю
+  setRpcActivity(info).catch(() => {});
+  return true;
+});
 ipcMain.handle('rpc:assets-clear', () => { rpcAssets.clear(); return true; });
 
 // CORS-проба медиа-хоста: если отдаёт ACAO — можно включить Web Audio анализатор

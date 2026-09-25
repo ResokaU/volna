@@ -16,30 +16,50 @@ function cleanTitleForLyrics(t) {
     .trim();
 }
 
-/* «Artist - Title» / «Artist — Title» / «Artist | Title» → пара */
-function splitArtistTitle(track) {
-  let raw = (track?.title || '').trim();
-  let artist = (track?.user?.username || '').trim();
-  let title = raw;
-  const m = raw.match(/^(.{2,60}?)\s+[-–—|]\s+(.+)$/);
-  if (m) {
-    const a = m[1].trim(), t = m[2].trim();
-    const norm = s => s.toLowerCase().replace(/[^a-zа-яё0-9]/g, '');
-    const uname = norm(artist), uname6 = uname.slice(0, 6);
-    if (!artist || uname6 && (norm(a).includes(uname6) || uname.includes(norm(a).slice(0, 6)))) {
-      artist = a;
-      title = t;
-    }
-  }
-  return { title: cleanTitleForLyrics(title) || title, artist };
+/* «Артист - Песня» в заголовке — частый формат у репостов от случайных людей */
+function splitDash(raw) {
+  const m = (raw || '').match(/^(.{2,60}?)\s+[-–—|]\s+(.+)$/);
+  if (!m) return null;
+  const artist = cleanTitleForLyrics(m[1].trim());
+  const title = cleanTitleForLyrics(m[2].trim());
+  if (!artist || !title) return null;
+  return { artist, title };
 }
 
-/* выбор лучшей записи: с синхронизацией и ближайшей длительностью */
+/* набор вариантов «исполнитель/название» для поиска текста:
+   1) из заголовка «X - Y» (репосты: загрузчик ≠ исполнитель)
+   2) от имени загрузчика с очищенным названием */
+function lyricsVariants(track) {
+  const uploader = (track?.user?.username || '').trim();
+  const dash = splitDash(track?.title);
+  const clean = cleanTitleForLyrics(track?.title || '');
+  const variants = [];
+  if (dash) variants.push(dash);
+  if (uploader && clean) {
+    const dup = dash && dash.artist.toLowerCase() === uploader.toLowerCase()
+      && dash.title.toLowerCase() === clean.toLowerCase();
+    if (!dup) variants.push({ artist: uploader, title: clean });
+  }
+  const seen = new Set();
+  return variants.filter(v => {
+    const k = (v.artist + '|' + v.title).toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+/* выбор лучшей записи: синхронизация ценнее, длительность ближе — лучше */
 function pickLyricsRecord(list, dur) {
-  const arr = (Array.isArray(list) ? list : []).slice(0, 20);
-  return arr.filter(r => r.syncedLyrics)
-    .sort((a, b) => Math.abs((a.duration || 0) - dur) - Math.abs((b.duration || 0) - dur))[0]
-    || arr[0] || null;
+  const arr = Array.isArray(list) ? list : [];
+  let best = null, bestScore = -Infinity;
+  for (const r of arr) {
+    if (!r) continue;
+    const score = (r.syncedLyrics ? 100 : 0) + (r.plainLyrics ? 10 : 0)
+      - Math.min(50, Math.abs((r.duration || 0) - dur) / 10);
+    if (score > bestScore) { bestScore = score; best = r; }
+  }
+  return best;
 }
 
 /* ---------- загрузка ---------- */
@@ -56,20 +76,24 @@ async function loadLyrics(track, force) {
   state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null };
   renderLyrics();
 
-  const { title, artist } = splitArtistTitle(track);
   const dur = Math.round((track.duration || 0) / 1000);
+  const variants = lyricsVariants(track);
 
   try {
-    // три запроса параллельно — берём лучший: точное совпадение → по имени → общий q=
-    const [rExact, rByName, rByQ] = await Promise.allSettled([
-      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`),
-      scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`),
-      scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((artist + ' ' + title).trim())}`)
-    ]);
-    const val = r => r.status === 'fulfilled' ? r.value : null;
-    const exact = val(rExact);
-    const rec = (exact && (exact.syncedLyrics || exact.plainLyrics)) ? exact
-      : pickLyricsRecord(val(rByName), dur) || pickLyricsRecord(val(rByQ), dur);
+    // параллельно: точные запросы по каждому варианту + общий поиск по q
+    const requests = variants.map(v =>
+      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(v.artist)}&track_name=${encodeURIComponent(v.title)}&album_name=&duration=${dur}`)
+    );
+    const raw = (track?.title || '').trim();
+    if (raw) requests.push(scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(raw)}`));
+    const results = await Promise.allSettled(requests);
+    const pool = [];
+    for (const r of results) {
+      if (r.status !== 'fulfilled' || !r.value) continue;
+      if (Array.isArray(r.value)) pool.push(...r.value.slice(0, 20));
+      else pool.push(r.value);
+    }
+    const rec = pickLyricsRecord(pool, dur);
     if (rec) {
       state.lyricsCache[track.id] = rec;
       const keys = Object.keys(state.lyricsCache);
@@ -77,13 +101,13 @@ async function loadLyrics(track, force) {
       applyRecord(rec, track);
     } else {
       state.lyrics.status = 'none';
-      state.lyrics.query = { title, artist };
+      state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
       renderLyrics();
       resetLyricsScroll();
     }
   } catch (_) {
     state.lyrics.status = 'none';
-    state.lyrics.query = { title, artist };
+    state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
     renderLyrics();
     resetLyricsScroll();
   }
