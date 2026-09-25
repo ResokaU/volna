@@ -146,6 +146,7 @@
       <div class="nav-item" data-view="playlists"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>Плейлисты<span class="badge" id="pl-badge">0</span></div>
       <div class="nav-item" data-view="history"><svg class="ic" viewBox="0 0 24 24"><use href="#i-history"/></svg>История</div>
       <div class="nav-item" data-view="lyrics"><svg class="ic" viewBox="0 0 24 24"><use href="#i-quote"/></svg>Текст</div>
+      <div class="nav-item" data-view="vibe"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Вайб</div>
       <div class="nav-item" data-view="queue"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>Очередь<span class="badge badge-muted" id="queue-badge">0</span></div>
     </div>
 
@@ -267,6 +268,14 @@
         <div class="tracks" id="home-continue"></div>
         <div class="section-head"><div><h2 class="section-title">Популярное сейчас</h2><div class="section-sub">Мировые чарты</div></div></div>
         <div class="tracks" id="home-popular"></div>
+      </section>
+
+      <section class="view" id="view-vibe">
+        <div class="vibe-bg" id="vibe-bg"></div>
+        <div class="vibe-shade"></div>
+        <canvas id="vibe-particles"></canvas>
+        <div class="vibe-text" id="vibe-text"></div>
+        <button class="toolbar-btn vibe-collapse" onclick="collapseVibe()">✕ Esc</button>
       </section>
 
       <section class="view" id="view-nowplaying">

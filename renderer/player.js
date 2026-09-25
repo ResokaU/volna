@@ -406,6 +406,23 @@ function saveLastTrack(posMs, durMs) {
   }).catch(() => {});
 }
 
+/* 🌴 вайб: гигантский текст = строка караоке / название */
+function updateVibeUI(posMs) {
+  if (!$('#view-vibe')?.classList.contains('active')) return;
+  const t = state.currentTrack;
+  const el = $('#vibe-text');
+  if (!el || !t) return;
+  const L = state.lyrics;
+  let txt = (L.status === 'synced' && L.lastIdx != null && L.lines[L.lastIdx]) ? L.lines[L.lastIdx].text : (t.title || '');
+  txt = txt.toUpperCase();
+  if (el.textContent !== txt) {
+    el.textContent = txt;
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+}
+
 /* синк прогресса/времени Now Playing из тика плеера */
 function updateNpUI(posMs, durMs) {
   if (!$('#view-nowplaying')?.classList.contains('active')) return;
@@ -529,7 +546,11 @@ async function ensureVisual(t) {
     const imgs = await ipc.invoke('img:search', { q, seed: String(h) }).catch(() => null);
     if (imgs && imgs.length) {
       state.visual = { trackId: t.id, img: imgs[h % imgs.length] };
-      if ($('#view-nowplaying')?.classList.contains('active')) renderNp();
+      const bg = $('#vibe-bg');
+      if (bg && $('#view-vibe')?.classList.contains('active')) {
+        bg.style.backgroundImage = 'url(' + state.visual.img + ')';
+        bg.classList.remove('loading');
+      }
       return;
     }
   }
@@ -660,6 +681,7 @@ function updateProgressUI() {
     if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
     mediaSessionPosition(pos / 1000, dur / 1000);
     updateNpUI(pos, dur);
+    updateVibeUI(pos);
     drawWave(pos, dur);
     pushRemoteState(pos, dur);
     saveLastTrack(pos, dur);
@@ -676,6 +698,7 @@ function updateProgressUI() {
       handleListenThreshold(pos, dur);
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
       updateNpUI(pos, dur);
+      updateVibeUI(pos);
       drawWave(pos, dur);
       pushRemoteState(pos, dur);
       sendMiniSync();

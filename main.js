@@ -720,12 +720,21 @@ ipcMain.handle('img:search', async (_e, payload) => {
   try {
     const q = String((payload && payload.q) || '');
     const seed = String((payload && payload.seed) || 'volna');
-    const u = 'https://wallhaven.cc/api/v1/search?q=' + encodeURIComponent(q) +
-      '&categories=010&purity=100&sorting=random&seed=' + encodeURIComponent(seed);
-    const res = await net.fetch(u, { headers: { 'User-Agent': 'VOLNA' }, signal: AbortSignal.timeout(12000) });
-    if (!res.ok) return [];
-    const j = await res.json();
-    return (j.data || []).map(x => (x.thumbs && x.thumbs.large) || x.path).filter(Boolean).slice(0, 40);
+    const base = 'https://wallhaven.cc/api/v1/search?q=' + encodeURIComponent(q) +
+      '&categories=010&purity=100&sorting=random&seed=' + encodeURIComponent(seed) +
+      '&atleast=1920x1080';
+    const out = [];
+    for (const u of [base, base.replace('&atleast=1920x1080', '')]) {
+      const res = await net.fetch(u, { headers: { 'User-Agent': 'VOLNA' }, signal: AbortSignal.timeout(12000) });
+      if (!res.ok) continue;
+      const j = await res.json();
+      for (const x of (j.data || [])) {
+        if (x.path) out.push(x.path);
+        if (out.length >= 40) return out;
+      }
+      if (out.length) return out;
+    }
+    return out;
   } catch (_) { return []; }
 });
 

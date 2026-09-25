@@ -134,6 +134,7 @@ function switchView(name) {
   if (name === 'trending') loadTrending();
   if (name === 'foryou') loadForyou();
   if (name === 'home') renderHome();
+  if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
   if (typeof updateMascot === 'function') updateMascot();
 }
@@ -272,6 +273,7 @@ const PALETTE_CMDS = [
   { t: 'Sleep timer', k: '', run: () => openSleepModal() },
   { t: 'Поиск', k: 'F', run: () => switchView('discover') },
   { t: 'Главная', k: '1', run: () => switchView('home') },
+  { t: 'Вайб (тикток-режим)', k: '9', run: () => switchView('vibe') },
   { t: 'Тренды', k: '2', run: () => switchView('trending') },
   { t: 'Лайки', k: '3', run: () => switchView('favorites') },
   { t: 'Плейлисты', k: '4', run: () => switchView('playlists') },
@@ -387,7 +389,7 @@ function onKeydown(e) {
   if (k === 'l') { likeCurrent(); return; }
   if (k === 'm') { toggleMiniPlayer(); return; }
 
-  const views = { '1': 'home', '2': 'trending', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings' };
+  const views = { '1': 'home', '2': 'trending', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings', '9': 'vibe' };
   if (views[e.key]) switchView(views[e.key]);
 }
 
@@ -583,14 +585,10 @@ function renderNp() {
   const L = state.lyrics;
   const plainHtml = escapeHtml(L.plain || '').split(String.fromCharCode(10)).join('<br>');
   const art = artwork(t);
-  const visOn = !!state.visualMode && !!state.visual && state.visual.trackId === t.id;
-  $('#view-nowplaying')?.classList.toggle('vis-on', visOn);
   box.innerHTML = `
-    ${visOn
-      ? `<div class="visual-bg" id="visual-bg" style="background-image:url('${escapeHtml(state.visual.img)}')"></div><div class="visual-shade"></div><div class="visual-text" id="visual-text">${escapeHtml(t.title || '')}</div>`
-      : (state.npClip && state.npClip.trackId === t.id && state.npClip.on
+    ${state.npClip && state.npClip.trackId === t.id && state.npClip.on
         ? `<div class="np-video"><iframe src="https://www.youtube-nocookie.com/embed/${state.npClip.videoId}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`
-        : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`)}
+        : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`}
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(displayArtist(t))}</div>
@@ -611,8 +609,8 @@ function renderNp() {
         <div class="np-progress-wrap" id="np-progress-wrap" title="Перемотка"><div class="np-progress" id="np-progress"></div></div>
         <span id="np-time-dur">${formatTime((t.duration || 0) / 1000)}</span>
       </div>
-      ${!visOn && L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
-      ${!visOn && L.status === 'synced'
+      ${L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
+      ${L.status === 'synced'
         ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`
         : (!visOn && L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
     </div>`;
@@ -662,6 +660,63 @@ function resumeLast() {
   state.pendingSeekMs = lt.posMs || 0;
   toast('▶ Продолжаю с ' + formatTime((lt.posMs || 0) / 1000), 'success');
   playTrack(lt.track, 'single');
+}
+
+/* ---------- 🌴 Вайб: тикток-вкладка ---------- */
+function renderVibe() {
+  const t = state.currentTrack;
+  const bg = $('#vibe-bg'), txt = $('#vibe-text');
+  if (!bg || !txt) return;
+  if (!t) {
+    txt.textContent = 'включи трек — и тут станет красиво';
+    bg.classList.remove('loading');
+    return;
+  }
+  const ready = state.visual && state.visual.trackId === t.id;
+  bg.style.backgroundImage = ready ? 'url(' + state.visual.img + ')' : '';
+  bg.classList.toggle('loading', !ready);
+  if (state.visualMode) ensureVisual(t);
+  txt.textContent = (t.title || '').toUpperCase();
+  state._vibeRt = t.id;
+  startVibeParticles();
+}
+
+function collapseVibe() {
+  switchView('home');
+}
+
+/* пылинки, дрейфующие вверх (ускоряются от баса) */
+let vibeParticles = null;
+function startVibeParticles() {
+  const c = $('#vibe-particles');
+  if (!c || vibeParticles) return;
+  const resize = () => { c.width = innerWidth; c.height = innerHeight; };
+  resize();
+  window.addEventListener('resize', resize);
+  const P = Array.from({ length: 70 }, () => ({
+    x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+    r: .6 + Math.random() * 2.2, vy: .18 + Math.random() * .6, vx: (Math.random() - .5) * .3,
+    a: .12 + Math.random() * .4
+  }));
+  vibeParticles = { c, ctx: c.getContext('2d'), P };
+  (function frame() {
+    if (!$('#view-vibe')?.classList.contains('active')) { requestAnimationFrame(frame); return; }
+    const ctx = vibeParticles.ctx;
+    ctx.clearRect(0, 0, c.width, c.height);
+    const beat = parseFloat(document.body.style.getPropertyValue('--beat')) || 0;
+    for (const p of P) {
+      p.y -= p.vy * (1 + beat * 2.2);
+      p.x += p.vx;
+      if (p.y < -4) { p.y = c.height + 4; p.x = Math.random() * c.width; }
+      if (p.x < -4) p.x = c.width + 4;
+      if (p.x > c.width + 4) p.x = -4;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(214,255,58,' + (p.a + beat * .3) + ')';
+      ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  })();
 }
 
 function collapseNp() {
