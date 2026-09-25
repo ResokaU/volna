@@ -150,6 +150,21 @@ async function setRpcActivity(info) {
 
 ipcMain.handle('rpc:update', (_e, info) => { setRpcActivity(info).catch(() => {}); return true; });
 ipcMain.handle('rpc:assets-clear', () => { rpcAssets.clear(); return true; });
+
+// CORS-проба медиа-хоста: если отдаёт ACAO — можно включить Web Audio анализатор
+// (иначе MediaElementSource «промьютит» звук). Кэш по origin делает рендерер.
+ipcMain.handle('net:cors', async (_e, url) => {
+  if (typeof url !== 'string' || !/^https:\/\//i.test(url)) return '';
+  try {
+    const res = await net.fetch(url, {
+      headers: { Range: 'bytes=0-1' },
+      signal: AbortSignal.timeout(6000)
+    });
+    return res.headers.get('access-control-allow-origin') || '';
+  } catch (_) {
+    return '';
+  }
+});
 ipcMain.handle('rpc:enable', () => { clearTimeout(rpcRetryTimer); return initRpc(); });
 ipcMain.handle('rpc:disable', async () => {
   clearTimeout(rpcRetryTimer);

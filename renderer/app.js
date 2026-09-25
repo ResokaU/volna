@@ -31,6 +31,11 @@ const state = {
   currentTrack: null,
   currentListKey: null, currentIdx: -1,
   isPlaying: false, shuffle: false, repeat: false,
+  engine: 'widget',          // 'audio' — нативный mp3, 'widget' — iframe-фолбэк
+  audio: null, audioCors: null, analyser: null, audioCtx: null, vizData: null,
+  corsCache: new Map(),      // origin -> доступен ли Web Audio
+  rate: 1,                   // скорость воспроизведения
+  listenedCounted: false,    // честная статистика: засчитан ли текущий трек
   volume: 1, muted: false,
   filter: 'all', sortFavs: 'date',
   widget: null, mini: false,

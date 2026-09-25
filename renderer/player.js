@@ -70,7 +70,10 @@ function bindMediaKeys() {
     ipc.on('media:toggle', togglePlay);
     ipc.on('media:next', playNext);
     ipc.on('media:prev', playPrev);
-    ipc.on('media:stop', () => state.widget?.pause());
+    ipc.on('media:stop', () => {
+      if (state.engine === 'audio' && state.audio) state.audio.pause();
+      else state.widget?.pause();
+    });
   } catch (_) {}
 }
 
@@ -80,8 +83,152 @@ function setPowerSave(on) {
   ipc.invoke(on ? 'powerSave:enable' : 'powerSave:disable').catch(() => {});
 }
 
+/* ---------- аудио-движок: нативный <audio> + фолбэк на виджет ----------
+   Нативный путь: прямой mp3 из media.transcodings (progressive) — даёт честный
+   визуализатор (Web Audio), скорость, MediaSession. Если трек недоступен
+   (превью/Go+/ошибка) — играем через iframe-виджет как раньше. */
+
+function ensureAudioEl(corsOk) {
+  if (state.audio && state.audioCors === corsOk) return state.audio;
+  if (state.audio) { try { state.audio.pause(); } catch (_) {} }
+  if (state.audioCtx) { try { state.audioCtx.close(); } catch (_) {} }
+  const el = new Audio();
+  el.preload = 'auto';
+  if (corsOk) el.crossOrigin = 'anonymous'; // иначе MediaElementSource промьютит поток
+  state.audio = el;
+  state.audioCors = corsOk;
+  state.analyser = null; state.audioCtx = null; state.vizData = null;
+  el.addEventListener('play', () => {
+    state.isPlaying = true; updatePlayIcon(); setPowerSave(true); updateTitle();
+    state.audioCtx?.resume?.().catch(() => {});
+  });
+  el.addEventListener('pause', () => {
+    state.isPlaying = false; updatePlayIcon(); setPowerSave(false); updateTitle();
+  });
+  el.addEventListener('ended', () => {
+    if (state.repeat) { el.currentTime = 0; el.play().catch(() => {}); }
+    else playNext();
+  });
+  el.addEventListener('error', () => {
+    if (state.engine === 'audio' && state.currentTrack) startWidget(state.currentTrack);
+  });
+  return el;
+}
+
+function setupAudioGraph() {
+  try {
+    const ctx = new AudioContext();
+    const src = ctx.createMediaElementSource(state.audio);
+    const an = ctx.createAnalyser();
+    an.fftSize = 128; an.smoothingTimeConstant = .8;
+    src.connect(an); an.connect(ctx.destination);
+    state.audioCtx = ctx; state.analyser = an;
+    state.vizData = new Uint8Array(an.frequencyBinCount);
+  } catch (_) { state.analyser = null; }
+}
+
+/* CORS-проба по origin (кэш в сессии) — можно ли включить анализатор */
+async function hostAllowsCors(url) {
+  if (!ipc || !url) return false;
+  let origin;
+  try { origin = new URL(url).origin; } catch (_) { return false; }
+  if (state.corsCache.has(origin)) return state.corsCache.get(origin);
+  let ok = false;
+  try {
+    const acao = await ipc.invoke('net:cors', url);
+    ok = !!acao; // * или конкретный origin — достаточно
+  } catch (_) {}
+  state.corsCache.set(origin, ok);
+  return ok;
+}
+
+/* прямой mp3-URL через публичный поток api-v2 */
+async function resolveStreamUrl(track) {
+  const cid = await ensureClientId();
+  const opts = state.scAuth?.token ? { auth: true } : {};
+  const t = await scJson(`${SC_API2}/tracks/${track.id}?client_id=${cid}`, opts);
+  const trans = (t?.media?.transcodings || [])
+    .filter(x => x?.format?.protocol === 'progressive' && x.url);
+  if (!trans.length) return null;
+  for (const tr of trans) {
+    try {
+      const sep = tr.url.includes('?') ? '&' : '?';
+      const r = await scJson(tr.url + sep + 'client_id=' + cid, opts);
+      if (r?.url) return r.url;
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function tryNativePlay(track) {
+  const url = await resolveStreamUrl(track).catch(() => null);
+  if (!url || !state.currentTrack || state.currentTrack.id !== track.id) return false;
+  const corsOk = await hostAllowsCors(url);
+  const el = ensureAudioEl(corsOk);
+  state.engine = 'audio';
+  el.src = url;
+  el.volume = state.muted ? 0 : state.volume;
+  el.playbackRate = state.rate || 1;
+  if (corsOk && !state.analyser) setupAudioGraph();
+  try { await el.play(); } catch (_) { return false; }
+  // превью (Go+/SNIPPET) короче полного трека — уходим на виджет
+  el.addEventListener('loadedmetadata', function once() {
+    el.removeEventListener('loadedmetadata', once);
+    if (state.engine === 'audio' && el.duration && el.duration < (track.duration || 0) / 1000 * 0.85 - 2) {
+      startWidget(track);
+    }
+  });
+  return state.engine === 'audio';
+}
+
+/* фолбэк: старый добрый iframe-виджет */
+function startWidget(track) {
+  if (!state.widget) { toast('Плеер ещё загружается…', 'error'); return; }
+  state.engine = 'widget';
+  try { state.audio?.pause(); } catch (_) {}
+  try {
+    state.widget.load(track.permalink_url, {
+      auto_play: true,
+      show_artwork: false,
+      callback: () => applyVolume()
+    });
+  } catch (e) { toast('Не удалось запустить трек', 'error'); }
+}
+
+/* ---------- MediaSession: нативный медиа-флаут ОС ---------- */
+function updateMediaSession(t) {
+  if (!('mediaSession' in navigator)) return;
+  try {
+    const art = artwork(t);
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: t.title || '',
+      artist: t.user?.username || '',
+      album: 'VOLNA · SoundCloud',
+      artwork: art ? [{ src: art, sizes: '500x500', type: 'image/jpeg' }] : []
+    });
+    navigator.mediaSession.setActionHandler('play', () => togglePlay());
+    navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+    navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
+    navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+    navigator.mediaSession.setActionHandler('seekto', d => { if (d.seekTime != null) engSeek(d.seekTime * 1000); });
+    navigator.mediaSession.setActionHandler('seekbackward', d => engSeek(-(d.seekOffset || 5) * 1000));
+    navigator.mediaSession.setActionHandler('seekforward', d => engSeek((d.seekOffset || 5) * 1000));
+  } catch (_) {}
+}
+
+function mediaSessionPosition(posSec, durSec) {
+  if (!('mediaSession' in navigator) || !durSec) return;
+  try {
+    navigator.mediaSession.setPositionState({
+      duration: durSec,
+      playbackRate: (state.engine === 'audio' && state.audio?.playbackRate) || 1,
+      position: Math.min(posSec, durSec)
+    });
+  } catch (_) {}
+}
+
 /* ---------- воспроизведение ---------- */
-function playTrack(track, listKey = null) {
+async function playTrack(track, listKey = null) {
   if (!track || !track.permalink_url) { toast('Трек недоступен', 'error'); return; }
   rememberTrack(track);
 
@@ -90,6 +237,7 @@ function playTrack(track, listKey = null) {
   else { state.currentIdx = 0; listKey = 'single'; }
   state.currentListKey = listKey;
   state.currentTrack = track;
+  state.listenedCounted = false; // честная статистика: счёт после 30с прослушивания
 
   $('#player-title').textContent = track.title;
   $('#player-artist').textContent = track.user?.username || '—';
@@ -99,26 +247,18 @@ function playTrack(track, listKey = null) {
   // ambient: размытая обложка светится фоном за плеером
   $('#player').style.setProperty('--ambient', art ? `url(${art})` : 'none');
   $('#player').classList.toggle('no-ambient', !art);
-  updateTitle(true);
   $('#time-dur').textContent = formatTime((track.duration || 0) / 1000);
   $('#progress').style.width = '0%';
   $('#time-cur').textContent = '0:00';
   $('#player').classList.add('active');
 
-  if (!state.widget) { toast('Плеер ещё загружается…', 'error'); return; }
-  try {
-    state.widget.load(track.permalink_url, {
-      auto_play: true,
-      show_artwork: false,
-      callback: () => applyVolume()
-    });
-  } catch (e) { toast('Не удалось запустить трек', 'error'); return; }
-
-  addHistory(track);
-  bumpStats(track);
   highlightPlaying();
-  updateTitle();
+  updateMediaSession(track);
   loadLyrics(track); // караоке-текст
+
+  const native = await tryNativePlay(track);
+  if (!native && state.engine !== 'widget') startWidget(track);
+  updateTitle(true);
 }
 
 /* заголовок окна = now playing (+ трей + Discord RPC) */
@@ -128,24 +268,31 @@ function updateTitle(freshTrack) {
   if (ipc && t) {
     ipc.invoke('tray:nowplaying', { title: t.title, artist: t.user?.username || '', isPlaying: state.isPlaying }).catch(() => {});
     // Discord Rich Presence: позиция трека для таймстампов (у нового трека — 0)
-    state.widget?.getPosition(pos => {
+    const sendRpc = posMs => {
       ipc.invoke('rpc:update', {
         title: t.title,
         artist: t.user?.username || '',
         artwork: artwork(t),
         durationMs: t.duration || 0,
-        positionMs: freshTrack ? 0 : (pos || 0),
+        positionMs: freshTrack ? 0 : (posMs || 0),
         isPlaying: state.isPlaying,
         liked: state.favorites.some(f => f.id === t.id),
         permalink: t.permalink_url
       }).catch(() => {});
-    });
+    };
+    if (state.engine === 'audio' && state.audio) sendRpc((state.audio.currentTime || 0) * 1000);
+    else state.widget?.getPosition(pos => sendRpc(pos || 0));
   }
   if (typeof updateMascot === 'function') updateMascot();
 }
 
 function togglePlay() {
   if (!state.currentTrack) { toast('Сначала выбери трек'); return; }
+  if (state.engine === 'audio' && state.audio) {
+    if (state.isPlaying) state.audio.pause();
+    else state.audio.play().catch(() => {});
+    return;
+  }
   if (!state.widget) return;
   try {
     if (state.isPlaying) state.widget.pause();
@@ -202,21 +349,58 @@ function toggleRepeat() {
 }
 
 function seekBy(ms) {
-  if (!state.widget || !state.currentTrack) return;
+  if (!state.currentTrack) return;
+  if (state.engine === 'audio' && state.audio) {
+    state.audio.currentTime = Math.max(0, (state.audio.currentTime || 0) + ms / 1000);
+    return;
+  }
+  if (!state.widget) return;
   state.widget.getPosition(pos => state.widget.seekTo(Math.max(0, pos + ms)));
+}
+
+/* универсальный seek (мс) — используется и из MediaSession */
+function engSeek(ms) {
+  if (!state.currentTrack) return;
+  if (state.engine === 'audio' && state.audio) {
+    state.audio.currentTime = Math.max(0, Math.min(ms / 1000, state.audio.duration || ms / 1000));
+    return;
+  }
+  if (!state.widget) return;
+  state.widget.seekTo(Math.max(0, ms));
 }
 
 /* ---------- прогресс и громкость ---------- */
 let seekDragging = false;
+/* честная статистика: трек засчитывается после 30с или половины прослушивания */
+function handleListenThreshold(posMs, durMs) {
+  if (state.listenedCounted || !state.currentTrack) return;
+  const d = durMs || state.currentTrack.duration || 0;
+  if (posMs >= 30000 || (d > 0 && posMs >= d * 0.5)) {
+    state.listenedCounted = true;
+    addHistory(state.currentTrack);
+    bumpStats(state.currentTrack);
+  }
+}
+
 function updateProgressUI() {
-  if (!state.widget || !state.currentTrack) return;
+  if (!state.currentTrack) return;
+  if (state.engine === 'audio' && state.audio) {
+    const pos = (state.audio.currentTime || 0) * 1000;
+    const dur = (state.audio.duration || 0) * 1000;
+    if (dur && !seekDragging) $('#progress').style.width = (pos / dur * 100) + '%';
+    $('#time-cur').textContent = formatTime(pos / 1000);
+    handleListenThreshold(pos, dur);
+    if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
+    mediaSessionPosition(pos / 1000, dur / 1000);
+    return;
+  }
+  if (!state.widget) return;
   state.widget.getPosition(pos => {
     state.widget.getDuration(dur => {
       if (!dur) return;
       if (!seekDragging) $('#progress').style.width = (pos / dur * 100) + '%';
       $('#time-cur').textContent = formatTime(pos / 1000);
-      const durEl = $('#time-dur');
-      if (durEl.textContent === '0:00') durEl.textContent = formatTime(dur / 1000);
+      handleListenThreshold(pos, dur);
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
     });
   });
@@ -240,7 +424,13 @@ function bindPlayerControls() {
     if (!seeking) return;
     seeking = false; seekDragging = false;
     const pct = pctOf(e);
-    state.widget.getDuration(dur => { if (dur) state.widget.seekTo(pct * dur); });
+    if (state.engine === 'audio' && state.audio) {
+      if (state.audio.duration) state.audio.currentTime = pct * state.audio.duration;
+      updateTitle();
+    } else if (state.widget) {
+      state.widget.getDuration(dur => { if (dur) state.widget.seekTo(pct * dur); });
+      updateTitle();
+    }
   });
 
   // тултип с временем при наведении на прогресс-бар
@@ -274,7 +464,8 @@ function nudgeVolume(d) { setVolume(state.volume + d); }
 function applyVolume() {
   const v = state.muted ? 0 : state.volume;
   $('#vol-fill').style.width = v * 100 + '%';
-  try { state.widget?.setVolume(v * 100); } catch (_) {}
+  if (state.engine === 'audio' && state.audio) state.audio.volume = v;
+  else { try { state.widget?.setVolume(v * 100); } catch (_) {} }
   updateVolumeIcon();
 }
 
@@ -488,17 +679,19 @@ function setSleepTimer() {
 
 /* мягкое затухание громкости перед паузой */
 function fadeOutStop() {
-  if (!state.widget) return;
   toast('😴 Мягко гасим волну…');
   const steps = 40;
   let i = 0;
   const startVol = state.muted ? 0 : state.volume;
   const timer = setInterval(() => {
     i++;
-    try { state.widget.setVolume(Math.max(0, startVol * (1 - i / steps) * 100)); } catch (_) {}
+    const v = Math.max(0, startVol * (1 - i / steps));
+    if (state.engine === 'audio' && state.audio) state.audio.volume = v;
+    else { try { state.widget?.setVolume(v * 100); } catch (_) {} }
     if (i >= steps) {
       clearInterval(timer);
-      state.widget.pause();
+      if (state.engine === 'audio' && state.audio) state.audio.pause();
+      else state.widget?.pause();
       setPowerSave(false);
       applyVolume();
       toast('😴 Sleep timer: пауза');
@@ -520,10 +713,19 @@ function startVizLoop() {
     const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2;
     ctx.clearRect(0, 0, W, H);
     if (!state.isPlaying) return;
-    const [r, g, b] = hexToRgb(getComputedStyle(document.body).getPropertyValue('--accent'));
     const bars = 36;
+    // реальный спектр через Web Audio (когда CORS позволяет), иначе псевдо-анимация
+    let spectrum = null;
+    if (state.engine === 'audio' && state.analyser && state.vizData) {
+      state.analyser.getByteFrequencyData(state.vizData);
+      spectrum = i => {
+        const bin = Math.floor(Math.pow(i / bars, 1.4) * (state.vizData.length - 1));
+        return Math.max(.12, state.vizData[bin] / 255);
+      };
+    }
+    const [r, g, b] = hexToRgb(getComputedStyle(document.body).getPropertyValue('--accent'));
     for (let i = 0; i < bars; i++) {
-      const v = .25 + Math.random() * .75;
+      const v = spectrum ? spectrum(i) : .25 + Math.random() * .75;
       const a = (i / bars) * Math.PI * 2;
       const rad = 38, rad2 = rad + v * 12;
       ctx.strokeStyle = `rgba(${r},${g},${b},${.25 + v * .6})`;
@@ -535,4 +737,15 @@ function startVizLoop() {
       ctx.stroke();
     }
   }, 80);
+}
+
+/* ---------- скорость воспроизведения (нативный движок) ---------- */
+const RATES = [1, 1.25, 1.5, 2, 0.75];
+function cycleRate() {
+  const next = RATES[(RATES.indexOf(state.rate || 1) + 1) % RATES.length];
+  state.rate = next;
+  if (state.engine === 'audio' && state.audio) state.audio.playbackRate = next;
+  const label = $('#btn-rate');
+  if (label) label.textContent = (next === 1 ? '1' : next) + '×';
+  toast(next === 1 ? '⏩ Скорость: обычная' : `⏩ Скорость: ${next}×`);
 }

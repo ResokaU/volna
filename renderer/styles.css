@@ -643,3 +643,9 @@ border-radius:12px;padding:8px 14px;color:var(--text);font-family:inherit;font-s
 outline:none;width:200px;cursor:text;transition:.25s}
 .fav-filter:focus{border-color:var(--acid);width:270px}
 .fav-filter::placeholder{color:var(--muted)}
+
+/* ============ v2.4: кнопка скорости ============ */
+.pbtn.rate{width:auto;min-width:42px;padding:0 10px;border-radius:999px;
+font-size:12px;font-weight:800;font-family:inherit;color:var(--acid);
+border:1px solid color-mix(in srgb,var(--acid) 40%,transparent)}
+.pbtn.rate:hover{background:var(--acid);color:#000;transform:scale(1.06)}
