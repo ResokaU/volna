@@ -108,10 +108,10 @@ const NAV_ALIAS = { 'playlist-detail': 'playlists' };
 function switchView(name) {
   // Now Playing — полноэкранный режим; запоминаем, куда возвращаться
   if (name === 'nowplaying') {
-    const cur = $('.view').find(v => v.classList.contains('active'));
+    const cur = $$('.view').find(v => v.classList.contains('active'));
     state.npBack = cur ? cur.id.replace('view-', '') : 'home';
   }
-  $('.view').forEach(v => v.classList.remove('active'));
+  $$('.view').forEach(v => v.classList.remove('active'));
   $('#view-' + name)?.classList.add('active');
   const navName = NAV_ALIAS[name] || name;
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === navName));
@@ -346,8 +346,8 @@ function onKeydown(e) {
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
   if (e.key === 'Escape') {
-    if (!$('.modal.show').length && $('#view-nowplaying')?.classList.contains('active')) { collapseNp(); return; }
-    $('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return;
+    if (!$$('.modal.show').length && $('#view-nowplaying')?.classList.contains('active')) { collapseNp(); return; }
+    $$('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return;
   }
   if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); togglePalette(); return; }
   if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'q') { e.preventDefault(); if (ipc) ipc.invoke('app:quit').catch(() => {}); return; }

@@ -160,7 +160,7 @@ async function initRpc() {
     await rpc.login({ clientId: DISCORD_ID });
   } catch (_) {
     // Discord не запущен — тихо пробуем позже
-    try { rpc?.destroy(); } catch (_) {}
+    try { rpc?.destroy().catch(() => {}); } catch (_) {}
     rpc = null; rpcReady = false;
     clearTimeout(rpcRetryTimer);
     rpcRetryTimer = setTimeout(initRpc, 30000); // Discord могли просто запустить позже
@@ -261,6 +261,7 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
 
   // Save window state on move/resize/close (debounced)
   let boundsTimer = null;
