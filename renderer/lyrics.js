@@ -55,28 +55,45 @@ async function loadLyrics(track, force) {
 
   const { title, artist } = splitArtistTitle(track);
   const dur = Math.round((track.duration || 0) / 1000);
+  // коллабы: «Kai Angel & 9mice» — LRCLIB может знать каждого по отдельности
+  const artistList = [artist];
+  for (const p of artist.split(/\s*&\s*|\s*,\s*|\s+и\s+|\s+[x×]\s+|\s+feat\.?\s*|\s+ft\.?\s*/i)) {
+    const a = p.trim();
+    if (a && a !== artist && !artistList.includes(a)) artistList.push(a);
+  }
 
   try {
-    // три запроса параллельно — берём лучший: точное совпадение → по имени → общий q=
-    // 4-й запрос: только название, без исполнителя — спасает треки от лейблов
-    // и репостов, где в поле «артист» записан кто угодно, кроме настоящего автора
-    const [rExact, rByName, rByQ, rByTitle] = await Promise.allSettled([
-      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`),
-      scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`, { timeout: 25000 }),
-      scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((artist + ' ' + title).trim())}`, { timeout: 25000 }),
-      title ? scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(title)}`, { timeout: 25000 }) : Promise.reject(new Error('empty'))
-    ]);
-    const val = r => r.status === 'fulfilled' ? r.value : null;
+    // параллельно: точные + нечёткие по каждому артисту, общие q и «только название»
+    const gReqs = artistList.map(a =>
+      scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(a)}&track_name=${encodeURIComponent(title)}&album_name=&duration=${dur}`)
+        .then(r => { if (r) r.__exact = true; return r; })
+    );
+    const nReqs = artistList.map(a =>
+      scJson(`${LRCLIB}/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(a)}`, { timeout: 25000 })
+    );
+    const qSet = new Set();
+    qSet.add((artist + ' ' + title).trim());
+    if (artistList[1]) qSet.add((artistList[1] + ' ' + title).trim());
+    if (title) qSet.add(title);
+    const qReqs = [...qSet].map(q => scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(q)}`, { timeout: 25000 }));
+    const results = await Promise.allSettled([...gReqs, ...nReqs, ...qReqs]);
+    const exacts = [], byName = [], byQ = [];
+    results.forEach((r, i) => {
+      const v = val(r);
+      if (!v) return;
+      if (i < artistList.length) { if (v.syncedLyrics || v.plainLyrics) exacts.push(v); }
+      else if (i < artistList.length + nReqs.length) { if (Array.isArray(v)) byName.push(...v.slice(0, 20)); }
+      else if (Array.isArray(v)) byQ.push(...v.slice(0, 20));
+    });
     const pick = list => {
       const arr = (Array.isArray(list) ? list : []).slice(0, 20);
       return arr.filter(r => r.syncedLyrics)
         .sort((a, b) => Math.abs((a.duration || 0) - dur) - Math.abs((b.duration || 0) - dur))[0]
         || arr[0] || null;
     };
-    const exact = val(rExact);
-    const rec = (exact && (exact.syncedLyrics || exact.plainLyrics)) ? exact
-      : pick(val(rByName)) || pick(val(rByQ)) || pick(val(rByTitle))
-      || (exact && (exact.syncedLyrics || exact.plainLyrics) ? exact : null);
+    const rec = exacts.find(r => r.syncedLyrics)
+      || pick(byName) || pick(byQ)
+      || exacts[0] || null;
     // пока ждали LRCLIB, могли переключить трек — старый ответ не применяем
     if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
     if (rec) {
