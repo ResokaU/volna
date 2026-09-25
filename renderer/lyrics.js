@@ -49,17 +49,15 @@ function lyricsVariants(track) {
   });
 }
 
-/* выбор лучшей записи: синхронизация ценнее, длительность ближе — лучше */
-function pickLyricsRecord(list, dur) {
-  const arr = Array.isArray(list) ? list : [];
-  let best = null, bestScore = -Infinity;
-  for (const r of arr) {
-    if (!r) continue;
-    const score = (r.syncedLyrics ? 100 : 0) + (r.plainLyrics ? 10 : 0)
-      - Math.min(50, Math.abs((r.duration || 0) - dur) / 10);
-    if (score > bestScore) { bestScore = score; best = r; }
-  }
-  return best;
+
+/* ---------- постоянный выбор текста (переживает перезапуски) ---------- */
+function lyricsChoiceGet(id) { return lsGet('lyricsChoice', {})[id] || null; }
+function lyricsChoiceSet(id, v) {
+  const m = lsGet('lyricsChoice', {});
+  m[id] = v;
+  const keys = Object.keys(m);
+  if (keys.length > 200) delete m[keys[0]]; // не разрастаемся бесконечно
+  lsSet('lyricsChoice', m);
 }
 
 /* ---------- загрузка ---------- */
@@ -73,13 +71,24 @@ async function loadLyrics(track, force) {
   const cached = state.lyricsCache[track.id];
   if (cached && !force) { applyRecord(cached, track); return; }
 
-  state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null };
+  state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null, candidates: null };
   renderLyrics();
 
   const dur = Math.round((track.duration || 0) / 1000);
-  const variants = lyricsVariants(track);
 
   try {
+    // сохранённый выбор (после ручного подбора) — точный запрос, мгновенно
+    const choice = !force && lyricsChoiceGet(track.id);
+    if (choice) {
+      const rec = await scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(choice.artist)}&track_name=${encodeURIComponent(choice.title)}&album_name=&duration=${dur}`).catch(() => null);
+      if (rec && (rec.syncedLyrics || rec.plainLyrics)) {
+        state.lyricsCache[track.id] = rec;
+        applyRecord(rec, track);
+        return;
+      }
+    }
+
+    const variants = lyricsVariants(track);
     // параллельно: точные запросы по каждому варианту + общий поиск по q
     const requests = variants.map(v =>
       scJson(`${LRCLIB}/api/get?artist_name=${encodeURIComponent(v.artist)}&track_name=${encodeURIComponent(v.title)}&album_name=&duration=${dur}`)
@@ -94,39 +103,85 @@ async function loadLyrics(track, force) {
       else pool.push(r.value);
     }
     const rec = pickLyricsRecord(pool, dur);
-    if (rec) {
+    if (isConfidentMatch(rec, dur)) {
+      lyricsChoiceSet(track.id, { artist: rec.artist_name || '', title: rec.track_name || '' });
       state.lyricsCache[track.id] = rec;
       const keys = Object.keys(state.lyricsCache);
       if (keys.length > 40) delete state.lyricsCache[keys[0]]; // не раздуваем память
       applyRecord(rec, track);
+      return;
+    }
+    // неуверенный или пустой результат — предлагаем 2-3 кандидата по названию
+    let cands = pool.filter(r => r && (r.syncedLyrics || r.plainLyrics));
+    if (cands.length < 2) cands = cands.concat(await titleCandidates(track, dur));
+    if (cands.length) {
+      cands = cands
+        .sort((a, b) => matchScore(b, dur) - matchScore(a, dur))
+        .filter((r, i, arr) => arr.findIndex(x =>
+          (x.artist_name || '').toLowerCase() === (r.artist_name || '').toLowerCase()
+          && (x.track_name || '').toLowerCase() === (r.track_name || '').toLowerCase()) === i)
+        .slice(0, 3);
+      state.lyrics.status = 'pick';
+      state.lyrics.candidates = cands;
+      state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
     } else {
       state.lyrics.status = 'none';
       state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
-      renderLyrics();
-      resetLyricsScroll();
     }
+    renderLyrics();
+    resetLyricsScroll();
   } catch (_) {
     state.lyrics.status = 'none';
-    state.lyrics.query = variants[0] || { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
+    state.lyrics.query = { artist: track?.user?.username || '', title: cleanTitleForLyrics(track?.title || '') };
     renderLyrics();
     resetLyricsScroll();
   }
 }
 
-function applyRecord(rec, track) {
-  state.lyrics.trackId = track.id;
-  state.lyrics.plain = rec.plainLyrics || '';
-  state.lyrics.lines = rec.syncedLyrics ? parseLRC(rec.syncedLyrics) : [];
-  state.lyrics.status = state.lyrics.lines.length ? 'synced' : 'plain';
-  state.lyrics.lastIdx = null;
-  renderLyrics();
-  resetLyricsScroll(); // новая песня — текст всегда сверху
-  if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false) switchView('lyrics');
+/* уверенный автосоответ: синхронизированный текст и длительность сходится */
+function isConfidentMatch(rec, dur) {
+  if (!rec || !rec.syncedLyrics) return false; // текст без таймингов — лучше предложить выбор
+  const d = rec.duration || 0;
+  if (!d) return true;
+  return Math.abs(d - dur) <= Math.max(8, dur * 0.2);
+}
+function matchScore(rec, dur) {
+  if (!rec) return -Infinity;
+  return (rec.syncedLyrics ? 100 : 0) + (rec.plainLyrics ? 10 : 0)
+    - Math.min(50, Math.abs((rec.duration || 0) - dur) / 10);
+}
+function pickLyricsRecord(list, dur) {
+  const arr = Array.isArray(list) ? list : [];
+  let best = null, bestScore = -Infinity;
+  for (const r of arr) {
+    if (!r) continue;
+    const s = matchScore(r, dur);
+    if (s > bestScore) { bestScore = s; best = r; }
+  }
+  return best;
 }
 
-function resetLyricsScroll() {
-  const w = $('#lyrics-wrap');
-  if (w) w.scrollTop = 0;
+/* запасной поиск кандидатов только по названию трека */
+async function titleCandidates(track, dur) {
+  const raw = (track?.title || '').trim();
+  if (!raw) return [];
+  try {
+    const res = await scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(raw)}`);
+    return Array.isArray(res) ? res.slice(0, 10) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+/* клик по кандидату: применяем и запоминаем навсегда */
+function applyLyricsCandidate(i) {
+  const rec = state.lyrics?.candidates?.[i];
+  const t = state.currentTrack;
+  if (!rec || !t) return;
+  lyricsChoiceSet(t.id, { artist: rec.artist_name || '', title: rec.track_name || '' });
+  state.lyricsCache[t.id] = rec;
+  applyRecord(rec, t);
+  toast('📝 Текст сохранён для этого трека', 'success');
 }
 
 /* ---------- парсер LRC: [mm:ss.xx] строка ---------- */
@@ -157,6 +212,18 @@ function renderLyrics() {
     box.innerHTML = emptyHTML('i-quote', 'Текст появится здесь', 'Включи любой трек — VOLNA сам найдёт синхронизированный текст');
   } else if (L.status === 'loading') {
     box.innerHTML = '<div class="lyr-skel"></div><div class="lyr-skel" style="width:70%"></div><div class="lyr-skel" style="width:85%"></div><div class="lyr-skel" style="width:55%"></div>';
+  } else if (L.status === 'pick') {
+    const cands = L.candidates || [];
+    box.innerHTML = '<div class="lyr-pick-title">Точный текст не нашёлся — выбери свою версию:</div>' +
+      cands.map((c, i) =>
+        `<div class="lyr-cand" onclick="applyLyricsCandidate(${i})">
+          <div class="lyr-cand-txt"><strong>${escapeHtml(c.artist_name || '—')}</strong> — ${escapeHtml(c.track_name || '—')}</div>
+          <div class="lyr-cand-meta">${c.duration ? formatTime(c.duration) : '?'}${c.syncedLyrics ? ' · ⏱ синхронизирован' : ' · без таймингов'}</div>
+        </div>`).join('') +
+      `<div class="lyr-manual">
+        <input type="text" id="lyrics-manual-input" placeholder="исполнитель — название…">
+        <button onclick="lyricsManualSearch()">Найти</button>
+      </div>`;
   } else if (L.status === 'none') {
     const q = L.query || {};
     box.innerHTML = emptyHTML('i-search', 'Текст не нашёлся',
@@ -212,6 +279,7 @@ async function lyricsManualSearch() {
     const data = await scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(q)}`);
     const rec = pickLyricsRecord(data, Math.round((state.currentTrack.duration || 0) / 1000));
     if (rec) {
+      lyricsChoiceSet(state.currentTrack.id, { artist: rec.artist_name || '', title: rec.track_name || '' });
       state.lyricsCache[state.currentTrack.id] = rec;
       applyRecord(rec, state.currentTrack);
       toast('📝 Текст найден', 'success');
