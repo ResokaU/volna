@@ -1,7 +1,7 @@
 const {
   app, BrowserWindow, ipcMain, globalShortcut,
   Menu, Tray, nativeImage, dialog, Notification,
-  shell, powerSaveBlocker, net, session
+  shell, powerSaveBlocker, net, session, clipboard
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -713,6 +713,14 @@ ipcMain.handle('shell:openExternal', (_e, url) => {
     return true;
   }
   return false;
+});
+
+// буфер обмена: шаринг-карточка трека (PNG dataURL из renderer)
+ipcMain.handle('share:clipboard', (_e, dataUrl) => {
+  try {
+    clipboard.writeImage(nativeImage.createFromDataURL(String(dataUrl)));
+    return true;
+  } catch (_) { return false; }
 });
 
 ipcMain.handle('notify', (_e, { title, body }) => {

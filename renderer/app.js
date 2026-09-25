@@ -152,6 +152,7 @@ function showTrackMenu(e, trackId) {
     <div class="context-item" data-act="playlist"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>В плейлист…</div>
     <div class="context-sep"></div>
     <div class="context-item" data-act="copy"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Копировать ссылку</div>
+    <div class="context-item" data-act="share">📸 Карточка трека</div>
     <div class="context-item" data-act="open"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Открыть на SoundCloud</div>
     <div class="context-item" data-act="dislike">🚫 Скрывать «${escapeHtml(track.user?.username || '')}» из Radio</div>`;
   menu.dataset.trackId = trackId;
@@ -194,6 +195,7 @@ function bindContextMenu() {
           .then(() => toast('Ссылка скопирована', 'success'))
           .catch(() => toast('Не удалось скопировать', 'error'));
         break;
+      case 'share': shareCard(track); break;
       case 'open':
         if (track.permalink_url) {
           if (ipc) ipc.invoke('shell:openExternal', track.permalink_url).catch(() => {});
@@ -639,6 +641,122 @@ function logoEgg() {
   _logoClicks = 0;
   toast('🌊 Скрытая волна от создателя…', 'success');
   setTimeout(() => searchArtist('madk1d'), 900);
+}
+
+/* ---------- 📸 шаринг-карточка трека (ПКМ → в буфер обмена) ---------- */
+function eggLoadImg(src) {
+  return new Promise((res, rej) => {
+    if (!src) return rej(new Error('no src'));
+    const i = new Image();
+    i.crossOrigin = 'anonymous';
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = src;
+  });
+}
+function eggRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function eggWrapText(ctx, text, x, y, maxW, lh, maxLines) {
+  const words = String(text).split(' ');
+  let line = '', yy = y;
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, x, yy);
+      line = w; yy += lh;
+      if (--maxLines <= 0) { line += '…'; break; }
+    } else line = test;
+  }
+  if (line) ctx.fillText(line, x, yy);
+  return yy;
+}
+async function shareCard(track) {
+  toast('📸 Собираю карточку…');
+  const W = 900, H = 1100;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // фон: тёмный + фирменные градиентные пятна
+  ctx.fillStyle = '#0a0a12';
+  ctx.fillRect(0, 0, W, H);
+  const g1 = ctx.createLinearGradient(0, 0, W, H);
+  g1.addColorStop(0, 'rgba(177,74,255,.38)');
+  g1.addColorStop(.5, 'rgba(255,61,127,.30)');
+  g1.addColorStop(1, 'rgba(214,255,58,.26)');
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, 0, W, H);
+  const g2 = ctx.createRadialGradient(W * .8, H * .15, 0, W * .8, H * .15, W * .7);
+  g2.addColorStop(0, 'rgba(58,240,255,.22)');
+  g2.addColorStop(1, 'rgba(58,240,255,0)');
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, 0, W, H);
+
+  // обложка (только если CDN отдаёт CORS — иначе стилизованная заглушка)
+  const art = artwork(track);
+  let cover = null;
+  if (art && await hostAllowsCors(art)) {
+    cover = await eggLoadImg(art).catch(() => null);
+  }
+  const cs = 620, cx = (W - cs) / 2, cy = 80;
+  ctx.save();
+  eggRoundRect(ctx, cx, cy, cs, cs, 34);
+  ctx.clip();
+  if (cover) {
+    ctx.drawImage(cover, cx, cy, cs, cs);
+  } else {
+    const fg = ctx.createLinearGradient(cx, cy, cx + cs, cy + cs);
+    fg.addColorStop(0, '#b14aff'); fg.addColorStop(.5, '#ff3d7f'); fg.addColorStop(1, '#d6ff3a');
+    ctx.fillStyle = fg;
+    ctx.fillRect(cx, cy, cs, cs);
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.font = '900 260px "Unbounded", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText((track.title || '♪').trim().charAt(0).toUpperCase(), W / 2, cy + cs / 2 + 90);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 2;
+  eggRoundRect(ctx, cx, cy, cs, cs, 34);
+  ctx.stroke();
+
+  // текст
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 42px "Golos Text", sans-serif';
+  let y = eggWrapText(ctx, track.title || 'Без названия', 80, cy + cs + 90, W - 160, 52, 2);
+  ctx.fillStyle = 'rgba(255,255,255,.6)';
+  ctx.font = '600 26px "Golos Text", sans-serif';
+  ctx.fillText(track.user?.username || '—', 80, y + 46);
+  const plays = track.playback_count ? ' · ▶ ' + fmtCount(track.playback_count) : '';
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  ctx.font = '500 20px "Golos Text", sans-serif';
+  ctx.fillText('⏱ ' + formatTime((track.duration || 0) / 1000) + plays, 80, y + 88);
+
+  // бренд
+  const bg = ctx.createLinearGradient(80, H - 70, 300, H - 40);
+  bg.addColorStop(0, '#b14aff'); bg.addColorStop(.5, '#ff3d7f'); bg.addColorStop(1, '#d6ff3a');
+  ctx.fillStyle = bg;
+  ctx.font = '900 30px "Unbounded", sans-serif';
+  ctx.fillText('VOLNA', 80, H - 50);
+  ctx.fillStyle = 'rgba(255,255,255,.35)';
+  ctx.font = '500 18px "Golos Text", sans-serif';
+  ctx.fillText('· слушай в VOLNA · ' + (track.permalink_url ? 'soundcloud.com' : ''), 240, H - 50);
+
+  try {
+    const dataUrl = c.toDataURL('image/png');
+    const ok = await ipc.invoke('share:clipboard', dataUrl);
+    toast(ok ? '📸 Карточка скопирована — вставь куда хочешь (Ctrl+V)' : 'Не удалось скопировать карточку', ok ? 'success' : 'error');
+  } catch (_) {
+    toast('Не удалось собрать карточку', 'error');
+  }
 }
 
 function clearWallpaper() {
