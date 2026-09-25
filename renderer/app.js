@@ -131,6 +131,7 @@ function showTrackMenu(e, trackId) {
   const isFav = state.favorites.some(f => f.id === trackId);
   menu.innerHTML = `
     <div class="context-item" data-act="play"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg>Слушать сейчас</div>
+    <div class="context-item" data-act="next"><svg class="ic" viewBox="0 0 24 24"><use href="#i-next"/></svg>Играть следующим</div>
     <div class="context-item" data-act="queue"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>В очередь</div>
     <div class="context-item" data-act="like"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${isFav ? 'Убрать из лайков' : 'В лайки'}</div>
     <div class="context-item" data-act="playlist"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>В плейлист…</div>
@@ -168,6 +169,7 @@ function bindContextMenu() {
     if (!track) return;
     switch (item.dataset.act) {
       case 'play': playTrack(track); break;
+      case 'next': playNextInQueue(track); break;
       case 'queue': addToQueue(track); break;
       case 'like': toggleLike(track); break;
       case 'playlist': showPlaylistPicker(track.id); break;
@@ -318,6 +320,10 @@ function onKeydown(e) {
   if (e.key === 'Escape') { $$('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return; }
   if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); togglePalette(); return; }
   if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'q') { e.preventDefault(); if (ipc) ipc.invoke('app:quit').catch(() => {}); return; }
+  // масштаб UI: Ctrl+= / Ctrl+- / Ctrl+0
+  if (e.ctrlKey && (e.key === '=' || e.key === '+')) { e.preventDefault(); nudgeZoom(.1); return; }
+  if (e.ctrlKey && e.key === '-') { e.preventDefault(); nudgeZoom(-.1); return; }
+  if (e.ctrlKey && e.key === '0') { e.preventDefault(); setZoom(1); return; }
   if (e.key === 'F1') { e.preventDefault(); openShortcuts(); return; }
   if (e.key === 'F12' || e.key === 'F5') return;
 
@@ -479,3 +485,13 @@ function clearWallpaper() {
   applyWallpaper();
   toast('Обои убраны — снова аврора и волны');
 }
+
+/* ---------- масштаб UI ---------- */
+function setZoom(v, silent) {
+  const z = Math.min(1.5, Math.max(.8, v));
+  document.body.style.zoom = z === 1 ? '' : z;
+  state.zoom = z;
+  if (typeof saveSetting === 'function') saveSetting('uiScale', z);
+  if (!silent) toast('🔍 Масштаб: ' + Math.round(z * 100) + '%');
+}
+function nudgeZoom(d) { setZoom((state.zoom || 1) + d); }

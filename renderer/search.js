@@ -160,10 +160,45 @@ function defaultSearch() {
 }
 
 /* ---------- поиск ---------- */
+const SC_URL_RE = /^https?:\/\/(www\.)?(soundcloud\.com|snd\.sc)\/\S+/i;
+
+/* вставка ссылки: resolve трека/плейлиста/артиста через api-v2 */
+async function resolveUrl(q) {
+  if (!SC_URL_RE.test(q)) return false;
+  toast('🔗 Открываю ссылку…');
+  try {
+    const cid = await ensureClientId();
+    const data = await scJson(`${SC_API2}/resolve?url=${encodeURIComponent(q)}&client_id=${cid}`);
+    if (!data || !data.kind) throw new Error('пустой ответ');
+    if (data.kind === 'track') {
+      const t = normalizeTrack(data);
+      if (!t) { toast('Трек недоступен', 'error'); return true; }
+      rememberTrack(t);
+      $('#search-input').value = t.title;
+      playTrack(t, 'single');
+      toast('▶ ' + t.title, 'success');
+    } else if (data.kind === 'playlist') {
+      await openPlaylistFromSearch(data.id);
+    } else if (data.kind === 'user') {
+      toast('👤 ' + (data.username || 'артист'));
+      setMode('tracks');
+      $('#search-input').value = data.username;
+      await doSearch(data.username);
+    } else {
+      toast('Тип ссылки не поддерживается: ' + data.kind, 'error');
+    }
+  } catch (e) {
+    toast('Не удалось открыть ссылку: ' + (e?.message || 'ошибка сети'), 'error');
+  }
+  return true;
+}
+
 async function doSearch(query, append = false) {
   const q = String(query ?? $('#search-input').value).trim();
   if (!q) { toast('Введи запрос', 'error'); return; }
   if (query === undefined || query === null) $('#search-input').value = q;
+
+  if (!append && SC_URL_RE.test(q)) { await resolveUrl(q); return; }
 
   const grid = $('#tracks');
   if (!append) {

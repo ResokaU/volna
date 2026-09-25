@@ -373,6 +373,18 @@
             <button class="accent-chip" data-accent="orange" style="--ac:#ff5500" title="Оранж"></button>
             <button class="accent-chip" data-accent="red" style="--ac:#ff3d3d" title="Красный"></button>
             <button class="accent-chip" data-accent="gold" style="--ac:#e2b714" title="Золото"></button>
+            <button class="accent-chip" data-accent="mint" style="--ac:#00e8a0" title="Мята"></button>
+            <button class="accent-chip" data-accent="sunset" style="--ac:#ff6b3d" title="Закат"></button>
+            <button class="accent-chip" data-accent="violet" style="--ac:#8a5cff" title="Фиолет"></button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Масштаб интерфейса</h3>
+          <div class="setting-row ui-scale-row">
+            <button class="sc-btn" onclick="nudgeZoom(-.1)" title="Меньше (Ctrl+-)">−</button>
+            <span class="ui-scale-val" id="ui-scale-val">100%</span>
+            <button class="sc-btn" onclick="nudgeZoom(.1)" title="Больше (Ctrl+=)">+</button>
+            <button class="sc-btn" onclick="setZoom(1)" title="Сброс (Ctrl+0)" style="width:auto;padding:0 12px;font-size:12px">Сброс</button>
           </div>
         </div>
         <div class="settings-group">
@@ -490,7 +502,7 @@
     </button>
     <div class="volume-slider" id="vol-slider"><div class="volume-fill" id="vol-fill"></div></div>
   </div>
-  <div class="progress-wrap" id="progress-wrap"><div class="progress" id="progress"></div></div>
+  <div class="progress-wrap" id="progress-wrap"><div class="progress" id="progress"></div><div class="seek-tip" id="seek-tip">0:00</div></div>
   <div class="time-row"><span id="time-cur">0:00</span><span id="time-dur">0:00</span></div>
 </div>
 

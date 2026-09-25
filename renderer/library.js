@@ -64,6 +64,9 @@ function applySettings() {
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
+  const usv = $('#ui-scale-val');
+  if (usv) usv.textContent = Math.round((state.settings.uiScale || 1) * 100) + '%';
+  setZoom(state.settings.uiScale || 1, true);
   $$('.accent-chip').forEach(c => c.classList.toggle('active', c.dataset.accent === (state.settings.accent || 'neon')));
 }
 
@@ -700,7 +703,7 @@ function updateFavSourceBtn() {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '2.0.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '2.1.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

@@ -95,6 +95,9 @@ function playTrack(track, listKey = null) {
   $('#mini-title').textContent = track.title;
   const art = artwork(track);
   if (art) $('#player-cover').src = art;
+  // ambient: размытая обложка светится фоном за плеером
+  $('#player').style.setProperty('--ambient', art ? `url(${art})` : 'none');
+  $('#player').classList.toggle('no-ambient', !art);
   $('#time-dur').textContent = formatTime((track.duration || 0) / 1000);
   $('#progress').style.width = '0%';
   $('#time-cur').textContent = '0:00';
@@ -222,6 +225,18 @@ function bindPlayerControls() {
     state.widget.getDuration(dur => { if (dur) state.widget.seekTo(pct * dur); });
   });
 
+  // тултип с временем при наведении на прогресс-бар
+  const tip = $('#seek-tip');
+  if (tip) {
+    bar.addEventListener('pointermove', e => {
+      const r = bar.getBoundingClientRect();
+      tip.style.left = Math.min(Math.max(e.clientX - r.left, 26), r.width - 26) + 'px';
+      tip.textContent = formatTime(pctOf(e) * (state.currentTrack?.duration || 0) / 1000);
+    });
+    bar.addEventListener('pointerenter', () => tip.classList.add('show'));
+    bar.addEventListener('pointerleave', () => tip.classList.remove('show'));
+  }
+
   const slider = $('#vol-slider'), volFill = $('#vol-fill');
   const volOf = e => {
     const r = slider.getBoundingClientRect();
@@ -271,6 +286,39 @@ function addToQueue(track) {
   state.queue.push(track);
   updateBadges(); renderQueue();
   toast('📋 В очереди', 'success');
+}
+
+/* тулбар результатов: добавить всё найденное в очередь */
+function addToQueueAll() {
+  const list = state.visibleTracks.length ? state.visibleTracks : state.tracks;
+  if (!list.length) { toast('Нечего добавлять', 'error'); return; }
+  let added = 0;
+  for (const t of list) {
+    if (state.queue.length >= 200) break;
+    if (!state.queue.some(q => q.id === t.id)) { state.queue.push(t); rememberTrack(t); added++; }
+  }
+  updateBadges(); renderQueue();
+  toast(added ? `📋 В очереди: +${added}` : 'Всё уже в очереди', added ? 'success' : '');
+}
+
+/* тулбар результатов: играть всё с первого трека */
+function playAllResults() {
+  const list = state.visibleTracks.length ? state.visibleTracks : state.tracks;
+  if (!list.length) { toast('Нечего играть', 'error'); return; }
+  playTrack(list[0], state.visibleTracks.length ? 'search' : null);
+}
+
+/* «Играть следующим»: сразу после текущего трека */
+function playNextInQueue(track) {
+  if (!track) return;
+  if (state.queue.some(t => t.id === track.id)) { toast('Уже в очереди'); return; }
+  if (state.currentListKey === 'queue' && state.currentIdx >= 0) {
+    state.queue.splice(state.currentIdx + 1, 0, track);
+  } else {
+    state.queue.unshift(track);
+  }
+  updateBadges(); renderQueue(); highlightPlaying();
+  toast('▶ Следующим: ' + (track.title || ''), 'success');
 }
 
 function playFromQueue(idx) {

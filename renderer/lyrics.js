@@ -34,6 +34,14 @@ function splitArtistTitle(track) {
   return { title: cleanTitleForLyrics(title) || title, artist };
 }
 
+/* выбор лучшей записи: с синхронизацией и ближайшей длительностью */
+function pickLyricsRecord(list, dur) {
+  const arr = (Array.isArray(list) ? list : []).slice(0, 20);
+  return arr.filter(r => r.syncedLyrics)
+    .sort((a, b) => Math.abs((a.duration || 0) - dur) - Math.abs((b.duration || 0) - dur))[0]
+    || arr[0] || null;
+}
+
 /* ---------- загрузка ---------- */
 async function loadLyrics(track, force) {
   if (!track) {
@@ -59,15 +67,9 @@ async function loadLyrics(track, force) {
       scJson(`${LRCLIB}/api/search?q=${encodeURIComponent((artist + ' ' + title).trim())}`)
     ]);
     const val = r => r.status === 'fulfilled' ? r.value : null;
-    const pick = list => {
-      const arr = (Array.isArray(list) ? list : []).slice(0, 20);
-      return arr.filter(r => r.syncedLyrics)
-        .sort((a, b) => Math.abs((a.duration || 0) - dur) - Math.abs((b.duration || 0) - dur))[0]
-        || arr[0] || null;
-    };
     const exact = val(rExact);
     const rec = (exact && (exact.syncedLyrics || exact.plainLyrics)) ? exact
-      : pick(val(rByName)) || pick(val(rByQ)) || (exact && (exact.syncedLyrics || exact.plainLyrics) ? exact : null);
+      : pickLyricsRecord(val(rByName), dur) || pickLyricsRecord(val(rByQ), dur);
     if (rec) {
       state.lyricsCache[track.id] = rec;
       const keys = Object.keys(state.lyricsCache);
@@ -134,7 +136,11 @@ function renderLyrics() {
   } else if (L.status === 'none') {
     const q = L.query || {};
     box.innerHTML = emptyHTML('i-search', 'Текст не нашёлся',
-      `${escapeHtml(q.artist || '')} — ${escapeHtml(q.title || '')}<br>Попробуй кнопкой Genius — там почти всё есть`);
+      `${escapeHtml(q.artist || '')} — ${escapeHtml(q.title || '')}<br>Попробуй найти вручную или через Genius`) +
+      `<div class="lyr-manual">
+        <input type="text" id="lyrics-manual-input" placeholder="исполнитель — название…" value="${escapeHtml([q.artist, q.title].filter(Boolean).join(' '))}">
+        <button onclick="lyricsManualSearch()">Найти</button>
+      </div>`;
   } else if (L.status === 'plain') {
     box.innerHTML = `<div class="lyr-plain">${escapeHtml(L.plain).replace(/\n/g, '<br>')}</div>`;
   } else {
@@ -169,6 +175,31 @@ function updateLyricsSync(posMs) {
   if (active && wrap) {
     const y = active.offsetTop - wrap.clientHeight / 2 + active.offsetHeight / 2;
     wrap.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  }
+}
+
+/* ручной поиск: произвольный запрос к LRCLIB */
+async function lyricsManualSearch() {
+  const q = $('#lyrics-manual-input')?.value.trim();
+  if (!q || !state.currentTrack) return;
+  state.lyrics.status = 'loading';
+  renderLyrics();
+  try {
+    const data = await scJson(`${LRCLIB}/api/search?q=${encodeURIComponent(q)}`);
+    const rec = pickLyricsRecord(data, Math.round((state.currentTrack.duration || 0) / 1000));
+    if (rec) {
+      state.lyricsCache[state.currentTrack.id] = rec;
+      applyRecord(rec, state.currentTrack);
+      toast('📝 Текст найден', 'success');
+    } else {
+      state.lyrics.status = 'none';
+      state.lyrics.query = { artist: q, title: '' };
+      renderLyrics();
+    }
+  } catch (_) {
+    state.lyrics.status = 'none';
+    renderLyrics();
+    toast('LRCLIB не ответил', 'error');
   }
 }
 
