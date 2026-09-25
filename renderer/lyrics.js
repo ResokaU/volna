@@ -46,6 +46,7 @@ async function loadLyrics(track, force) {
   const cached = state.lyricsCache[track.id];
   if (cached && !force) { applyRecord(cached, track); return; }
 
+  const gen = state.playGen || 0; // токен: если трек сменился — ответ не применяем
   state.lyrics = { status: 'loading', lines: [], plain: '', trackId: track.id, offset: 0, lastIdx: null };
   renderLyrics();
 
@@ -69,6 +70,8 @@ async function loadLyrics(track, force) {
     const exact = val(rExact);
     const rec = (exact && (exact.syncedLyrics || exact.plainLyrics)) ? exact
       : pick(val(rByName)) || pick(val(rByQ)) || (exact && (exact.syncedLyrics || exact.plainLyrics) ? exact : null);
+    // пока ждали LRCLIB, могли переключить трек — старый ответ не применяем
+    if (gen !== (state.playGen || 0) || state.currentTrack?.id !== track.id) return;
     if (rec) {
       state.lyricsCache[track.id] = rec;
       const keys = Object.keys(state.lyricsCache);

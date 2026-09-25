@@ -577,6 +577,15 @@ function renderNp() {
         : (L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
     </div>`;
   bindNpProgress();
+  // при открытии сразу показать текущую строку, а не начало текста
+  const L2 = state.lyrics;
+  if (L2.status === 'synced' && L2.lastIdx != null) {
+    const w = $('#np-lyrics-wrap'), els = $('#np-lyrics')?.children;
+    if (w && els && els[L2.lastIdx]) {
+      const y = els[L2.lastIdx].offsetTop - w.clientHeight / 2 + els[L2.lastIdx].offsetHeight / 2;
+      w.scrollTop = Math.max(0, y);
+    }
+  }
   highlightPlaying();
 }
 

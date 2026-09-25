@@ -751,3 +751,6 @@ width:3px;height:60%;background:var(--acid);border-radius:99px;box-shadow:0 0 12
 #np-lyrics-wrap{scrollbar-width:none}
 #np-lyrics-wrap::-webkit-scrollbar{width:0}
 /* и в обычном караоке полосу тоже прячем — уже так, дублируем для надёжности */
+
+/* ============ v3.3.3: каретка текста в NP мерится от своего контейнера ============ */
+#np-lyrics{position:relative}

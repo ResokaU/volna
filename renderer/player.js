@@ -194,10 +194,12 @@ function presetRank(p) {
   return 0;
 }
 
-async function tryNativePlay(track) {
+async function tryNativePlay(track, gen) {
   const url = await resolveStreamUrl(track).catch(() => null);
+  if (state.playGen !== gen) return false; // пока резолвили, уже включили другой трек
   if (!url || !state.currentTrack || state.currentTrack.id !== track.id) return false;
   const corsOk = await hostAllowsCors(url);
+  if (state.playGen !== gen) return false;
   const el = ensureAudioEl(corsOk);
   state.engine = 'audio';
   // глушим виджет: без этого играли две песни одновременно
@@ -207,10 +209,12 @@ async function tryNativePlay(track) {
   el.playbackRate = state.rate || 1;
   if (corsOk && !state.analyser) setupAudioGraph();
   try { await el.play(); } catch (_) { return false; }
+  if (state.playGen !== gen) return false;
   // превью (Go+/SNIPPET) короче полного трека — уходим на виджет
   el.addEventListener('loadedmetadata', function once() {
     el.removeEventListener('loadedmetadata', once);
-    if (state.engine === 'audio' && el.duration && el.duration < (track.duration || 0) / 1000 * 0.85 - 2) {
+    if (state.playGen === gen && state.engine === 'audio' && state.currentTrack?.id === track.id
+      && el.duration && el.duration < (track.duration || 0) / 1000 * 0.85 - 2) {
       startWidget(track);
     }
   });
@@ -297,6 +301,9 @@ function updateNpUI(posMs, durMs) {
 /* ---------- воспроизведение ---------- */
 async function playTrack(track, listKey = null) {
   if (!track || !track.permalink_url) { toast('Трек недоступен', 'error'); return; }
+  // генерация воспроизведения: только самая свежая команда «играть» управляет звуком и текстом
+  state.playGen = (state.playGen || 0) + 1;
+  const gen = state.playGen;
   rememberTrack(track);
 
   const list = listKey ? resolveList(listKey) : null;
@@ -327,13 +334,12 @@ async function playTrack(track, listKey = null) {
   updateMediaSession(track);
   loadLyrics(track); // караоке-текст
 
-  // глушим ОБА движка перед стартом нового — иначе предыдущий трек доигрывает поверх
+  // виджет — отдельный iframe, глушим сразу; аудио догрузится новым src без паузы
   try { state.widget?.pause(); } catch (_) {}
-  try { state.audio?.pause(); } catch (_) {}
 
-  const native = await tryNativePlay(track);
+  const native = await tryNativePlay(track, gen);
   // пока резолвили стрим, могли переключить трек — не стартуем старый
-  if (!native && state.engine !== 'widget' && state.currentTrack?.id === track.id) startWidget(track);
+  if (!native && state.playGen === gen && state.engine !== 'widget' && state.currentTrack?.id === track.id) startWidget(track);
   updateTitle(true);
 }
 
