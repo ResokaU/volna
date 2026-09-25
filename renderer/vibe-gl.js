@@ -104,7 +104,9 @@ window.VibeGL = (function () {
     raf = requestAnimationFrame(frame);
     if (!gl || !canvas.isConnected) return;
     if (preset === 'off') { return; }
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    // оптимизация: рендер в 0.8x + dpr cap 1.5 (глазу одинаково, GPU в 2 раза легче)
+    if (document.hidden || canvas.offsetParent === null) return; // вкладка/экран не видны
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1) * 0.8;
     const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
     const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }

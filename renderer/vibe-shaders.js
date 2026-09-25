@@ -39,23 +39,34 @@ void main() {
     name: 'Космос',
     frag: `
 void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
-  vec3 col = vec3(0.02, 0.02, 0.05);
-  float t = u_time * 0.35;
-  for (float i = 1.0; i < 4.0; i++) {
-    float sc = i * 2.2 + u_vol * 1.5;
-    vec2 p = uv * sc + vec2(t * (2.0 + i * 0.7), t * 0.4 * (i + 1.0));
-    vec2 id = floor(p), f = fract(p) - 0.5;
-    float h = fract(sin(dot(id, vec2(127.1, 311.7))) * 43758.5453);
-    vec2 off = (vec2(h, fract(h * 7.13)) - 0.5) * 0.6;
-    float star = smoothstep(0.28, 0.0, length(f - off));
-    col += mix(u_accent, vec3(1.0), h * 0.6) * star * (0.4 + u_high * 1.4) * smoothstep(0.0, 0.15, fract(h * 9.0 + t));
+  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y) * 0.5;
+  vec3 dir = vec3(uv * 0.8, 1.0);
+  float time = u_time * 0.01 + 0.25;
+  vec3 from = vec3(1.0, 0.5, 0.5) + vec3(uv, 2.0);
+  from.xz += vec2(time * 3.0, time);
+  float s = 0.1, fade = 1.0;
+  vec3 v = vec3(0.0);
+  for (int r = 0; r < 16; r++) {
+    vec3 p = from + s * dir * 0.5;
+    p = abs(vec3(0.85) - mod(p, vec3(1.7)));
+    float pa = 0.0, a = 0.0;
+    for (int i = 0; i < 15; i++) {
+      p = abs(p) / dot(p, p) - 0.53;
+      a += abs(length(p) - pa);
+      pa = length(p);
+    }
+    a *= a * a;
+    v += fade * (1.0 + u_bass * 2.0);
+    v += vec3(s, s * s, s * s * s * s) * a * 0.0015 * fade * (1.0 + u_bass * 1.5);
+    fade *= 0.76;
+    s += 0.1;
   }
-  col += u_accent * u_bass * 0.35;
+  v = mix(vec3(length(v)), v, 0.8) * 0.01;
+  vec3 col = v * (1.0 + u_bass * 1.5) + u_accent * v * 0.9 + vec3(u_high * 0.15);
+  col *= 1.0 - 0.35 * length(uv);
   gl_FragColor = vec4(col, 1.0);
 }`
-  },
-  wave: {
+  },  wave: {
     name: 'Волна',
     frag: `
 float band(float i) {

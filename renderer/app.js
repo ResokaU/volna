@@ -813,7 +813,7 @@ function startVibeParticles() {
   const resize = () => { c.width = innerWidth; c.height = innerHeight; };
   resize();
   window.addEventListener('resize', resize);
-  const P = Array.from({ length: 70 }, () => ({
+  const P = Array.from({ length: 45 }, () => ({
     x: Math.random() * innerWidth, y: Math.random() * innerHeight,
     r: .6 + Math.random() * 2.2, vy: .18 + Math.random() * .6, vx: (Math.random() - .5) * .3,
     a: .12 + Math.random() * .4
