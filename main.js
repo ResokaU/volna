@@ -833,6 +833,8 @@ function startRemoteServer() {
         if (cmd === 'like' && win) win.webContents.send('remote:like');
         if (cmd === 'back' && win) win.webContents.send('remote:seek', -15000);
         if (cmd === 'fwd' && win) win.webContents.send('remote:seek', 15000);
+        if (cmd === 'shuffle' && win) win.webContents.send('remote:shuffle');
+        if (cmd === 'repeat' && win) win.webContents.send('remote:repeat');
         res.writeHead(204); res.end(); return;
       }
       if (u.searchParams.has('state')) {

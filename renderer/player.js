@@ -86,6 +86,8 @@ function bindMediaKeys() {
     ipc.on('remote:vol', v => setVolume(v));
     ipc.on('remote:like', () => likeCurrent());
     ipc.on('remote:seek', ms => seekBy(ms));
+    ipc.on('remote:shuffle', () => toggleShuffle());
+    ipc.on('remote:repeat', () => toggleRepeat());
   } catch (_) {}
 }
 
@@ -370,6 +372,27 @@ function bindNpProgress() {
   });
 }
 
+/* состояние для пульта: шлём всегда, из обоих движков, с карaoke-строкой */
+function pushRemoteState(posMs, durMs) {
+  const t = state.currentTrack;
+  if (!ipc || !t) return;
+  if (state._rsSent && Date.now() - state._rsSent < 400) return;
+  state._rsSent = Date.now();
+  let line = '';
+  if (state.lyrics && state.lyrics.status === 'synced' && state.lyrics.lastIdx != null && state.lyrics.lines[state.lyrics.lastIdx]) {
+    line = state.lyrics.lines[state.lyrics.lastIdx].text || '';
+  }
+  try {
+    ipc.send('remote:state', {
+      title: t.title, artist: displayArtist(t), art: artwork(t),
+      isPlaying: state.isPlaying, pos: Math.round(posMs || 0),
+      dur: Math.round(durMs || t.duration || 0), vol: state.volume,
+      liked: state.favorites.some(f => f.id === t.id),
+      shuffle: !!state.shuffle, repeat: !!state.repeat, line
+    });
+  } catch (_) {}
+}
+
 /* «Продолжить где остановился»: сохраняем трек+позицию раз в 5 секунд */
 function saveLastTrack(posMs, durMs) {
   const t = state.currentTrack;
@@ -381,8 +404,6 @@ function saveLastTrack(posMs, durMs) {
       artwork_url: t.artwork_url, playback_count: t.playback_count, user: t.user },
     posMs: Math.round(posMs || 0), savedAt: Date.now()
   }).catch(() => {});
-  try { ipc.send('remote:state', { title: t.title, artist: displayArtist(t), art: artwork(t), liked: state.favorites.some(f => f.id === t.id),
-    isPlaying: state.isPlaying, pos: Math.round(posMs || 0), dur: Math.round(durMs || 0), vol: state.volume }); } catch (_) {}
 }
 
 /* синк прогресса/времени Now Playing из тика плеера */
@@ -467,6 +488,7 @@ function updateTitle(freshTrack) {
     if (state.engine === 'audio' && state.audio) sendRpc((state.audio.currentTime || 0) * 1000);
     else state.widget?.getPosition(pos => sendRpc(pos || 0));
   }
+  pushRemoteState(state._lastPosMs || 0, state._lastDurMs || (t && t.duration) || 0);
   sendMiniSync(true); // мгновенное обновление мини-окна (play/pause/трек)
   if ($('#view-nowplaying')?.classList.contains('active') && t) {
     if (state._npRt !== t.id) renderNp(); // сменился трек — перерисовать полноэкранку
@@ -591,6 +613,7 @@ function updateProgressUI() {
     mediaSessionPosition(pos / 1000, dur / 1000);
     updateNpUI(pos, dur);
     drawWave(pos, dur);
+    pushRemoteState(pos, dur);
     saveLastTrack(pos, dur);
     sendMiniSync();
     return;
@@ -606,6 +629,7 @@ function updateProgressUI() {
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
       updateNpUI(pos, dur);
       drawWave(pos, dur);
+      pushRemoteState(pos, dur);
       sendMiniSync();
     });
   });

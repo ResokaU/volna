@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{color:#eee;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;text-align:center;
-padding:max(24px,env(safe-area-inset-top)) 22px 32px;min-height:100vh;
+padding:max(22px,env(safe-area-inset-top)) 22px 30px;min-height:100vh;
 display:flex;flex-direction:column;align-items:center;
 background:#08080f;
 background-image:radial-gradient(640px 420px at 50% -8%,rgba(177,74,255,.42),transparent),
@@ -16,42 +16,44 @@ radial-gradient(520px 340px at 92% 108%,rgba(214,255,58,.15),transparent),
 radial-gradient(420px 320px at 8% 102%,rgba(255,61,127,.2),transparent);
 background-attachment:fixed;overflow-x:hidden;
 -webkit-user-select:none;user-select:none}
-/* размытая обложка как фон всего пульта */
 #ambg{position:fixed;inset:-60px;background-size:cover;background-position:center;
 filter:blur(70px) saturate(1.9);opacity:.35;z-index:-1;transition:background-image .8s}
-.logo{font-weight:900;font-size:23px;letter-spacing:.1em;margin-bottom:20px;
+.logo{font-weight:900;font-size:23px;letter-spacing:.1em;margin-bottom:18px;
 background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);
 -webkit-background-clip:text;background-clip:text;color:transparent}
-.cover-wrap{position:relative;width:min(66vw,250px);aspect-ratio:1;margin-bottom:6px}
+.cover-wrap{position:relative;width:min(62vw,240px);aspect-ratio:1;margin-bottom:4px}
 #art{width:100%;height:100%;border-radius:26px;object-fit:cover;background:#181820;
 box-shadow:0 26px 70px -16px rgba(0,0,0,.9)}
 #ring{position:absolute;inset:-10px;border-radius:30px;border:1px solid rgba(177,74,255,.35);
 opacity:0;transition:opacity .4s}
 body.playing #ring{opacity:1;animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 18px rgba(177,74,255,.35)}50%{box-shadow:0 0 44px rgba(255,61,127,.5)}}
-h3{margin:18px 0 3px;font-size:19px;line-height:1.35;font-weight:800;word-break:break-word}
-# volunteered{}
+h3{margin:16px 0 3px;font-size:19px;line-height:1.35;font-weight:800;word-break:break-word}
 #a{color:#9a9ab0;font-size:14px}
+#lyr{min-height:44px;display:flex;align-items:center;justify-content:center;
+color:#d6ff3a;font-style:italic;font-size:14px;line-height:1.4;margin-top:8px;
+opacity:0;transition:opacity .4s;padding:0 10px}
+#lyr.show{opacity:1}
 #bar{width:min(80vw,330px);height:5px;background:rgba(255,255,255,.13);border-radius:9px;
-margin:22px auto 8px;overflow:hidden}
+margin:14px auto 6px;overflow:hidden}
 #pf{height:100%;background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);border-radius:9px;width:0%}
-#tm{font-size:12px;color:#888;font-variant-numeric:tabular-nums;margin-bottom:6px}
-.row{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:6px}
+#tm{font-size:12px;color:#888;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px}
 button{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);color:#eee;
-width:62px;height:62px;border-radius:50%;font-size:20px;cursor:pointer;
+width:56px;height:56px;border-radius:50%;font-size:18px;cursor:pointer;
 transition:transform .1s,background .15s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
 button:active{transform:scale(.88)}
-button.big{width:88px;height:88px;font-size:32px;border:none;color:#fff;
+button.big{width:84px;height:84px;font-size:30px;border:none;color:#fff;
 background:linear-gradient(135deg,#b14aff,#ff3d7f);
 box-shadow:0 10px 30px -8px rgba(177,74,255,.75)}
 body.playing button.big{animation:beat 1.9s ease-in-out infinite}
 @keyframes beat{0%,100%{box-shadow:0 10px 30px -8px rgba(177,74,255,.75)}50%{box-shadow:0 10px 44px -6px rgba(255,61,127,.9)}}
+button.mini{width:48px;height:48px;font-size:15px;color:#bbb}
+button.on{background:linear-gradient(135deg,#b14aff,#ff3d7f);color:#fff;border-color:transparent}
 button.like.liked{color:#ff3d7f;border-color:rgba(255,61,127,.6)}
-button.like.liked::after{content:'♥'}
-#like{font-size:19px}
-.mini{width:50px;height:50px;font-size:16px;color:#bbb}
-input[type=range]{width:min(78vw,300px);accent-color:#b14aff;margin-top:20px;display:block;margin:18px auto 0}
-.m{font-size:11px;color:#666;margin-top:auto;padding-top:24px}
+#like{font-size:18px}
+input[type=range]{width:min(78vw,300px);accent-color:#b14aff;margin-top:16px;display:block;margin-left:auto;margin-right:auto}
+.m{font-size:11px;color:#666;margin-top:auto;padding-top:22px}
 .m .dot{color:#d6ff3a}
 </style>
 </head>
@@ -61,15 +63,20 @@ input[type=range]{width:min(78vw,300px);accent-color:#b14aff;margin-top:20px;dis
 <div class="cover-wrap"><div id="ring"></div><img id="art" src="" alt=""></div>
 <h3 id="t">VOLNA</h3>
 <p id="a">управляй волной отсюда</p>
+<div id="lyr"></div>
 <div id="bar"><div id="pf"></div></div>
 <p id="tm">—</p>
 <div class="row">
-  <button class="mini" onclick="c('prev')" title="Назад">⏮</button>
-  <button class="mini" id="like" onclick="c('like')" title="Лайк">♡</button>
+  <button class="mini" id="shuf" onclick="c('shuffle')" title="Shuffle">🔀</button>
+  <button class="mini like" id="like" onclick="c('like')" title="Лайк">♡</button>
   <button class="big" id="pl" onclick="c('toggle')" title="Play/Pause">▶</button>
+  <button class="mini" id="rep" onclick="c('repeat')" title="Repeat">🔁</button>
+  <button class="mini" onclick="c('next')" title="Вперёд">⏭</button>
+</div>
+<div class="row">
+  <button class="mini" onclick="c('prev')" title="Назад">⏮</button>
   <button class="mini" onclick="c('back')" title="−15 сек">↺15</button>
   <button class="mini" onclick="c('fwd')" title="+15 сек">↻15</button>
-  <button class="mini" onclick="c('next')" title="Вперёд">⏭</button>
 </div>
 <input type="range" id="vol" min="0" max="1" step="0.05" oninput="setVol(this.value)" title="Громкость">
 <p class="m"><span class="dot">●</span> подключено к твоей волне · VOLNA пульт</p>
@@ -86,14 +93,19 @@ async function poll() {
     if (d.art) { $('art').src = d.art; $('ambg').style.backgroundImage = 'url(' + d.art + ')'; }
     $('pl').textContent = d.isPlaying ? '⏸' : '▶';
     document.body.classList.toggle('playing', !!d.isPlaying);
+    $('shuf').classList.toggle('on', !!d.shuffle);
+    $('rep').classList.toggle('on', !!d.repeat);
     $('like').textContent = d.liked ? '❤' : '♡';
     $('like').classList.toggle('liked', !!d.liked);
+    const lyr = $('lyr');
+    if (d.line) { lyr.textContent = '♪ ' + d.line; lyr.classList.add('show'); }
+    else lyr.classList.remove('show');
     if (d.dur) {
       $('pf').style.width = Math.min(100, d.pos / d.dur * 100) + '%';
       const p = Math.round(d.pos / 1000), q = Math.round(d.dur / 1000);
       $('tm').textContent = (p / 60 | 0) + ':' + ('0' + (p % 60)).slice(-2) + ' / ' + (q / 60 | 0) + ':' + ('0' + (q % 60)).slice(-2);
     }
-    if (typeof d.vol === 'number' && !document.activeElement?.matches('#vol')) $('vol').value = d.vol;
+    if (typeof d.vol === 'number' && document.activeElement !== $('vol')) $('vol').value = d.vol;
   } catch (e) {}
 }
 function c(x) { fetch('?cmd=' + x); }
