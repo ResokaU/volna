@@ -133,6 +133,7 @@ function switchView(name) {
   if (name === 'stats') renderStats();
   if (name === 'trending') loadTrending();
   if (name === 'foryou') loadForyou();
+  document.body.classList.toggle('vibe-on', name === 'vibe'); // весь UI прячется, остаётся плеер-бар
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
@@ -600,7 +601,6 @@ function renderNp() {
         <button class="pbtn" onclick="playNext()" title="Next"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
         <button class="pbtn ${state.repeat ? 'active' : ''}" onclick="toggleRepeat();renderNp()" title="Repeat"><svg class="ic" viewBox="0 0 24 24"><use href="#i-repeat"/></svg></button>
         <button class="pbtn rate" onclick="cycleRate();renderNp()" title="Скорость">${state.rate === 1 ? '1' : state.rate}×</button>
-        <button class="pbtn ${visOn ? 'active' : ''}" onclick="toggleNpVisual()" title="Визуал: фон + большой текст">🖼</button>
         <button class="pbtn ${state.npClip && state.npClip.trackId === t.id && state.npClip.on ? 'active' : ''}" onclick="toggleNpClip()" title="Клип с YouTube (звук трека глушится)">🎬</button>
       </div>
       <canvas id="np-wave" width="600" height="46" title="Волновая форма — клик для перемотки"></canvas>
@@ -612,7 +612,7 @@ function renderNp() {
       ${L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
       ${L.status === 'synced'
         ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`
-        : (!visOn && L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
+        : (L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
     </div>`;
   bindNpProgress();
   bindNpWave();
