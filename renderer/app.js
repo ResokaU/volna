@@ -738,7 +738,11 @@ function renderVibe() {
     bg.classList.remove('loading');
     return;
   }
+  renderVShaderChips();
+  if (state.vibeShader && state.vibeShader !== 'off') VibeGL.start($('#vibe-gl'), state.vibeShader);
   const cat = state.settings.vibeCat || 'anime';
+  const glOn = state.vibeShader && state.vibeShader !== 'off';
+  $('#view-vibe')?.classList.toggle('gl-on', glOn);
   if (cat === 'neon') {
     bg.classList.add('vibe-neon');
     bg.classList.remove('loading');
@@ -753,6 +757,48 @@ function renderVibe() {
   txt.textContent = (t.title || '').toUpperCase();
   state._vibeRt = t.id;
   startVibeParticles();
+}
+
+function renderVShaderChips() {
+  const box = $('#vshader-chips');
+  if (!box) return;
+  const items = [{ id: 'off', label: '🖼 Выкл' }].concat(
+    Object.keys(window.VIBE_SHADERS || {}).map(k => ({ id: k, label: (window.VIBE_SHADERS[k].name || k) }))
+  );
+  box.innerHTML = items.map(it =>
+    '<button class="bit-chip' + (state.vibeShader === it.id ? ' active' : '') + '" data-shader="' + it.id + '">' + it.label + '</button>'
+  ).join('');
+  box.querySelectorAll('.bit-chip').forEach(ch => ch.addEventListener('click', () => {
+    state.vibeShader = ch.dataset.shader;
+    renderVShaderChips();
+    const canvas = $('#vibe-gl');
+    if (!canvas) return;
+    if (state.vibeShader === 'off') { canvas.style.display = 'none'; VibeGL.stop(); renderVibe(); }
+    else { canvas.style.display = 'block'; VibeGL.start(canvas, state.vibeShader); }
+    saveSetting('vibeShader', state.vibeShader);
+  }));
+}
+
+/* 🔎 поиск картинок на фон (многоисточниковый) */
+async function doVibeSearch() {
+  const q = $('#vibe-q')?.value.trim();
+  const src = $('#vibe-src')?.value || 'wallhaven';
+  if (!q) { toast('Введи, что искать', 'error'); return; }
+  const box = $('#vibe-results');
+  if (box) box.innerHTML = '<div class="vibe-res-hint">Ищу…</div>';
+  const imgs = await ipc.invoke('img:query', { source: src, q, seed: String(Date.now() % 9999) }).catch(() => []);
+  if (!imgs || !imgs.length) { if (box) box.innerHTML = '<div class="vibe-res-hint">Ничего не нашлось для «' + escapeHtml(q) + '»</div>'; return; }
+  state.vibeResults = imgs;
+  if (box) box.innerHTML = imgs.slice(0, 12).map((im, i) =>
+    '<img class="vibe-thumb" data-i="' + i + '" src="' + escapeHtml(im.thumb || im.full) + '" loading="lazy" title="Поставить фоном">').join('');
+  box.querySelectorAll('.vibe-thumb').forEach(th => th.addEventListener('click', () => {
+    const im = imgs[+th.dataset.i];
+    const t = state.currentTrack;
+    state.visual = { trackId: t ? t.id : 0, img: im.full };
+    const bg = $('#vibe-bg');
+    if (bg) { bg.style.backgroundImage = 'url(' + im.full + ')'; bg.classList.remove('loading', 'vibe-neon'); }
+    toast('🖼 Фон установлен', 'success');
+  }));
 }
 
 function collapseVibe() {

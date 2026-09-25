@@ -552,15 +552,16 @@ async function ensureVisual(t) {
   const h = hashStr(String(t.id) + '#' + (state._vibeAttempt || 0));
   const themes = VIBE_CATS[cat] || VIBE_CATS.anime;
   const theme = themes[h % themes.length];
+  const source = state.settings.vibeSource || 'wallhaven';
   const clean = String(t.title || '').replace(/[^p{L}p{N} ]/gu, '').trim();
   const q0 = clean.split(/s+/).slice(0, 2).join(' ');
   const queries = [];
   if (q0 && q0.length > 3) queries.push(q0);
   queries.push(theme);
   for (const q of queries) {
-    const imgs = await ipc.invoke('img:search', { q, seed: String(h) }).catch(() => null);
+    const imgs = await ipc.invoke('img:query', { source, q, seed: String(h) }).catch(() => null);
     if (imgs && imgs.length) {
-      state.visual = { trackId: t.id, img: imgs[h % imgs.length] };
+      state.visual = { trackId: t.id, img: imgs[h % imgs.length].full };
       const bg = $('#vibe-bg');
       if (bg && $('#view-vibe')?.classList.contains('active')) {
         bg.style.backgroundImage = 'url(' + state.visual.img + ')';

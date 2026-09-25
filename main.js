@@ -715,21 +715,37 @@ ipcMain.handle('shell:openExternal', (_e, url) => {
   return false;
 });
 
-// атмосферные фоны для «Визуала»: Wallhaven (аниме-категория, SFW, keyless)
-ipcMain.handle('img:search', async (_e, payload) => {
+// 🖼 движок картинок: многоисточниковый (wallhaven/openverse/yandere/konachan)
+ipcMain.handle('img:query', async (_e, payload) => {
+  const source = (payload && payload.source) || 'wallhaven';
+  const q = String((payload && payload.q) || '');
+  const seed = String((payload && payload.seed) || 'volna');
+  const UA = { 'User-Agent': 'VOLNA/6.0' };
   try {
-    const q = String((payload && payload.q) || '');
-    const seed = String((payload && payload.seed) || 'volna');
+    if (source === 'yandere' || source === 'konachan') {
+      const host = source === 'yandere' ? 'yande.re' : 'konachan.com';
+      const words = q.trim().split(/\s+/).slice(0, 2).map(x => encodeURIComponent(x));
+      const tags = (words.length ? words.join('+') : 'landscape') + '+rating:s';
+      const res = await net.fetch('https://' + host + '/post.json?limit=40&tags=' + tags, { headers: UA, signal: AbortSignal.timeout(15000) });
+      const j = await res.json();
+      return (Array.isArray(j) ? j : []).filter(x => x.jpeg_url || x.file_url)
+        .map(x => ({ full: x.jpeg_url || x.file_url, thumb: x.preview_url })).slice(0, 40);
+    }
+    if (source === 'openverse') {
+      const res = await net.fetch('https://api.openverse.org/v1/images/?q=' + encodeURIComponent(q) + '&size=large&page_size=40', { headers: UA, signal: AbortSignal.timeout(15000) });
+      const j = await res.json();
+      return (j.results || []).map(x => ({ full: x.url, thumb: x.thumbnail })).filter(x => x.full).slice(0, 40);
+    }
+    // wallhaven (по умолчанию): full-res с фильтром 1080p, фолбэк без фильтра
     const base = 'https://wallhaven.cc/api/v1/search?q=' + encodeURIComponent(q) +
-      '&categories=010&purity=100&sorting=random&seed=' + encodeURIComponent(seed) +
-      '&atleast=1920x1080';
+      '&categories=010&purity=100&sorting=random&seed=' + encodeURIComponent(seed) + '&atleast=1920x1080';
     const out = [];
     for (const u of [base, base.replace('&atleast=1920x1080', '')]) {
-      const res = await net.fetch(u, { headers: { 'User-Agent': 'VOLNA' }, signal: AbortSignal.timeout(12000) });
+      const res = await net.fetch(u, { headers: UA, signal: AbortSignal.timeout(12000) });
       if (!res.ok) continue;
       const j = await res.json();
       for (const x of (j.data || [])) {
-        if (x.path) out.push(x.path);
+        if (x.path) out.push({ full: x.path, thumb: (x.thumbs && x.thumbs.large) || x.path });
         if (out.length >= 40) return out;
       }
       if (out.length) return out;
@@ -737,7 +753,6 @@ ipcMain.handle('img:search', async (_e, payload) => {
     return out;
   } catch (_) { return []; }
 });
-
 // поиск клипа на YouTube по «артист + название» (грубый скрейп выдачи)
 ipcMain.handle('yt:search', async (_e, q) => {
   try {
