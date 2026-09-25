@@ -911,3 +911,28 @@ overflow-x:auto;background:rgba(5,5,10,.7)}
 border:1px solid rgba(255,255,255,.15);transition:.15s;flex-shrink:0}
 .vibe-thumb:hover{border-color:var(--acid);transform:scale(1.05)}
 .vibe-res-hint{font-size:11px;color:var(--muted);padding:6px 2px}
+
+
+/* ============ v6.0.3: тёмные акценты + панель поиска вайба ============ */
+body[data-accent="blood"]{--accent:#7f1d1d;--accent2:#c0392b;--accent3:#f59e0b;
+  --grad:linear-gradient(90deg,#c0392b,#f59e0b)}
+body[data-accent="emerald"]{--accent:#065f46;--accent2:#059669;--accent3:#a7f3d0;
+  --grad:linear-gradient(90deg,#059669,#a7f3d0)}
+body[data-accent="abyss"]{--accent:#0c2d48;--accent2:#145da0;--accent3:#6bd3ff;
+  --grad:linear-gradient(90deg,#145da0,#6bd3ff)}
+body[data-accent="wine"]{--accent:#6b1836;--accent2:#9d174d;--accent3:#fbbf24;
+  --grad:linear-gradient(90deg,#9d174d,#fbbf24)}
+body[data-accent="bronze"]{--accent:#6d3f14;--accent2:#b45309;--accent3:#fcd34d;
+  --grad:linear-gradient(90deg,#b45309,#fcd34d)}
+body[data-accent="moss"]{--accent:#3f6212;--accent2:#65a30d;--accent3:#d9f99d;
+  --grad:linear-gradient(90deg,#65a30d,#d9f99d)}
+body[data-accent="midnight"]{--accent:#221c4d;--accent2:#4f46e5;--accent3:#67e8f9;
+  --grad:linear-gradient(90deg,#4f46e5,#67e8f9)}
+body[data-accent="slate"]{--accent:#27303f;--accent2:#64748b;--accent3:#cbd5e1;
+  --grad:linear-gradient(90deg,#64748b,#cbd5e1)}
+
+.vibe-toolbar .vibe-tools,
+.vibe-toolbar .vibe-results{display:none}
+.vibe-toolbar.open .vibe-tools{display:flex}
+.vibe-toolbar.open .vibe-results{display:flex}
+.vibe-search-toggle{font-size:15px}
