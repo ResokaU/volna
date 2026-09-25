@@ -36,6 +36,8 @@ const state = {
   corsCache: new Map(),      // origin -> доступен ли Web Audio
   rate: 1,                   // скорость воспроизведения
   listenedCounted: false,    // честная статистика: засчитан ли текущий трек
+  visualMode: true,          // 🖼 визуал в полноэкранке
+  visual: null,              // {trackId, img}
   eqGains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10 полос, дБ
   eqPreset: 'flat', eqNodes: null,
   dislikes: [],              // артисты, скрытые из Radio
@@ -581,10 +583,14 @@ function renderNp() {
   const L = state.lyrics;
   const plainHtml = escapeHtml(L.plain || '').split(String.fromCharCode(10)).join('<br>');
   const art = artwork(t);
+  const visOn = !!state.visualMode && !!state.visual && state.visual.trackId === t.id;
+  $('#view-nowplaying')?.classList.toggle('vis-on', visOn);
   box.innerHTML = `
-    ${state.npClip && state.npClip.trackId === t.id && state.npClip.on
-      ? `<div class="np-video"><iframe src="https://www.youtube-nocookie.com/embed/${state.npClip.videoId}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`
-      : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`}
+    ${visOn
+      ? `<div class="visual-bg" id="visual-bg" style="background-image:url('${escapeHtml(state.visual.img)}')"></div><div class="visual-shade"></div><div class="visual-text" id="visual-text">${escapeHtml(t.title || '')}</div>`
+      : (state.npClip && state.npClip.trackId === t.id && state.npClip.on
+        ? `<div class="np-video"><iframe src="https://www.youtube-nocookie.com/embed/${state.npClip.videoId}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`
+        : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`)}
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(displayArtist(t))}</div>
@@ -596,6 +602,7 @@ function renderNp() {
         <button class="pbtn" onclick="playNext()" title="Next"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
         <button class="pbtn ${state.repeat ? 'active' : ''}" onclick="toggleRepeat();renderNp()" title="Repeat"><svg class="ic" viewBox="0 0 24 24"><use href="#i-repeat"/></svg></button>
         <button class="pbtn rate" onclick="cycleRate();renderNp()" title="Скорость">${state.rate === 1 ? '1' : state.rate}×</button>
+        <button class="pbtn ${visOn ? 'active' : ''}" onclick="toggleNpVisual()" title="Визуал: фон + большой текст">🖼</button>
         <button class="pbtn ${state.npClip && state.npClip.trackId === t.id && state.npClip.on ? 'active' : ''}" onclick="toggleNpClip()" title="Клип с YouTube (звук трека глушится)">🎬</button>
       </div>
       <canvas id="np-wave" width="600" height="46" title="Волновая форма — клик для перемотки"></canvas>
@@ -604,10 +611,10 @@ function renderNp() {
         <div class="np-progress-wrap" id="np-progress-wrap" title="Перемотка"><div class="np-progress" id="np-progress"></div></div>
         <span id="np-time-dur">${formatTime((t.duration || 0) / 1000)}</span>
       </div>
-      ${L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
-      ${L.status === 'synced'
+      ${!visOn && L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
+      ${!visOn && L.status === 'synced'
         ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`
-        : (L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
+        : (!visOn && L.status === 'plain' ? `<div class="np-plain">${plainHtml}</div>` : '')}
     </div>`;
   bindNpProgress();
   bindNpWave();

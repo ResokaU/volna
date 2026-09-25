@@ -409,6 +409,18 @@ function saveLastTrack(posMs, durMs) {
 /* синк прогресса/времени Now Playing из тика плеера */
 function updateNpUI(posMs, durMs) {
   if (!$('#view-nowplaying')?.classList.contains('active')) return;
+  // 🖼 визуал: гигантский текст = текущая строка караоке (или название)
+  if ($('#view-nowplaying')?.classList.contains('vis-on')) {
+    const L = state.lyrics, t = state.currentTrack;
+    let txt = (L.status === 'synced' && L.lastIdx != null && L.lines[L.lastIdx]) ? L.lines[L.lastIdx].text : (t ? t.title : '');
+    const el = $('#visual-text');
+    if (el && txt && el.textContent !== txt.toUpperCase()) {
+      el.textContent = txt.toUpperCase();
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+    }
+  }
   const pw = $('#np-progress');
   if (pw && durMs) pw.style.width = (posMs / durMs * 100) + '%';
   const tc = $('#np-time-cur');
@@ -454,6 +466,7 @@ async function playTrack(track, listKey = null) {
   updateMediaSession(track);
   triggerEgg(track); // пасхалки
   loadLyrics(track); // караоке-текст
+  if (state.visualMode) ensureVisual(track); // фон-визуал для нового трека
 
   // виджет — отдельный iframe, глушим сразу; аудио догрузится новым src без паузы
   try { state.widget?.pause(); } catch (_) {}
@@ -495,6 +508,41 @@ function updateTitle(freshTrack) {
     else { const m = $('#np-meta'); if (m) m.innerHTML = npMetaHTML(t); }
   }
   if (typeof updateMascot === 'function') updateMascot();
+}
+
+/* 🖼 Визуал: тикток-стиль — атмосферный фон + гигантский текст строки */
+const VIS_THEMES = ['dark forest night','anime scenery night','night city rain','moonlight mountains',
+  'cyberpunk city neon','storm ocean dark','cherry blossom night','desert night stars','snow forest anime'];
+function hashStr(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
+
+async function ensureVisual(t) {
+  if (!t || !state.visualMode) return;
+  if (state.visual && state.visual.trackId === t.id) return;
+  const h = hashStr(String(t.id));
+  const theme = VIS_THEMES[h % VIS_THEMES.length];
+  const clean = String(t.title || '').replace(/[^p{L}p{N} ]/gu, '').trim();
+  const q0 = clean.split(/s+/).slice(0, 2).join(' ');
+  const queries = [];
+  if (q0 && q0.length > 3) queries.push(q0);
+  queries.push(theme);
+  for (const q of queries) {
+    const imgs = await ipc.invoke('img:search', { q, seed: String(h) }).catch(() => null);
+    if (imgs && imgs.length) {
+      state.visual = { trackId: t.id, img: imgs[h % imgs.length] };
+      if ($('#view-nowplaying')?.classList.contains('active')) renderNp();
+      return;
+    }
+  }
+}
+
+function toggleNpVisual() {
+  const t = state.currentTrack;
+  if (!t) { toast('Сначала включи трек', 'error'); return; }
+  state.visualMode = !state.visualMode;
+  saveSetting('visualMode', state.visualMode);
+  if (state.visualMode && $('#view-nowplaying')?.classList.contains('active')) ensureVisual(t);
+  renderNp();
+  toast(state.visualMode ? '🖼 Визуал включён' : 'Визуал выключен');
 }
 
 /* артист для показа: из «Артист - Песня» в заголовке, иначе ник */

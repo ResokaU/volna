@@ -153,6 +153,7 @@ function applySettings() {
   setZoom(state.settings.uiScale || 1, true);
   restoreEqUI();
   updateDislikeCount();
+  state.visualMode = state.settings.visualMode !== false;
   $$('.bit-chip').forEach(x => x.classList.toggle('active', x.dataset.bit === (state.settings.bitrate || 'best')));
   const su = $('#set-updates');
   if (su) su.checked = state.settings.checkUpdates !== false;
@@ -1064,7 +1065,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '5.0.9', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '5.1.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

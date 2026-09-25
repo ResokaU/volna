@@ -715,6 +715,20 @@ ipcMain.handle('shell:openExternal', (_e, url) => {
   return false;
 });
 
+// атмосферные фоны для «Визуала»: Wallhaven (аниме-категория, SFW, keyless)
+ipcMain.handle('img:search', async (_e, payload) => {
+  try {
+    const q = String((payload && payload.q) || '');
+    const seed = String((payload && payload.seed) || 'volna');
+    const u = 'https://wallhaven.cc/api/v1/search?q=' + encodeURIComponent(q) +
+      '&categories=010&purity=100&sorting=random&seed=' + encodeURIComponent(seed);
+    const res = await net.fetch(u, { headers: { 'User-Agent': 'VOLNA' }, signal: AbortSignal.timeout(12000) });
+    if (!res.ok) return [];
+    const j = await res.json();
+    return (j.data || []).map(x => (x.thumbs && x.thumbs.large) || x.path).filter(Boolean).slice(0, 40);
+  } catch (_) { return []; }
+});
+
 // поиск клипа на YouTube по «артист + название» (грубый скрейп выдачи)
 ipcMain.handle('yt:search', async (_e, q) => {
   try {
