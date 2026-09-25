@@ -273,7 +273,22 @@
       <section class="view" id="view-vibe">
         <div class="vibe-bg" id="vibe-bg"></div>
         <div class="vibe-shade"></div>
+        <canvas id="vibe-gl"></canvas>
         <canvas id="vibe-particles"></canvas>
+        <div class="vibe-toolbar">
+          <div class="eq-presets" id="vshader-chips"></div>
+          <div class="vibe-tools">
+            <select id="vibe-src" title="Источник картинок">
+              <option value="wallhaven">Wallhaven</option>
+              <option value="openverse">Openverse</option>
+              <option value="yandere">Yande.re (аниме)</option>
+              <option value="konachan">Konachan (аниме)</option>
+            </select>
+            <input type="text" id="vibe-q" placeholder="🔎 фон: ночной лес, город, аниме…">
+            <button class="toolbar-btn" onclick="doVibeSearch()">Найти</button>
+          </div>
+          <div class="vibe-results" id="vibe-results"></div>
+        </div>
         <div class="vibe-text" id="vibe-text"></div>
         <button class="toolbar-btn vibe-collapse" onclick="collapseVibe()">✕ Esc</button>
         <button class="toolbar-btn vibe-reroll" onclick="rerollVibe()">🔄 Другой фон</button>
