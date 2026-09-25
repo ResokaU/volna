@@ -534,16 +534,23 @@ const VIBE_CATS = {
   forest:    ['foggy forest','pine forest mist','forest path sunlight','autumn forest road','dark forest night'],
   mountains: ['mountains fog','snowy mountains','mountain valley sunset','alpine lake','himalayas night'],
   city:      ['neon city night','cyberpunk city','city skyline night','tokyo street night','rainy city window'],
-  nature:    ['ocean waves storm','waterfall jungle','desert dunes night','flower field sunset','lake reflection night']
+  nature:    ['ocean waves storm','waterfall jungle','desert dunes night','flower field sunset','lake reflection night'],
+  neon:      [] // процедурные градиенты — без картинок, работает офлайн
 };
 function hashStr(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
 
 async function ensureVisual(t) {
   if (!t || !state.visualMode) return;
+  const cat = state.settings.vibeCat || 'anime';
+  // «один на сессию»: держим картинку, пока пользователь сам не сменит
+  if (state.settings.vibeSession && state.visual && state.visual.img) {
+    state.visual.trackId = t.id;
+    return;
+  }
   if (state.visual && state.visual.trackId === t.id) return;
-  const h = hashStr(String(t.id));
-  const cat = VIBE_CATS[state.settings.vibeCat] ? state.settings.vibeCat : 'anime';
-  const themes = VIBE_CATS[cat];
+  if (cat === 'neon') { state.visual = { trackId: t.id, img: null, neon: true }; return; }
+  const h = hashStr(String(t.id) + '#' + (state._vibeAttempt || 0));
+  const themes = VIBE_CATS[cat] || VIBE_CATS.anime;
   const theme = themes[h % themes.length];
   const clean = String(t.title || '').replace(/[^p{L}p{N} ]/gu, '').trim();
   const q0 = clean.split(/s+/).slice(0, 2).join(' ');

@@ -155,7 +155,9 @@ function applySettings() {
   updateDislikeCount();
   state.visualMode = state.settings.visualMode !== false;
   $$('.bit-chip').forEach(x => x.classList.toggle('active', x.dataset.bit === (state.settings.bitrate || 'best')));
-  $$('.bit-chip[data-vcat]').forEach(x => x.classList.toggle('active', x.dataset.vcat === (state.settings.vibeCat || 'anime')));
+  renderVcatChips();
+  const vs = $('#set-vsession');
+  if (vs) vs.checked = state.settings.vibeSession === true;
   const su = $('#set-updates');
   if (su) su.checked = state.settings.checkUpdates !== false;
   $$('.accent-chip').forEach(c => c.classList.toggle('active', c.dataset.accent === (state.settings.accent || 'neon')));
@@ -215,6 +217,9 @@ function bindLibraryUI() {
   $('#set-updates').addEventListener('change', e => saveSetting('checkUpdates', e.target.checked));
 
   bindEq();
+  bindVcatChips();
+  const vsb = $('#set-vsession');
+  if (vsb) vsb.addEventListener('change', e => saveSetting('vibeSession', e.target.checked));
   bindPlaylistDnD();
   $$('.bit-chip[data-bit]').forEach(ch => ch.addEventListener('click', async () => {
     await saveSetting('bitrate', ch.dataset.bit);

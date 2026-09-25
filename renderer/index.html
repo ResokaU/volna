@@ -276,6 +276,7 @@
         <canvas id="vibe-particles"></canvas>
         <div class="vibe-text" id="vibe-text"></div>
         <button class="toolbar-btn vibe-collapse" onclick="collapseVibe()">✕ Esc</button>
+        <button class="toolbar-btn vibe-reroll" onclick="rerollVibe()">🔄 Другой фон</button>
       </section>
 
       <section class="view" id="view-nowplaying">
@@ -468,13 +469,9 @@
           </div>
         <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Стиль фонов (Вайб)</h3>
-          <div class="eq-presets">
-            <button class="bit-chip active" data-vcat="anime">⛩ Аниме</button>
-            <button class="bit-chip" data-vcat="night">🌃 Ночь</button>
-            <button class="bit-chip" data-vcat="forest">🌲 Лес</button>
-            <button class="bit-chip" data-vcat="mountains">⛰ Горы</button>
-            <button class="bit-chip" data-vcat="city">🏙 Город</button>
-            <button class="bit-chip" data-vcat="nature">🌊 Природа</button>
+          <div class="eq-presets" id="vcat-chips" title="Перетаскивай, чтобы менять порядок"></div>
+          <div style="margin-top:10px">
+            <label class="toggle-row"><input type="checkbox" id="set-vsession"><span>Держать один фон на всю сессию (не менять с треком)</span></label>
           </div>
         </div>
         </div>

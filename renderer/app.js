@@ -662,6 +662,72 @@ function resumeLast() {
   playTrack(lt.track, 'single');
 }
 
+/* порядок категорий вайба — перетаскивается и сохраняется */
+function vibeOrder() {
+  const def = ['anime', 'night', 'forest', 'mountains', 'city', 'nature', 'neon'];
+  const saved = state.settings.vibeOrder;
+  if (!Array.isArray(saved)) return def;
+  return saved.filter(c => def.includes(c)).concat(def.filter(c => !saved.includes(c)));
+}
+function renderVcatChips() {
+  const box = $('#vcat-chips');
+  if (!box) return;
+  box.innerHTML = vibeOrder().map(cat => {
+    const icon = { anime:'⛩', night:'🌃', forest:'🌲', mountains:'⛰', city:'🏙', nature:'🌊', neon:'🌈' }[cat] || '🖼';
+    const label = { anime:'Аниме', night:'Ночь', forest:'Лес', mountains:'Горы', city:'Город', nature:'Природа', neon:'Неон' }[cat];
+    return '<button class="bit-chip' + (state.settings.vibeCat === cat ? ' active' : '') + '" data-vcat="' + cat + '" draggable="true">' + icon + ' ' + label + '</button>';
+  }).join('');
+}
+function bindVcatChips() {
+  const box = $('#vcat-chips');
+  if (!box) return;
+  box.addEventListener('click', async e => {
+    const ch = e.target.closest('.bit-chip');
+    if (!ch) return;
+    state.settings.vibeCat = ch.dataset.vcat;
+    await saveSetting('vibeCat', ch.dataset.vcat);
+    state.visual = null;
+    renderVcatChips();
+    if ($('#view-vibe')?.classList.contains('active')) renderVibe();
+    toast('🖼 Стиль фонов: ' + ch.textContent.trim(), 'success');
+  });
+  let dragEl = null;
+  box.addEventListener('dragstart', e => {
+    const ch = e.target.closest('.bit-chip');
+    if (!ch) return;
+    dragEl = ch;
+    ch.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  box.addEventListener('dragover', e => {
+    e.preventDefault();
+    const ch = e.target.closest('.bit-chip');
+    if (!ch || !dragEl || ch === dragEl) return;
+    const r = ch.getBoundingClientRect();
+    const before = (e.clientX - r.left) < r.width / 2;
+    ch.parentNode.insertBefore(dragEl, before ? ch : ch.nextSibling);
+  });
+  box.addEventListener('drop', async e => {
+    e.preventDefault();
+    if (!dragEl) return;
+    const order = [...box.querySelectorAll('.bit-chip')].map(x => x.dataset.vcat);
+    state.settings.vibeOrder = order;
+    await saveSetting('vibeOrder', order);
+    dragEl.classList.remove('dragging');
+    dragEl = null;
+    toast('🧩 Порядок категорий сохранён', 'success');
+  });
+  box.addEventListener('dragend', () => { if (dragEl) dragEl.classList.remove('dragging'); });
+}
+function rerollVibe() {
+  const t = state.currentTrack;
+  if (!t) { toast('Сначала включи трек', 'error'); return; }
+  state._vibeAttempt = (state._vibeAttempt || 0) + 1;
+  state.visual = null;
+  renderVibe();
+  toast('🔄 Ищу другой фон…');
+}
+
 /* ---------- 🌴 Вайб: тикток-вкладка ---------- */
 function renderVibe() {
   const t = state.currentTrack;
@@ -672,10 +738,18 @@ function renderVibe() {
     bg.classList.remove('loading');
     return;
   }
-  const ready = state.visual && state.visual.trackId === t.id;
-  bg.style.backgroundImage = ready ? 'url(' + state.visual.img + ')' : '';
-  bg.classList.toggle('loading', !ready);
-  if (state.visualMode) ensureVisual(t);
+  const cat = state.settings.vibeCat || 'anime';
+  if (cat === 'neon') {
+    bg.classList.add('vibe-neon');
+    bg.classList.remove('loading');
+    bg.style.backgroundImage = '';
+  } else {
+    bg.classList.remove('vibe-neon');
+    const ready = state.visual && state.visual.trackId === t.id && state.visual.img;
+    bg.style.backgroundImage = ready ? 'url(' + state.visual.img + ')' : '';
+    bg.classList.toggle('loading', !ready);
+    if (state.visualMode) ensureVisual(t);
+  }
   txt.textContent = (t.title || '').toUpperCase();
   state._vibeRt = t.id;
   startVibeParticles();
