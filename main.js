@@ -120,30 +120,74 @@ let rpcPending = null;     // последний статус, ждущий read
 let rpcRetryTimer = null;
 const rpcAssets = new Map(); // url обложки -> mp:external-ключ
 
-// Discord не берёт картинки по URL напрямую — маппим обложку через external-assets API.
-// API требует bot-токен приложения (портал → Bot → Reset Token); токен хранится
-// только локально в настройках. Без токена (или если API не ответил) — фолбэк
-// на загруженный в портал ассет volna_logo, статус работает в любом случае.
-async function rpcExternalAsset(url) {
-  if (!url) return 'volna_logo';
-  if (rpcAssets.has(url)) return rpcAssets.get(url);
+// Discord не принимает внешние URL в RPC. Двухшаговый флоу с бот-токеном:
+// скачать обложку → presign → PUT байтов → создать ассет с key = hash(url).
+// external-assets API (старый путь) Discord закрыл для ботов (20001).
+function rpcToken() { return (store.get('settings.discordBotToken') || '').trim(); }
+
+async function rpcUploadArtwork(url, tok) {
+  const res = await net.fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!buf.length || buf.length > 8 * 1024 * 1024) throw new Error('плохой размер обложки');
+  const type = res.headers.get('content-type') || 'image/jpeg';
+  const crypto = require('crypto');
+  const key = 'cov_' + crypto.createHash('md5').update(url).digest('hex').slice(0, 16);
+
+  const meta = JSON.stringify({ filename: key + '.img', file_size: buf.length });
+  const r1 = await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/assets/upload`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bot ' + tok },
+    body: meta, signal: AbortSignal.timeout(8000)
+  });
+  if (!r1.ok) throw new Error('presign ' + r1.status);
+  const slot = await r1.json();
+  const u = new URL(slot.upload_url);
+  const r2 = await net.fetch(u, { method: 'PUT', body: buf, headers: { 'Content-Type': type }, signal: AbortSignal.timeout(20000) });
+  if (!r2.ok) throw new Error('PUT ' + r2.status);
+  const fin = JSON.stringify({ upload_filename: slot.upload_filename, name: key, key });
+  const r3 = await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/assets`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bot ' + tok },
+    body: fin, signal: AbortSignal.timeout(8000)
+  });
+  if (!r3.ok) throw new Error('create ' + r3.status);
+  return key;
+}
+
+// у приложения лимит ассетов — чистим те, что не в текущем кэше
+async function rpcCleanupAssets(tok) {
   try {
-    const headers = { 'Content-Type': 'application/json' };
-    const tok = (store.get('settings.discordBotToken') || '').trim();
-    if (tok) headers.Authorization = 'Bot ' + tok;
-    const res = await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/external-assets`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ urls: [url] }),
-      signal: AbortSignal.timeout(8000)
+    const r = await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/assets`, {
+      headers: { 'Authorization': 'Bot ' + tok }, signal: AbortSignal.timeout(8000)
     });
-    if (res.ok) {
-      const arr = await res.json();
-      const mapped = Array.isArray(arr) && arr[0]?.external_asset_path;
-      if (mapped) { rpcAssets.set(url, mapped); return mapped; }
+    const arr = await r.json();
+    if (!Array.isArray(arr) || arr.length <= 260) return;
+    const keep = new Set([...rpcAssets.values()]);
+    for (const a of arr) {
+      if (keep.has(a.key)) continue;
+      try {
+        await net.fetch(`https://discord.com/api/v9/applications/${DISCORD_ID}/assets/${a.key}`, {
+          method: 'DELETE', headers: { 'Authorization': 'Bot ' + tok }, signal: AbortSignal.timeout(8000)
+        });
+      } catch (_) {}
     }
   } catch (_) {}
-  return 'volna_logo';
+}
+
+async function rpcExternalAsset(url) {
+  if (!url) return 'volna_logo';
+  const cached = rpcAssets.get(url);
+  if (cached) return cached;
+  const tok = rpcToken();
+  if (!tok) return 'volna_logo';
+  try {
+    const key = await rpcUploadArtwork(url, tok);
+    rpcAssets.set(url, key);
+    rpcCleanupAssets(tok);
+    return key;
+  } catch (e) {
+    console.warn('[RPC] обложка не загрузилась:', e && e.message);
+    return 'volna_logo';
+  }
 }
 
 async function initRpc() {
