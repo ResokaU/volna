@@ -153,6 +153,32 @@ async function doVibeSearch() {
   }));
 }
 
+/* 🌦 вайб по погоде: IP-геолокация → open-meteo (оба без ключей, с CORS) */
+async function weatherVibe() {
+  toast('🌦 Смотрю за окно…');
+  try {
+    const geo = await fetch('https://ipapi.co/json/').then(r => r.json());
+    if (!geo || !geo.latitude) throw new Error('геолокация не удалась');
+    const w = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + geo.latitude +
+      '&longitude=' + geo.longitude + '&current_weather=true').then(r => r.json());
+    const cw = w.current_weather || {};
+    const code = cw.weathercode;
+    let pick;
+    if ([95, 96, 99].includes(code)) pick = { cat: 'night', label: '⚡ Гроза — тёмный вайб' };
+    else if ([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) pick = { cat: 'city', label: '🌧 Дождь — городской вайб' };
+    else if ([71,73,75,77,85,86].includes(code)) pick = { cat: 'nature', label: '❄️ Снег — природа' };
+    else if ([45,48].includes(code)) pick = { cat: 'mountains', label: '🌫 Туман — горы' };
+    else if ([0,1].includes(code)) pick = cw.is_day ? { cat: 'nature', label: '☀️ Ясно — природа' } : { cat: 'night', label: '🌙 Ясная ночь' };
+    else pick = cw.is_day ? { cat: 'forest', label: '⛅ Облачно — лес' } : { cat: 'city', label: '🌙 Облачная ночь — город' };
+    state.settings.vibeCat = pick.cat;
+    await saveSetting('vibeCat', pick.cat);
+    renderVibe();
+    toast('🌦 ' + pick.label, 'success');
+  } catch (e) {
+    toast('Погоду не узнал: ' + (e && e.message || 'сеть'), 'error');
+  }
+}
+
 function collapseVibe() {
   switchView('home');
 }

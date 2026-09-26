@@ -74,6 +74,7 @@ function bindMediaKeys() {
     ipc.on('media:toggle', togglePlay);
     ipc.on('media:next', playNext);
     ipc.on('media:prev', playPrev);
+    ipc.on('media:like', () => { if (typeof likeCurrent === 'function') likeCurrent(); });
     ipc.on('media:stop', () => {
       if (state.engine === 'audio' && state.audio) state.audio.pause();
       else state.widget?.pause();
@@ -851,6 +852,15 @@ function bindPlayerControls() {
   bindVibeHotbar();
 
   const slider = $('#vol-slider'), volFill = $('#vol-fill');
+  // колесо мыши: громкость над регулятором и перемотка над прогресс-баром
+  const wheelVol = e => { e.preventDefault(); nudgeVolume(e.deltaY < 0 ? 0.05 : -0.05); };
+  if (slider) slider.addEventListener('wheel', wheelVol, { passive: false });
+  const volBtn = $('#vol-icon') && $('#vol-icon').closest('button');
+  if (volBtn) volBtn.addEventListener('wheel', wheelVol, { passive: false });
+  if (bar) bar.addEventListener('wheel', e => {
+    e.preventDefault();
+    seekBy(e.deltaY < 0 ? 10 : -10);
+  }, { passive: false });
   const volOf = e => {
     const r = slider.getBoundingClientRect();
     return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
@@ -1086,7 +1096,18 @@ function sendMiniSync(force) {
     pos = (state.audio.currentTime || 0) * 1000;
     dur = (state.audio.duration || 0) * 1000 || dur;
   }
-  try { ipc.send('mini:sync', { title: t.title, artist: displayArtist(t), art: artwork(t), isPlaying: state.isPlaying, pos, dur }); } catch (_) {}
+  try { ipc.send('mini:sync', { title: t.title, artist: displayArtist(t), art: artwork(t), isPlaying: state.isPlaying, pos, dur, liked: state.favorites.some(f => f.id === t.id) }); } catch (_) {}
+}
+
+/* быстрая перемотка на ±секунд (колесо мыши) */
+function seekBy(sec) {
+  if (state.engine === 'audio' && state.audio) {
+    try { state.audio.currentTime = Math.max(0, state.audio.currentTime + sec); } catch (_) {}
+  } else if (state.widget) {
+    try {
+      state.widget.getPosition(p => { try { state.widget.seekTo(Math.max(0, p / 1000 + sec)); } catch (_) {} });
+    } catch (_) {}
+  }
 }
 
 /* ---------- sleep timer ---------- */

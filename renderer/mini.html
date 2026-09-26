@@ -44,6 +44,7 @@ font-size:11px;opacity:.35;border:none;background:transparent;-webkit-app-region
   <button onclick="window.mini.action('prev')" title="Назад">⏮</button>
   <button id="pl" onclick="window.mini.action('toggle')" title="Play/Pause">▶</button>
   <button onclick="window.mini.action('next')" title="Вперёд">⏭</button>
+  <button id="like" onclick="window.mini.action('like')" title="Лайк">🤍</button>
 </div>
 <button id="close" onclick="window.mini.action('close')" title="Закрыть">✕</button>
 <script>
@@ -54,6 +55,7 @@ window.mini.sync(d => {
   if (d.art) document.getElementById('cov').src = d.art;
   document.getElementById('pl').textContent = d.isPlaying ? '⏸' : '▶';
   if (d.dur) document.getElementById('pf').style.width = Math.min(100, d.pos / d.dur * 100) + '%';
+  document.getElementById('like').textContent = d.liked ? '❤️' : '🤍';
   document.body.style.setProperty('--amb', d.art ? 'url(' + d.art + ')' : 'none');
 });
 </script>

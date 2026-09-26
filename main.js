@@ -49,7 +49,7 @@ ipcMain.on('mini:sync', (_e, data) => {
 
 ipcMain.on('mini:action', (_e, a) => {
   if (!win) return;
-  const map = { toggle: 'media:toggle', next: 'media:next', prev: 'media:prev' };
+  const map = { toggle: 'media:toggle', next: 'media:next', prev: 'media:prev', like: 'media:like' };
   if (map[a]) win.webContents.send(map[a]);
   if (a === 'close' && miniWin) miniWin.close();
 });
