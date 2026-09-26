@@ -33,7 +33,24 @@ function renderVibe() {
   }
   renderVShaderChips();
   if (typeof updateVibeUI === 'function') updateVibeUI(state._lastPosMs, state._lastDurMs); // хотбар сразу с актуальными данными
-  if (state.vibeShader && state.vibeShader !== 'off') VibeGL.start($('#vibe-gl'), state.vibeShader);
+  const glCanvas = $('#vibe-gl'), bcCanvas = $('#vibe-bc'), view = $('#view-vibe');
+  view?.classList.remove('md-on');
+  if (state.vibeShader === 'milkdrop') {
+    // 🌀 настоящий MilkDrop: butterchurn рисует в свой канвас, GL-шейдеры спят
+    if (glCanvas) glCanvas.style.display = 'none';
+    VibeGL.stop();
+    if (bcCanvas) bcCanvas.style.display = ''; // показывает класс .md-on
+    view?.classList.add('md-on');
+    MilkdropGL.start(bcCanvas).then(ok => { if (!ok) { state.vibeShader = 'off'; renderVibe(); } });
+    renderMdCtl(true);
+  } else {
+    renderMdCtl(false);
+    view?.classList.remove('md-on'); // bc-канвас прячется классом, инлайн не трогаем
+    if (state.vibeShader && state.vibeShader !== 'off') {
+      VibeGL.start(glCanvas, state.vibeShader);
+      if (glCanvas) glCanvas.style.display = 'block';
+    }
+  }
   const cat = state.settings.vibeCat || 'anime';
   const glOn = state.vibeShader && state.vibeShader !== 'off';
   $('#view-vibe')?.classList.toggle('gl-on', glOn);
@@ -57,7 +74,8 @@ function renderVShaderChips() {
   const box = $('#vshader-chips');
   if (!box) return;
   const items = [{ id: 'off', label: '🖼 Выкл' }].concat(
-    Object.keys(window.VIBE_SHADERS || {}).map(k => ({ id: k, label: (window.VIBE_SHADERS[k].name || k) }))
+    Object.keys(window.VIBE_SHADERS || {}).map(k => ({ id: k, label: (window.VIBE_SHADERS[k].name || k) })),
+    [{ id: 'milkdrop', label: '🌀 Милкдроп' }]
   );
   box.innerHTML = items.map(it =>
     '<button class="bit-chip' + (state.vibeShader === it.id ? ' active' : '') + '" data-shader="' + it.id + '">' + it.label + '</button>'
@@ -67,10 +85,43 @@ function renderVShaderChips() {
     renderVShaderChips();
     const canvas = $('#vibe-gl');
     if (!canvas) return;
-    if (state.vibeShader === 'off') { canvas.style.display = 'none'; VibeGL.stop(); renderVibe(); }
-    else { canvas.style.display = 'block'; VibeGL.start(canvas, state.vibeShader); }
+    if (state.vibeShader === 'off') {
+      canvas.style.display = 'none'; VibeGL.stop(); MilkdropGL.stop(); renderVibe();
+    } else if (state.vibeShader === 'milkdrop') {
+      renderVibe(); // md-ветка сама переключит канвасы и покажет контролы
+    } else {
+      MilkdropGL.stop();
+      renderVibe();
+    }
     saveSetting('vibeShader', state.vibeShader);
   }));
+}
+
+/* 🌀 контролы милкдропа внутри fx-панели */
+function renderMdCtl(show) {
+  const ctl = $('#vibe-md-ctl');
+  if (!ctl) return;
+  ctl.classList.toggle('show', show);
+  if (!show) return;
+  const nameEl = $('#vibe-md-name');
+  if (nameEl && typeof MilkdropGL !== 'undefined' && MilkdropGL.getName()) {
+    nameEl.textContent = MilkdropGL.getName();
+  }
+  if (renderMdCtl._bound) return;
+  renderMdCtl._bound = true;
+  MilkdropGL.onPreset(name => { const el = $('#vibe-md-name'); if (el) el.textContent = name; });
+  $('#vibe-md-rand').addEventListener('click', () => MilkdropGL.random());
+  $('#vibe-md-next').addEventListener('click', () => MilkdropGL.next());
+  const autoBtn = $('#vibe-md-auto');
+  autoBtn.classList.toggle('active', state.settings.vibeMdAuto === true);
+  autoBtn.addEventListener('click', async () => {
+    const on = !(state.settings.vibeMdAuto === true);
+    state.settings.vibeMdAuto = on;
+    autoBtn.classList.toggle('active', on);
+    MilkdropGL.setAuto(on);
+    await saveSetting('vibeMdAuto', on);
+  });
+  if (state.settings.vibeMdAuto === true) MilkdropGL.setAuto(true);
 }
 
 /* 🔎 поиск картинок на фон (многоисточниковый) */

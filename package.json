@@ -1,7 +1,7 @@
 {
   "name": "volna",
   "productName": "VOLNA",
-  "version": "6.3.0",
+  "version": "6.4.0",
   "description": "Beautiful SoundCloud desktop player — waves, lyrics, neon",
   "author": "ResokaU",
   "license": "MIT",
@@ -50,6 +50,8 @@
     }
   },
   "dependencies": {
+    "butterchurn": "^2.6.7",
+    "butterchurn-presets": "^2.4.7",
     "discord-rpc": "^4.0.1",
     "electron-store": "^8.1.0",
     "qrcode": "^1.5.4"

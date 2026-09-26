@@ -179,5 +179,38 @@ void main() {
   col += u_accent * u_beat * 0.18;
   gl_FragColor = vec4(col, 1.0);
 }`
+  },
+  apoll: {
+    name: 'Аполлоний',
+    frag: `
+void main() {
+  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
+  float t = u_time * 0.2;
+  vec3 ro = vec3(0.9 * sin(t), 0.4 * sin(t * 1.3), 1.5 + 0.5 * sin(t * 0.7) - u_bass * 0.35);
+  vec3 rd = normalize(vec3(uv, 1.4));
+  mat2 R = mat2(cos(t * 0.3), -sin(t * 0.3), sin(t * 0.3), cos(t * 0.3));
+  rd.xz = R * rd.xz; ro.xz = R * ro.xz;
+  float s = 1.0 + u_bass * 0.18;   // бас раздувает гаскет
+  float dist = 0.0, glow = 0.0;
+  for (int i = 0; i < 48; i++) {
+    vec3 q = ro + rd * dist;
+    float sc = 1.0;
+    for (int j = 0; j < 6; j++) {
+      q = -1.0 + 2.0 * fract(0.5 * q + 0.5);
+      float r2 = dot(q, q);
+      float k = s / max(r2, 0.05);
+      q *= k; sc *= k;
+    }
+    float d = max(0.22 * abs(q.y) / sc, 0.0015);
+    glow += 0.02 / (d * 40.0 + 0.08);
+    dist += d * 0.8;
+    if (dist > 4.0) break;
+  }
+  vec3 col = u_accent * glow * 0.35;
+  col += vec3(1.0) * pow(glow * 0.05, 3.0);
+  col += u_accent * u_beat * 0.1;
+  col *= 1.0 - 0.25 * length(uv);
+  gl_FragColor = vec4(col, 1.0);
+}`
   }
 };

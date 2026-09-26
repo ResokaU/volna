@@ -274,6 +274,7 @@
         <div class="vibe-bg" id="vibe-bg"></div>
         <div class="vibe-shade"></div>
         <canvas id="vibe-gl"></canvas>
+        <canvas id="vibe-bc"></canvas>
         <canvas id="vibe-particles"></canvas>
         <div class="vibe-text" id="vibe-text"></div>
         <div class="vibe-player" id="vibe-player">
@@ -305,6 +306,12 @@
         </div>
         <div class="vibe-panel" id="vibe-fx-panel">
           <div class="eq-presets" id="vshader-chips"></div>
+          <div id="vibe-md-ctl">
+            <button class="md-btn" id="vibe-md-rand" title="Случайный пресет">🎲 Случайный</button>
+            <button class="md-btn" id="vibe-md-next" title="Следующий пресет">⏭ Следующий</button>
+            <button class="md-btn" id="vibe-md-auto" title="Автосмена пресетов по таймеру">⏱ Автосмена</button>
+            <span id="vibe-md-name"></span>
+          </div>
         </div>
         <div class="vibe-panel" id="vibe-search-panel">
           <div class="vibe-tools">
@@ -766,6 +773,7 @@
 <script src="vibe-shaders.js"></script>
 <script src="vibe-gl.js"></script>
 <script src="vibe.js"></script>
+<script src="vibe-md.js"></script>
 <script>init();</script>
 </body>
 </html>
