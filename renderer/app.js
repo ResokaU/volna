@@ -281,7 +281,8 @@ const PALETTE_CMDS = [
   { t: 'Статистика', k: '7', run: () => switchView('stats') },
   { t: 'Настройки', k: '8', run: () => switchView('settings') },
   { t: 'Текст песни', k: '', run: () => switchView('lyrics') },
-  { t: 'Комната-волна', k: '', run: () => openRooms() }
+  { t: 'Комната-волна', k: '', run: () => openRooms() },
+  { t: 'Волна года (Wrapped)', k: '', run: () => openWrapped() }
 ];
 
 let paletteItems = [], paletteIdx = 0, paletteTimer = null;
@@ -724,6 +725,44 @@ function bindVcatChips() {
 function collapseNp() {
   switchView(state.npBack || 'home');
 }
+
+/* 🎊 пасхалка: набери на клавиатуре «волна» */
+let _keyBuf = '';
+function confettiBurst() {
+  let cv = $('#confetti');
+  if (!cv) { cv = document.createElement('canvas'); cv.id = 'confetti'; document.body.appendChild(cv); }
+  cv.width = innerWidth; cv.height = innerHeight;
+  cv.style.cssText = 'position:fixed;inset:0;z-index:900;pointer-events:none';
+  const ctx = cv.getContext('2d');
+  const cs = getComputedStyle(document.body);
+  const colors = ['--accent', '--accent2', '--acid'].map(v => cs.getPropertyValue(v).trim() || '#b14aff');
+  const P = Array.from({ length: 140 }, () => ({
+    x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * 0.3,
+    r: 4 + Math.random() * 6, vy: 2 + Math.random() * 4, vx: -1.5 + Math.random() * 3,
+    rot: Math.random() * Math.PI, vr: -0.12 + Math.random() * 0.24,
+    c: colors[Math.floor(Math.random() * colors.length)]
+  }));
+  let frames = 0;
+  (function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    P.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+      ctx.restore();
+    });
+    if (++frames < 240) requestAnimationFrame(draw); else cv.remove();
+  })();
+}
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,textarea,select,[contenteditable]')) return;
+  _keyBuf = (_keyBuf + (e.key || '')).toLowerCase().slice(-5);
+  if (_keyBuf === 'волна') {
+    _keyBuf = '';
+    confettiBurst();
+    toast('🌊 Ты поймал волну!', 'success');
+  }
+});
 
 /* ---------- пасхалки (тихие, свои) ---------- */
 const EASTER_EGGS = [

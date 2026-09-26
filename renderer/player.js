@@ -1110,6 +1110,23 @@ function seekBy(sec) {
   }
 }
 
+/* FFT-полосы для мини-плеера (8 бандов) */
+function sendMiniFft() {
+  if (!ipc || !state.analyser || !state.isPlaying) return;
+  try {
+    const d = new Uint8Array(state.analyser.frequencyBinCount);
+    state.analyser.getByteFrequencyData(d);
+    const seg = Math.max(1, Math.floor(d.length / 8));
+    const bands = [];
+    for (let i = 0; i < 8; i++) {
+      let s = 0;
+      for (let j = i * seg; j < (i + 1) * seg; j++) s += d[j];
+      bands.push(Math.round((s / seg / 255) * 100));
+    }
+    ipc.send('mini:fft', bands);
+  } catch (_) {}
+}
+
 /* ---------- sleep timer ---------- */
 function setSleepTimer() {
   const raw = $('#sleep-duration').value;
@@ -1185,6 +1202,7 @@ function startVizLoop() {
   setInterval(() => {
     const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2;
     ctx.clearRect(0, 0, W, H);
+    if (state.mini) sendMiniFft(); // живой эквалайзер в мини-плеере
     if (!state.isPlaying) return;
     const bars = 36;
     // реальный спектр через Web Audio (когда CORS позволяет), иначе псевдо-анимация

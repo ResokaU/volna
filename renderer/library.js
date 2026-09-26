@@ -736,6 +736,87 @@ function renderStats() {
   renderHeatmap();
 }
 
+/* 🌊 Волна года: кинематографичное слайд-шоу по статистике */
+function wrappedData() {
+  const s = state.stats;
+  const top = topArtists();
+  const tc = new Map();
+  state.history.forEach(t => { const k = t.title || '—'; tc.set(k, (tc.get(k) || 0) + 1); });
+  const topTracks = [...tc.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const totalH = Math.floor((s.totalTime || 0) / 3600000);
+  const totalM = Math.round(((s.totalTime || 0) % 3600000) / 60000);
+  const timeLabel = totalH ? totalH + ' ч ' + totalM + ' м' : Math.round((s.totalTime || 0) / 60000) + ' м';
+  return { year: new Date().getFullYear(), played: s.totalPlayed || 0, timeLabel, top, topTracks,
+    likes: state.favorites.length, playlists: state.playlists.length };
+}
+
+function openWrapped() {
+  const d = wrappedData();
+  const slides = [
+    `<div class="wr-emoji">🌊</div><h1 class="grad-anim" style="font-size:clamp(40px,9vw,96px)">Волна года</h1><p class="wr-sub">${d.year} · VOLNA</p>`,
+    `<div class="wr-big">${d.played}</div><p class="wr-sub">треков прослушано</p>`,
+    `<div class="wr-big">${d.timeLabel}</div><p class="wr-sub">времени в волнах</p>`,
+    d.top.length
+      ? `<div class="wr-big grad-anim" style="font-size:clamp(28px,6vw,72px)">${escapeHtml(d.top[0].name)}</div><p class="wr-sub">твой артист года · ${d.top[0].count} проигрываний</p>`
+      : `<div class="wr-emoji">🎧</div><p class="wr-sub">Слушай больше — и появится твой артист года</p>`,
+    d.topTracks.length
+      ? `<div class="wr-list">${d.topTracks.map(([t, c], i) =>
+          `<div class="wr-row"><span class="wr-n">${i + 1}</span><span class="wr-t">${escapeHtml(t)}</span><span class="wr-c">×${c}</span></div>`).join('')}</div><p class="wr-sub">топ треков</p>`
+      : `<div class="wr-emoji">🎶</div><p class="wr-sub">История пуста — включи первый трек</p>`,
+    `<div class="wr-big">${d.likes}</div><p class="wr-sub">лайков · ${d.playlists} плейлистов</p>`,
+    `<div class="wr-emoji">🌊</div><h1 class="grad-anim" style="font-size:clamp(40px,9vw,96px)">Слушай волну</h1><p class="wr-sub">VOLNA · с тобой каждый день</p>`
+  ];
+  window._wrSlides = slides;
+  window._wrIdx = 0;
+  renderWrapped();
+  $('#wrapped').classList.add('show');
+}
+
+function renderWrapped() {
+  const slides = window._wrSlides, idx = window._wrIdx;
+  $('#wr-slide').innerHTML = slides[idx];
+  $('#wr-dots').innerHTML = slides.map((_, i) => `<span class="wr-dot${i === idx ? ' on' : ''}"></span>`).join('');
+}
+
+function wrappedNav(d) {
+  const n = (window._wrIdx + d + window._wrSlides.length) % window._wrSlides.length;
+  window._wrIdx = n;
+  renderWrapped();
+}
+
+function closeWrapped() { $('#wrapped').classList.remove('show'); }
+
+document.addEventListener('keydown', e => {
+  const w = $('#wrapped');
+  if (!w || !w.classList.contains('show')) return;
+  if (e.key === 'ArrowRight') wrappedNav(1);
+  else if (e.key === 'ArrowLeft') wrappedNav(-1);
+  else if (e.key === 'Escape') closeWrapped();
+});
+
+/* 🔗 импорт плейлиста SoundCloud по ссылке */
+async function importPlaylistUrl() {
+  const el = $('#pl-import-url');
+  const url = (el ? el.value : '').trim();
+  if (!url || !/soundcloud\.com/i.test(url)) { toast('Вставь ссылку на плейлист или сет SoundCloud', 'error'); return; }
+  toast('🔗 Импортирую плейлист…');
+  try {
+    const cid = await ensureClientId();
+    const data = await scJson('https://api-v2.soundcloud.com/resolve?url=' + encodeURIComponent(url) + '&client_id=' + cid);
+    const tracks = (data && Array.isArray(data.tracks) ? data.tracks : []).map(normalizeTrack).filter(Boolean);
+    if (!tracks.length) { toast('По ссылке не нашлось треков', 'error'); return; }
+    tracks.forEach(t => rememberTrack(t));
+    state.playlists.push({ id: Date.now(), name: data.title || 'Импорт', desc: '', tracks, createdAt: new Date().toISOString() });
+    await persistPlaylists();
+    updateBadges();
+    if (el) el.value = '';
+    if ($('#view-playlists')?.classList.contains('active')) renderPlaylists();
+    toast('🔗 Импортировано: ' + (data.title || 'плейлист') + ' · ' + tracks.length + ' треков', 'success');
+  } catch (e) {
+    toast('Не вышло импортировать: ' + (e && e.message || 'сеть'), 'error');
+  }
+}
+
 /* heatmap активности за 14 недель (по истории) */
 function renderHeatmap() {
   const el = $('#heatmap');
@@ -1085,7 +1166,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '6.8.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '7.0.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

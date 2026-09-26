@@ -946,7 +946,17 @@ app.whenReady().then(async () => {
     globalShortcut.register('MediaNextTrack', () => win?.webContents.send('media:next'));
     globalShortcut.register('MediaPreviousTrack', () => win?.webContents.send('media:prev'));
     globalShortcut.register('MediaStop', () => win?.webContents.send('media:stop'));
+    // Босс-режим: мгновенно спрятать/показать окно
+    globalShortcut.register('Control+Shift+H', () => {
+      if (!win) return;
+      if (win.isVisible()) win.hide(); else { win.show(); win.focus(); }
+    });
   } catch (_) {}
+
+  // мини-плеер: живой эквалайзер (рендерер шлёт 8 полос, форвардим в мини-окно)
+  ipcMain.on('mini:fft', (_e, data) => {
+    if (miniWin && !miniWin.isDestroyed()) miniWin.webContents.send('mini:fft', data);
+  });
 });
 
 app.on('second-instance', () => {

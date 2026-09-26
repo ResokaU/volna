@@ -694,6 +694,31 @@ background:rgba(255,61,110,.1);border:1px solid rgba(255,61,110,.3);color:#ff6d9
 font-family:inherit;font-size:12px;font-weight:700;transition:.15s}
 .rooms-leave:hover{background:rgba(255,61,110,.2)}
 
+/* ============ v7.0: 🌊 Волна года (Wrapped) ============ */
+#wrapped{position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;
+background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 55%),
+radial-gradient(circle at 70% 80%,color-mix(in srgb,var(--accent2) 18%,transparent),transparent 55%),#0a0a12;cursor:none}
+#wrapped.show{display:flex}
+.wr-slide{text-align:center;max-width:80vw;animation:wrIn .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes wrIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+.wr-emoji{font-size:64px;margin-bottom:10px}
+.wr-big{font-family:'Unbounded','Golos Text',sans-serif;font-size:clamp(56px,12vw,140px);font-weight:900;line-height:1.05;color:#fff}
+.wr-sub{font-size:16px;color:#9a9ab0;margin-top:16px}
+.wr-list{display:flex;flex-direction:column;gap:10px;align-items:center}
+.wr-row{display:flex;gap:14px;align-items:center;font-size:17px;font-weight:700;color:#fff;
+background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:12px 20px;min-width:min(420px,70vw)}
+.wr-n{color:var(--acid);font-weight:900}
+.wr-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-c{margin-left:auto;color:#9a9ab0;font-weight:500}
+.wr-nav{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.wr-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);transition:.2s}
+.wr-dot.on{background:var(--acid);box-shadow:0 0 8px var(--acid)}
+.wr-close{position:fixed;top:20px;right:24px;width:40px;height:40px;border-radius:50%;cursor:none;
+background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:16px}
+.wr-arrow{position:fixed;top:50%;transform:translateY(-50%);font-size:44px;color:#fff;background:none;border:none;cursor:none;opacity:.45;transition:.2s;font-family:inherit}
+.wr-arrow:hover{opacity:1}
+.wr-arrow.left{left:28px}.wr-arrow.right{right:28px}
+
 /* ============ v6.6: подсказки в настройках ============ */
 .setting-hint{font-size:11px;color:#8a8aa0;line-height:1.5;margin:6px 0 0}
 

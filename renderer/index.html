@@ -357,6 +357,10 @@
           </div>
           <button class="search-btn" style="padding:10px 20px;font-size:13px" onclick="openNewPlaylistModal()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>Новый</button>
         </div>
+        <div class="toolbar" style="margin-bottom:14px">
+          <input type="text" id="pl-import-url" class="fav-filter" style="flex:1;max-width:420px" placeholder="Импорт: вставь ссылку на плейлист/сет SoundCloud…">
+          <button class="toolbar-btn" onclick="importPlaylistUrl()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-download"/></svg>Импортировать</button>
+        </div>
         <div class="tracks" id="playlists-grid"></div>
       </section>
 
@@ -434,7 +438,10 @@
             <h2 class="section-title">Statistics</h2>
             <div class="section-sub">Твоя статистика</div>
           </div>
-          <button class="toolbar-btn danger" onclick="resetStats()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Сбросить</button>
+          <div style="display:flex;gap:8px">
+            <button class="toolbar-btn" onclick="openWrapped()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна года</button>
+            <button class="toolbar-btn danger" onclick="resetStats()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Сбросить</button>
+          </div>
         </div>
         <div class="stats-grid" id="stats-grid"></div>
         <div class="section-head" style="margin-top:40px">
@@ -674,6 +681,14 @@
   <div class="time-row"><span id="time-cur">0:00</span><span id="time-dur">0:00</span></div>
 </div>
 
+<div id="wrapped">
+  <div class="wr-slide" id="wr-slide"></div>
+  <button class="wr-arrow left" onclick="wrappedNav(-1)">‹</button>
+  <button class="wr-arrow right" onclick="wrappedNav(1)">›</button>
+  <div class="wr-nav" id="wr-dots"></div>
+  <button class="wr-close" onclick="closeWrapped()">✕</button>
+</div>
+
 <div class="modal" id="rooms_modal">
   <div class="modal-content rooms-modal">
     <button class="modal-close" onclick="closeModal('rooms_modal')">×</button>
@@ -719,6 +734,7 @@
       <li><span>Like current</span><span class="kbd">L</span></li>
       <li><span>Mini player</span><span class="kbd">M</span></li>
       <li><span>Разделы</span><span class="kbd">1–8</span></li>
+      <li><span>Босс-режим (спрятать окно)</span><span class="kbd">Ctrl + Shift + H</span></li>
       <li><span>Shortcuts</span><span class="kbd">F1</span></li>
       <li><span>Quit</span><span class="kbd">Ctrl+Q</span></li>
     </ul>

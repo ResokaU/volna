@@ -16,7 +16,8 @@ filter:blur(46px) saturate(1.7);opacity:.28;z-index:0;pointer-events:none}
 background:#181820;z-index:1;box-shadow:0 10px 30px -8px rgba(0,0,0,.7)}
 .info{flex:1;min-width:0;z-index:1}
 #t{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#a{font-size:11px;color:#9a9ab0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 0 10px}
+#a{font-size:11px;color:#9a9ab0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 0 6px}
+#fft{width:100%;height:22px;opacity:.85}
 #p{height:4px;background:rgba(255,255,255,.13);border-radius:9px;overflow:hidden}
 #pf{height:100%;background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);border-radius:9px;width:0%}
 .row{display:flex;align-items:center;gap:8px;-webkit-app-region:no-drag;z-index:1}
@@ -38,6 +39,7 @@ font-size:11px;opacity:.35;border:none;background:transparent;-webkit-app-region
 <div class="info">
   <div id="t">VOLNA</div>
   <div id="a">мини-плеер</div>
+  <canvas id="fft" width="180" height="22"></canvas>
   <div id="p"><div id="pf"></div></div>
 </div>
 <div class="row">
@@ -58,6 +60,19 @@ window.mini.sync(d => {
   document.getElementById('like').textContent = d.liked ? '❤️' : '🤍';
   document.body.style.setProperty('--amb', d.art ? 'url(' + d.art + ')' : 'none');
 });
+const fftC = document.getElementById('fft'), fftX = fftC.getContext('2d');
+let bands = new Array(8).fill(0);
+window.mini.onFft(b => { bands = b; });
+(function drawFft() {
+  requestAnimationFrame(drawFft);
+  fftX.clearRect(0, 0, fftC.width, fftC.height);
+  const bw = fftC.width / 8;
+  for (let i = 0; i < 8; i++) {
+    const h = Math.max(2, (bands[i] || 0) / 100 * fftC.height);
+    fftX.fillStyle = 'rgba(177,74,255,.85)';
+    fftX.fillRect(i * bw + 2, fftC.height - h, bw - 4, h);
+  }
+})();
 </script>
 </body>
 </html>
