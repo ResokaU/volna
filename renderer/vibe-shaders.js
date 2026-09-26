@@ -89,5 +89,95 @@ void main() {
   }
   gl_FragColor = vec4(col, 1.0);
 }`
+  },
+  milk: {
+    name: 'Молоко',
+    frag: `
+void main() {
+  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
+  float t = u_time * 0.35;
+  vec2 p = uv;
+  for (float i = 1.0; i < 5.0; i++) {
+    p.x += 0.32 / i * sin(i * 3.0 * p.y + t * 2.0 + u_bass * 2.0) + 0.12 * sin(p.x * 2.0 - t);
+    p.y += 0.32 / i * cos(i * 2.4 * p.x + t * 1.7 - u_beat * 1.5);
+  }
+  float v = 0.5 + 0.5 * sin(p.x * 3.0 + p.y * 2.0);
+  vec3 col = mix(vec3(0.04, 0.03, 0.09), vec3(0.98, 0.97, 0.92), v * v * 0.35);
+  col = mix(col, u_accent, v * 0.55 * (0.4 + u_bass));
+  col += u_accent * u_beat * 0.25 * smoothstep(0.8, 0.0, length(uv));
+  col *= 1.0 - 0.3 * length(uv);
+  gl_FragColor = vec4(col, 1.0);
+}`
+  },
+  pulse: {
+    name: 'Пульс',
+    frag: `
+float band(float i) {
+  float s = 0.0;
+  for (int k = 0; k < 8; k++) {
+    s += u_bands[k] * clamp(1.0 - abs(i - float(k)), 0.0, 1.0);
+  }
+  return s;
+}
+void main() {
+  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
+  float r = length(uv);
+  float a = atan(uv.y, uv.x);
+  float n = band((a / 6.2831 + 0.5) * 8.0);
+  float spike = n * 0.55 * (0.3 + u_bass);
+  float edge = smoothstep(0.02, 0.0, abs(r - 0.25 - spike));
+  float core = smoothstep(0.28 + u_bass * 0.15 + u_beat * 0.05, 0.0, r);
+  vec3 col = vec3(0.02, 0.02, 0.05);
+  col += u_accent * edge * (0.8 + n);
+  col += mix(u_accent, vec3(1.0), 0.55) * core * (0.35 + u_bass * 1.2);
+  col += u_accent * 0.25 * smoothstep(0.6, 0.2, abs(r - 0.6)) * u_high;
+  gl_FragColor = vec4(col, 1.0);
+}`
+  },
+  grid: {
+    name: 'Сетка',
+    frag: `
+void main() {
+  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
+  vec3 col = vec3(0.02, 0.02, 0.06);
+  float h = -0.15 + u_bass * 0.05;
+  if (uv.y < h) {
+    float z = 1.0 / (h - uv.y);
+    float x = uv.x * z * 0.5 + u_time * 1.2;
+    float zz = z * 0.5 - u_time * 2.0;
+    vec2 g = abs(fract(vec2(x, zz)) - 0.5);
+    float line = smoothstep(0.47, 0.5, max(g.x, g.y));
+    float fade = exp(-z * 0.12);
+    col += u_accent * line * fade * (1.2 + u_bass);
+  } else {
+    float sun = smoothstep(0.42 + u_beat * 0.04, 0.0, length(uv - vec2(0.0, 0.22)));
+    float stripe = step(0.5, sin((uv.y - 0.22) * 60.0 + u_time * 3.0) * 0.5 + 0.5);
+    col += mix(u_accent, vec3(1.0, 0.4, 0.6), 0.4) * sun * (0.55 + u_bass * 0.5);
+    col *= 1.0 - stripe * sun * 0.6;
+    col += vec3(0.10, 0.06, 0.2) * smoothstep(0.4, -0.1, uv.y);
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`
+  },
+  silk: {
+    name: 'Шёлк',
+    frag: `
+void main() {
+  vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
+  float t = u_time * 0.4;
+  vec2 p = uv * 1.6;
+  float m = 0.0, amp = 0.55;
+  mat2 R = mat2(0.8, 0.6, -0.6, 0.8);
+  for (float i = 0.0; i < 5.0; i++) {
+    m += amp * sin(p.x * 2.0 + t * 1.3) * sin(p.y * 2.0 - t * 1.1 + u_bass * 1.5);
+    p = R * p * 1.35 + vec2(t * 0.2, -t * 0.15);
+    amp *= 0.55;
+  }
+  float v = 0.5 + 0.5 * sin(m * 2.2 + u_time * 0.5);
+  vec3 col = mix(vec3(0.03, 0.02, 0.08), u_accent * 1.2, v);
+  col += vec3(1.0) * pow(v, 6.0) * (0.4 + u_high);
+  col += u_accent * u_beat * 0.18;
+  gl_FragColor = vec4(col, 1.0);
+}`
   }
 };

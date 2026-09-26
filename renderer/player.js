@@ -406,10 +406,26 @@ function saveLastTrack(posMs, durMs) {
   }).catch(() => {});
 }
 
-/* 🌴 вайб: гигантский текст = строка караоке / название */
-function updateVibeUI(posMs) {
+/* 🌴 вайб: гигантский текст = строка караоке / название + хотбар */
+function updateVibeUI(posMs, durMs) {
   if (!$('#view-vibe')?.classList.contains('active')) return;
   const t = state.currentTrack;
+  // хотбар вайба
+  const art = $('#vp-art'), pt = $('#vp-title'), pa = $('#vp-artist'), pf = $('#vp-pf');
+  if (pt && t) {
+    pt.textContent = t.title || '—';
+    pa.textContent = displayArtist(t);
+    if (art && art.dataset.tid !== String(t.id)) { art.dataset.tid = String(t.id); art.src = artwork(t); }
+    if (pf && durMs && !seekDragging) pf.style.width = Math.min(100, (posMs || 0) / durMs * 100) + '%';
+    const vc = $('#vp-time-cur'), vd = $('#vp-time-dur');
+    if (vc) vc.textContent = formatTime((posMs || 0) / 1000);
+    if (vd) vd.textContent = formatTime((durMs || 0) / 1000);
+    const hb = $('#vp-like');
+    if (hb) {
+      hb.dataset.id = t.id;
+      hb.classList.toggle('liked', state.favorites.some(f => f.id === t.id));
+    }
+  }
   const el = $('#vibe-text');
   if (!el || !t) return;
   const L = state.lyrics;
@@ -422,15 +438,6 @@ function updateVibeUI(posMs) {
     el.classList.add('pop');
   }
 }
-  // хотбар вайба
-  const art = $('#vp-art'), pt = $('#vp-title'), pa = $('#vp-artist'), pf = $('#vp-pf'), pp = $('#vp-play');
-  if (pt && t) {
-    pt.textContent = t.title || '—';
-    pa.textContent = displayArtist(t);
-    if (art) art.src = artwork(t);
-    if (pp) pp.textContent = state.isPlaying ? '⏸' : '▶';
-    if (pf && durMs) pf.style.width = Math.min(100, (posMs || 0) / durMs * 100) + '%';
-  }
 
 /* синк прогресса/времени Now Playing из тика плеера */
 function updateNpUI(posMs, durMs) {
@@ -614,7 +621,7 @@ function togglePlay() {
 function updatePlayIcon() {
   document.body.classList.toggle('playing', state.isPlaying); // для спин-анимаций пасхалок
   const ref = state.isPlaying ? '#i-pause' : '#i-play';
-  ['#play-icon', '#mini-play-icon', '#np-play-icon'].forEach(id => {
+  ['#play-icon', '#mini-play-icon', '#np-play-icon', '#vp-play-icon'].forEach(id => {
     const u = $(id);
     if (u) u.setAttribute('href', ref);
   });
@@ -706,7 +713,7 @@ function updateProgressUI() {
     if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
     mediaSessionPosition(pos / 1000, dur / 1000);
     updateNpUI(pos, dur);
-    updateVibeUI(pos);
+    updateVibeUI(pos, dur);
     drawWave(pos, dur);
     pushRemoteState(pos, dur);
     saveLastTrack(pos, dur);
@@ -723,12 +730,53 @@ function updateProgressUI() {
       handleListenThreshold(pos, dur);
       if (typeof updateLyricsSync === 'function') updateLyricsSync(pos);
       updateNpUI(pos, dur);
-      updateVibeUI(pos);
+      updateVibeUI(pos, dur);
       drawWave(pos, dur);
       pushRemoteState(pos, dur);
       sendMiniSync();
     });
   });
+}
+
+/* хотбар вайба: перемотка по бару + тултип времени */
+function bindVibeHotbar() {
+  const bar = $('#vp-bar'), fill = $('#vp-pf');
+  if (!bar || !fill) return;
+  let seeking = false;
+  const pctOf = e => {
+    const r = bar.getBoundingClientRect();
+    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  };
+  bar.addEventListener('pointerdown', e => {
+    if (!state.currentTrack) return;
+    seeking = true; seekDragging = true;
+    bar.setPointerCapture(e.pointerId);
+    fill.style.width = pctOf(e) * 100 + '%';
+  });
+  bar.addEventListener('pointermove', e => { if (seeking) fill.style.width = pctOf(e) * 100 + '%'; });
+  bar.addEventListener('pointerup', e => {
+    if (!seeking) return;
+    seeking = false; seekDragging = false;
+    const pct = pctOf(e);
+    if (state.lyrics) state.lyrics.lastIdx = null; // подсветка строки сразу перескочит
+    if (state.engine === 'audio' && state.audio) {
+      if (state.audio.duration) state.audio.currentTime = pct * state.audio.duration;
+    } else if (state.widget) {
+      state.widget.getDuration(dur => { if (dur) state.widget.seekTo(pct * dur); });
+    }
+  });
+  // клик по бару не должен проваливаться в .vp-info (открытие Now Playing)
+  bar.addEventListener('click', e => e.stopPropagation());
+  const tip = $('#vp-seek-tip');
+  if (tip) {
+    bar.addEventListener('pointermove', e => {
+      const r = bar.getBoundingClientRect();
+      tip.style.left = Math.min(Math.max(e.clientX - r.left, 22), r.width - 22) + 'px';
+      tip.textContent = formatTime(pctOf(e) * (state.currentTrack?.duration || 0) / 1000);
+    });
+    bar.addEventListener('pointerenter', () => tip.classList.add('show'));
+    bar.addEventListener('pointerleave', () => tip.classList.remove('show'));
+  }
 }
 
 function bindPlayerControls() {
@@ -770,6 +818,8 @@ function bindPlayerControls() {
     bar.addEventListener('pointerenter', () => tip.classList.add('show'));
     bar.addEventListener('pointerleave', () => tip.classList.remove('show'));
   }
+
+  bindVibeHotbar();
 
   const slider = $('#vol-slider'), volFill = $('#vol-fill');
   const volOf = e => {

@@ -1,24 +1,44 @@
 /* VOLNA · vibe-gl.js — шейдерный движок визуала (WebGL, без библиотек)
-   Читает FFT из state.analyser (нативный движок) или синтезирует вайб на паузе. */
+   v6.3.0: milkdrop-фидбэк — прошлый кадр примешивается с зум-варпом и распадом,
+   поэтому все пресеты получают шлейфы и «жидкое» движение. Три pass'а на кадр:
+   пресет → фидбэк (main+prev → out) → вывод на экран. */
 window.VibeGL = (function () {
-  let canvas = null, gl = null, prog = null, u = {}, raf = 0;
+  let canvas = null, gl = null, raf = 0;
   let preset = 'neon', bands = new Float32Array(8), cur = { bass: 0, mid: 0, high: 0, vol: 0, beat: 0 };
   const VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
   const HDR = 'precision highp float;uniform vec2 u_res;uniform float u_time,u_bass,u_mid,u_high,u_vol,u_beat;uniform vec3 u_accent;uniform float u_bands[8];';
+  const FB_HDR = 'precision highp float;uniform vec2 u_res;uniform sampler2D u_cur,u_prev;uniform float u_decay;uniform vec2 u_warp;';
+  // пинг-понг текстур: main (сырой кадр пресета), prev (накопленный), out (результат фидбэка)
+  const rt = { main: null, prev: null, out: null };
+  let prog = null, fbProg = null, copyProg = null, u = {}, fbU = {}, copyU = {};
 
-  function compile(fragSrc) {
-    const mk = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        console.warn('[GL]', gl.getShaderInfoLog(sh));
-        return null;
-      }
-      return sh;
-    };
-    const vs = mk(gl.VERTEX_SHADER, VS);
-    const fs = mk(gl.FRAGMENT_SHADER, HDR + '\n' + fragSrc);
+  const FB_FRAG = FB_HDR + `
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_res;
+  vec2 c = uv - 0.5;
+  float ca = cos(u_warp.y), sa = sin(u_warp.y);
+  c = mat2(ca, -sa, sa, ca) * c / u_warp.x;
+  vec3 prev = texture2D(u_prev, c + 0.5).rgb;
+  vec3 cur = texture2D(u_cur, uv).rgb;
+  gl_FragColor = vec4(max(cur, prev * u_decay), 1.0);
+}`;
+  const COPY_FRAG = 'precision highp float;uniform vec2 u_res;uniform sampler2D u_tex;\n' +
+    'void main(){gl_FragColor=texture2D(u_tex,gl_FragCoord.xy/u_res);}';
+
+  function mkShader(type, src) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.warn('[GL]', gl.getShaderInfoLog(sh));
+      return null;
+    }
+    return sh;
+  }
+
+  function mkProgram(fragSrc) {
+    const vs = mkShader(gl.VERTEX_SHADER, VS);
+    const fs = mkShader(gl.FRAGMENT_SHADER, fragSrc);
     if (!vs || !fs) return null;
     const p = gl.createProgram();
     gl.attachShader(p, vs);
@@ -28,46 +48,71 @@ window.VibeGL = (function () {
       console.warn('[GL] link:', gl.getProgramInfoLog(p));
       return null;
     }
-    return p;
+    return { p, loc: gl.getAttribLocation(p, 'p') };
+  }
+
+  // биндит программу + её атрибут вершины (у каждой свой loc)
+  function bindProg(pr) {
+    gl.useProgram(pr.p);
+    gl.enableVertexAttribArray(pr.loc);
+    gl.vertexAttribPointer(pr.loc, 2, gl.FLOAT, false, 0, 0);
   }
 
   function setupBuffer() {
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(prog, 'p');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  }
+
+  function mkRT(w, h) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { tex, fbo, w, h };
+  }
+
+  function freeRT(r) { if (r) { gl.deleteTexture(r.tex); gl.deleteFramebuffer(r.fbo); } }
+
+  function ensureRTs(w, h) {
+    if (rt.main && rt.main.w === w && rt.main.h === h) return;
+    freeRT(rt.main); freeRT(rt.prev); freeRT(rt.out);
+    rt.main = mkRT(w, h); rt.prev = mkRT(w, h); rt.out = mkRT(w, h);
   }
 
   function usePreset(name) {
     preset = name;
     if (!canvas || !ensureContext()) return;
     const lib = window.VIBE_SHADERS || {};
-    const src = (lib[name] || lib.neon).frag;
-    let p = compile(src);
-    if (!p) p = compile(HDR + '\n' + lib.neon.frag);
+    const src = HDR + '\n' + (lib[name] || lib.neon).frag;
+    let p = mkProgram(src);
+    if (!p) p = mkProgram(HDR + '\n' + lib.neon.frag);
     prog = p;
     if (!prog) return;
-    gl.useProgram(prog);
-    setupBuffer();
-    u = {
-      res: gl.getUniformLocation(prog, 'u_res'),
-      time: gl.getUniformLocation(prog, 'u_time'),
-      bass: gl.getUniformLocation(prog, 'u_bass'),
-      mid: gl.getUniformLocation(prog, 'u_mid'),
-      high: gl.getUniformLocation(prog, 'u_high'),
-      vol: gl.getUniformLocation(prog, 'u_vol'),
-      beat: gl.getUniformLocation(prog, 'u_beat'),
-      accent: gl.getUniformLocation(prog, 'u_accent'),
-      bands: gl.getUniformLocation(prog, 'u_bands')
-    };
+    u = {};
+    for (const n of ['res', 'time', 'bass', 'mid', 'high', 'vol', 'beat', 'accent', 'bands']) {
+      u[n] = gl.getUniformLocation(prog.p, 'u_' + n);
+    }
   }
 
   function ensureContext() {
     if (gl) return true;
     gl = canvas.getContext('webgl', { antialias: false, alpha: false }) || canvas.getContext('experimental-webgl');
-    return !!gl;
+    if (!gl) return false;
+    setupBuffer();
+    fbProg = mkProgram(FB_FRAG);
+    copyProg = mkProgram(COPY_FRAG);
+    if (!fbProg || !copyProg) { gl = null; return false; }
+    for (const n of ['res', 'cur', 'prev', 'decay', 'warp']) fbU[n] = gl.getUniformLocation(fbProg.p, 'u_' + n);
+    for (const n of ['res', 'tex']) copyU[n] = gl.getUniformLocation(copyProg.p, 'u_' + n);
+    return true;
   }
 
   function readAudio() {
@@ -102,22 +147,26 @@ window.VibeGL = (function () {
 
   function frame() {
     raf = requestAnimationFrame(frame);
-    if (!gl || !canvas.isConnected) return;
-    if (preset === 'off') { return; }
-    // оптимизация: рендер в 0.8x + dpr cap 1.5 (глазу одинаково, GPU в 2 раза легче)
+    if (!gl || !canvas.isConnected || !prog) return;
+    if (preset === 'off') return;
     if (document.hidden || canvas.offsetParent === null) return; // вкладка/экран не видны
+    // рендер в 0.8x + dpr cap 1.5 (глазу одинаково, GPU в 2 раза легче)
     const dpr = Math.min(1.5, window.devicePixelRatio || 1) * 0.8;
     const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
     const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-    gl.viewport(0, 0, w, h);
+    ensureRTs(w, h);
     readAudio();
     const t = performance.now() / 1000;
     const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#b14aff';
     const ar = parseInt(accent.slice(1, 3), 16) / 255 || 0.7;
     const ag = parseInt(accent.slice(3, 5), 16) / 255 || 0.3;
     const ab = parseInt(accent.slice(5, 7), 16) / 255 || 1;
-    gl.useProgram(prog);
+
+    // pass 1: пресет → main
+    gl.bindFramebuffer(gl.FRAMEBUFFER, rt.main.fbo);
+    gl.viewport(0, 0, w, h);
+    bindProg(prog);
     gl.uniform2f(u.res, w, h);
     gl.uniform1f(u.time, t);
     gl.uniform1f(u.bass, cur.bass);
@@ -128,6 +177,43 @@ window.VibeGL = (function () {
     gl.uniform3f(u.accent, ar, ag, ab);
     gl.uniform1fv(u.bands, bands);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // pass 2: фидбэк (main + prev → out) — зум наружу от баса, лёгкое вращение
+    const zoom = 1.003 + cur.bass * 0.012 + cur.beat * 0.006;
+    const rot = 0.0013 * Math.sin(t * 0.21) + 0.0022 * cur.beat * Math.sin(t * 1.7);
+    const decay = Math.min(0.95, Math.max(0.78, 0.935 - cur.bass * 0.22));
+    gl.bindFramebuffer(gl.FRAMEBUFFER, rt.out.fbo);
+    bindProg(fbProg);
+    gl.uniform2f(fbU.res, w, h);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, rt.main.tex);
+    gl.uniform1i(fbU.cur, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, rt.prev.tex);
+    gl.uniform1i(fbU.prev, 1);
+    gl.uniform1f(fbU.decay, decay);
+    gl.uniform2f(fbU.warp, zoom, rot);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // pass 3: out → экран
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, w, h);
+    bindProg(copyProg);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, rt.out.tex);
+    gl.uniform1i(copyU.tex, 0);
+    gl.uniform2f(copyU.res, w, h);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // ротация: out становится prev, старый prev — под main следующего кадра
+    const tmp = rt.prev;
+    rt.prev = rt.out;
+    rt.out = tmp;
   }
 
   return {

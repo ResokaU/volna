@@ -277,14 +277,22 @@
         <canvas id="vibe-particles"></canvas>
         <div class="vibe-text" id="vibe-text"></div>
         <div class="vibe-player" id="vibe-player">
-          <img id="vp-art" src="" alt="">
-          <div class="vp-info"><div id="vp-title">—</div><div id="vp-artist"></div>
-            <div class="vp-bar"><div id="vp-pf"></div></div>
+          <img id="vp-art" src="" alt="" onclick="switchView('nowplaying')" title="Открыть в плеере">
+          <div class="vp-info" onclick="switchView('nowplaying')" title="Открыть в плеере">
+            <div id="vp-title">—</div><div id="vp-artist"></div>
+            <div class="vp-seek" onclick="event.stopPropagation()">
+              <span id="vp-time-cur">0:00</span>
+              <div class="vp-bar" id="vp-bar"><div id="vp-pf"></div><div class="seek-tip" id="vp-seek-tip">0:00</div></div>
+              <span id="vp-time-dur">0:00</span>
+            </div>
           </div>
           <div class="vp-row">
-            <button onclick="playPrev()" title="Назад">⏮</button>
-            <button class="vp-main" id="vp-play" onclick="togglePlay()" title="Play/Pause">▶</button>
-            <button onclick="playNext()" title="Вперёд">⏭</button>
+            <button onclick="playPrev()" title="Назад"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
+            <button class="vp-main" onclick="togglePlay()" title="Play/Pause"><svg class="ic fill" viewBox="0 0 24 24"><use id="vp-play-icon" href="#i-play"/></svg></button>
+            <button onclick="playNext()" title="Вперёд"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
+            <button class="like-btn" id="vp-like" onclick="event.stopPropagation();likeCurrent()" title="Лайк">
+              <svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>
+            </button>
           </div>
         </div>
         <div class="vibe-icons">
@@ -757,6 +765,7 @@
 <script src="lyrics.js"></script>
 <script src="vibe-shaders.js"></script>
 <script src="vibe-gl.js"></script>
+<script src="vibe.js"></script>
 <script>init();</script>
 </body>
 </html>
