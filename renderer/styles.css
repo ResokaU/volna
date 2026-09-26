@@ -696,6 +696,9 @@ background:rgba(255,61,110,.1);border:1px solid rgba(255,61,110,.3);color:#ff6d9
 font-family:inherit;font-size:12px;font-weight:700;transition:.15s}
 .rooms-leave:hover{background:rgba(255,61,110,.2)}
 
+/* ============ v6.6: подсказки в настройках ============ */
+.setting-hint{font-size:11px;color:#8a8aa0;line-height:1.5;margin:6px 0 0}
+
 /* ============ v2.1: тултип времени на прогресс-баре ============ */
 
 .progress-wrap{position:relative}

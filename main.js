@@ -180,15 +180,22 @@ async function setRpcActivity(info) {
     if ((info.durationMs || 0) > pos) end = Date.now() + (info.durationMs - pos);
   }
   const art = await rpcExternalAsset(info.artwork);
+  const artist = String(info.artist || '').slice(0, 120);
+  const stateLine = (info.isPlaying ? '' : '⏸ Пауза · ') + (info.liked ? '❤️ ' : '') + artist;
   try {
     await rpc.setActivity({
       details: String(info.title).slice(0, 128),
-      state: ((info.liked ? '❤️ ' : '') + (info.artist || '')).slice(0, 128) || undefined,
+      state: stateLine || undefined,
       startTimestamp: start,
       endTimestamp: end,
       largeImageKey: art,
-      largeImageText: String(info.title).slice(0, 128),
-      buttons: info.permalink ? [{ label: 'Слушать на SoundCloud', url: info.permalink }] : undefined,
+      largeImageText: (artist ? artist + ' — ' : '') + String(info.title).slice(0, 128),
+      smallImageKey: 'volna_logo',
+      smallImageText: 'VOLNA v' + app.getVersion(),
+      buttons: [
+        ...(info.permalink ? [{ label: 'Слушать на SoundCloud', url: info.permalink }] : []),
+        { label: 'Скачать VOLNA', url: 'https://github.com/ResokaU/volna' }
+      ].slice(0, 2),
       instance: false
     });
   } catch (_) {}
