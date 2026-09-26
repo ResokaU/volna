@@ -422,6 +422,15 @@ function updateVibeUI(posMs) {
     el.classList.add('pop');
   }
 }
+  // хотбар вайба
+  const art = $('#vp-art'), pt = $('#vp-title'), pa = $('#vp-artist'), pf = $('#vp-pf'), pp = $('#vp-play');
+  if (pt && t) {
+    pt.textContent = t.title || '—';
+    pa.textContent = displayArtist(t);
+    if (art) art.src = artwork(t);
+    if (pp) pp.textContent = state.isPlaying ? '⏸' : '▶';
+    if (pf && durMs) pf.style.width = Math.min(100, (posMs || 0) / durMs * 100) + '%';
+  }
 
 /* синк прогресса/времени Now Playing из тика плеера */
 function updateNpUI(posMs, durMs) {

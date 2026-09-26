@@ -963,6 +963,22 @@ font-family:inherit;font-size:12px;outline:none;cursor:text}
 padding:7px 14px;font-weight:700;font-size:12px;cursor:none;font-family:inherit}
 .vibe-collapse{display:none}
 /* хотбар: плеер подстраивается под вайб */
-body.vibe-on #player{background:rgba(8,8,14,.45);border-color:rgba(255,255,255,.07);
-box-shadow:0 20px 50px -18px rgba(0,0,0,.8);width:min(88vw,720px);bottom:18px}
-body.vibe-on #player:hover{background:rgba(10,10,18,.62)}
+/* в вайбе основной плеер прячется — работает собственный хотбар */
+body.vibe-on #player{display:none}
+.vibe-player{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:160;
+width:min(620px,86vw);height:78px;display:none;align-items:center;gap:14px;padding:0 18px;
+background:rgba(8,8,14,.55);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.09);
+border-radius:20px;box-shadow:0 24px 60px -20px rgba(0,0,0,.85)}
+body.vibe-on .vibe-player{display:flex}
+.vibe-player img{width:52px;height:52px;border-radius:12px;object-fit:cover;background:#181820}
+.vp-info{flex:1;min-width:0;text-align:left}
+#vp-title{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vp-artist{font-size:11px;color:#9a9ab0;margin:2px 0 6px}
+.vp-bar{height:3px;background:rgba(255,255,255,.13);border-radius:9px;overflow:hidden}
+#vp-pf{height:100%;width:0%;background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a)}
+.vp-row{display:flex;gap:8px;z-index:1}
+.vp-row button{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.09);
+border:1px solid rgba(255,255,255,.1);color:#eee;font-size:15px;cursor:none;transition:.15s}
+.vp-row button:hover{background:rgba(255,255,255,.2)}
+.vp-row .vp-main{width:52px;height:52px;font-size:18px;border:none;color:#fff;
+background:linear-gradient(135deg,#b14aff,#ff3d7f);box-shadow:0 8px 24px -8px rgba(177,74,255,.8)}

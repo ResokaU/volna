@@ -276,6 +276,17 @@
         <canvas id="vibe-gl"></canvas>
         <canvas id="vibe-particles"></canvas>
         <div class="vibe-text" id="vibe-text"></div>
+        <div class="vibe-player" id="vibe-player">
+          <img id="vp-art" src="" alt="">
+          <div class="vp-info"><div id="vp-title">—</div><div id="vp-artist"></div>
+            <div class="vp-bar"><div id="vp-pf"></div></div>
+          </div>
+          <div class="vp-row">
+            <button onclick="playPrev()" title="Назад">⏮</button>
+            <button class="vp-main" id="vp-play" onclick="togglePlay()" title="Play/Pause">▶</button>
+            <button onclick="playNext()" title="Вперёд">⏭</button>
+          </div>
+        </div>
         <div class="vibe-icons">
           <button class="vibe-ic" onclick="vibeToggle('fx')" title="Шейдеры">✨</button>
           <button class="vibe-ic" onclick="vibeToggle('search')" title="Поиск фона">
