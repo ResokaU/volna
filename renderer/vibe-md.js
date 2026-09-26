@@ -10,12 +10,58 @@ window.MilkdropGL = (function () {
     'vendor/butterchurnPresetsMD1.min.js'
   ];
   let canvas = null, vis = null, raf = 0, ready = false, loading = null;
-  let names = [], curName = '', autoTimer = 0, onPresetCb = null;
+  let names = [], curated = [], curName = '', autoTimer = 0, onPresetCb = null;
+  let scale = 1;
+
+  // зрелищные классики для рандома (в пачках их сотни, но не все одинаково красивы;
+  // список пересекается с реально загруженными — имена взяты из самих паков)
+  const CURATED = [
+    'Flexi, martin + geiss - dedicated to the sherwin maxawow',
+    'Flexi + Martin - astral projection',
+    'Flexi + Martin - dive',
+    'Flexi + Martin - cascading decay swing',
+    'Flexi + Martin - tunnel of supraschismatika',
+    'Flexi + Rovastar - Fractopia [lovecraft]',
+    'Flexi + Geiss - Tokamak mindblob 2.0',
+    'Flexi + Geiss - pogo-cubes on tokamak matter (Jelly 5.55)',
+    'Flexi - mindblob [shiny mix]',
+    'Flexi - smashing fractals 2.0',
+    'Flexi - predator-prey-spirals',
+    'Flexi - infused with the spiral',
+    'Flexi - alien fish pond',
+    'Flexi - reality tunnel',
+    'Flexi - psychenapping',
+    'Flexi - wild at range',
+    'Flexi + stahlregen - jelly showoff parade',
+    'Flexi + fiShbRaiN - operation fatcap II',
+    'Eo.S. + Phat - cubetrace - v2',
+    'Eo.S. - multisphere 01 B_Phat_Ra_mix',
+    'Eo.S. + Geiss - glowsticks v2 02 (Relief Mix)',
+    'Eo.S. + Zylot - skylight (Stained Glass Majesty mix)',
+    'Eo.S. - spark C_Phat_Jester_Mix_v2',
+    'Flexi, Geiss and Rovastar - chaos layered tokamak',
+    'Flexi, martin + geiss - painterly rogue wave strike',
+    'Flexi, fishbrain + Martin - witchery',
+    'Flexi, Rovastar + Geiss - Fractopia vs bas relief',
+    'Geiss + Rovastar - Notions Of Tonality 2',
+    'Geiss + Flexi + Martin - disconnected',
+    'Geiss - Bipolar 2 Enhanced',
+    'Geiss - Brain Zoom 4',
+    'Geiss - 3 layers (Tunnel Mix)',
+    'Fumbling_Foo & Flexi, Martin, Orb, Unchained - Star Nova v7b',
+    'Martin - journey into space',
+    'Martin - liquid arrows',
+    'Martin - Diabolo',
+    'Unchained & Rovastar - Wormhole Pillars (Hall of Shadows mix)',
+    'Unchained - Rewop',
+    'Unchained - All You Can Eat',
+    'EVET + Flexi - Rainbox Splash Poolz'
+  ];
 
   function loadScript(src) {
     return new Promise((res, rej) => {
       const s = document.createElement('script');
-      s.src = src;
+      s.src = src + '?v=' + Date.now(); // cache-bust: дисковый кэш Chromium держит старые app://-ответы
       s.onload = res;
       s.onerror = () => rej(new Error('Не загрузился ' + src));
       document.head.appendChild(s);
@@ -33,6 +79,7 @@ window.MilkdropGL = (function () {
           butterchurnPresetsExtra2.getPresets(),
           butterchurnPresetsMD1.getPresets());
         names = Object.keys(map);
+        curated = CURATED.filter(n => map[n]); // живут только реально существующие
         window._BC_PRESETS = map;
         // UMD-сборка кладёт класс в .default
         window._BC_LIB = window.butterchurn.createVisualizer ? window.butterchurn : window.butterchurn.default;
@@ -62,7 +109,17 @@ window.MilkdropGL = (function () {
     vis.render();
   }
 
-  function pickRandom() { return names[Math.floor(Math.random() * names.length)] || ''; }
+  function pickRandom() {
+    // 75% — из кураторских красавцев, 25% — вся пачка (пусть и удивляет)
+    const pool = (curated.length && Math.random() < 0.75) ? curated : names;
+    return pool[Math.floor(Math.random() * pool.length)] || '';
+  }
+
+  function applyScale() {
+    if (!canvas) return;
+    canvas.style.transform = 'scale(' + scale + ')';
+    canvas.style.transformOrigin = 'center center';
+  }
 
   function load(name, blend) {
     curName = name;
@@ -110,10 +167,16 @@ window.MilkdropGL = (function () {
   return {
     start,
     stop() { if (raf) cancelAnimationFrame(raf); raf = 0; if (autoTimer) { clearInterval(autoTimer); autoTimer = 0; } },
-    resize: applySize,
+    resize() { applySize(); applyScale(); },
     random() { if (ready && vis) load(pickRandom(), 2.7); },
     next() { this.random(); },
     getName() { return curName; },
+    // 🔍 ручной зум картинки (некоторые пресеты рисуют гигантские формы)
+    setScale(s) {
+      scale = Math.min(1.6, Math.max(0.4, s));
+      applyScale();
+    },
+    getScale() { return scale; },
     setAuto(on) {
       if (autoTimer) { clearInterval(autoTimer); autoTimer = 0; }
       if (on) autoTimer = setInterval(() => { if (ready && vis) load(pickRandom(), 2.7); }, 30000);

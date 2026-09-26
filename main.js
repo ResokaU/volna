@@ -906,12 +906,14 @@ app.whenReady().then(async () => {
 
   const { pathToFileURL } = require('url');
   const rendererDir = path.join(__dirname, 'renderer');
-  protocol.handle('app', (request) => {
+  protocol.handle('app', async (request) => {
     const u = new URL(request.url);
     const rel = decodeURIComponent(u.pathname.replace(/^\//, '')) || 'index.html';
     const abs = path.join(rendererDir, path.normalize(rel));
     if (!abs.startsWith(rendererDir)) return new Response(null, { status: 403 });
-    return net.fetch(pathToFileURL(abs).toString());
+    // no-cache: без заголовков Chromium кэширует ответы намертво и обновы не подхватывает
+    const resp = await net.fetch(pathToFileURL(abs).toString());
+    return new Response(resp.body, { status: resp.status, headers: { 'Cache-Control': 'no-cache' } });
   });
 
   createWindow();

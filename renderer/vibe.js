@@ -112,6 +112,13 @@ function renderMdCtl(show) {
   MilkdropGL.onPreset(name => { const el = $('#vibe-md-name'); if (el) el.textContent = name; });
   $('#vibe-md-rand').addEventListener('click', () => MilkdropGL.random());
   $('#vibe-md-next').addEventListener('click', () => MilkdropGL.next());
+  // 🔍 зум: ±0.15 за клик, сброс 1:1
+  const zbtn = [$('#vibe-md-zout'), $('#vibe-md-zin'), $('#vibe-md-zreset')];
+  const applyZoom = (s) => { MilkdropGL.setScale(s); saveSetting('vibeMdScale', s); };
+  if (zbtn[0]) zbtn[0].addEventListener('click', () => applyZoom(Math.round((MilkdropGL.getScale() - 0.15) * 100) / 100));
+  if (zbtn[1]) zbtn[1].addEventListener('click', () => applyZoom(Math.round((MilkdropGL.getScale() + 0.15) * 100) / 100));
+  if (zbtn[2]) zbtn[2].addEventListener('click', () => applyZoom(1));
+  MilkdropGL.setScale(state.settings.vibeMdScale || 1);
   const autoBtn = $('#vibe-md-auto');
   autoBtn.classList.toggle('active', state.settings.vibeMdAuto === true);
   autoBtn.addEventListener('click', async () => {
