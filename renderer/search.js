@@ -444,39 +444,52 @@ function renderTrendTabs() {
 
 /* ---------- «Для вас»: персональный поток аккаунта ---------- */
 async function loadForyou(force) {
-  if (!state.scAuth?.token) {
-    $('#foryou-tracks').innerHTML = emptyHTML('i-user', 'Нужен аккаунт',
-      'Войди через SoundCloud — плашка «Аккаунт» слева внизу, и поток соберётся под твой профиль');
-    return;
-  }
   if (state.foryouTracks.length && !force) { renderForyou(); return; }
   const grid = $('#foryou-tracks');
   grid.innerHTML = Array(8).fill('<div class="skeleton"></div>').join('');
   try {
     await runForyou();
   } catch (err) {
-    const msg = String(err?.message || '');
     try { await ensureClientId(true); await runForyou(); return; } catch (_) {}
-    if (msg.includes('401')) {
-      grid.innerHTML = emptyHTML('i-alert', 'Нужен повторный вход', 'Токен аккаунта устарел — войди заново через плашку «Аккаунт»');
-    } else {
-      grid.innerHTML = emptyHTML('i-alert', 'Поток недоступен', escapeHtml(msg) + ' — проверь сеть и Антиблок');
-    }
+    grid.innerHTML = emptyHTML('i-alert', 'Поток недоступен', escapeHtml(String(err?.message || 'сеть')) + ' — проверь сеть и Антиблок');
   }
 }
 
+/* 🎯 Для вас — БЕЗ аккаунта: лайки + история → похожие треки, добираем чартами */
 async function runForyou() {
   const cid = await ensureClientId();
-  const data = await scJson(
-    `${SC_API2}/me/stream?client_id=${cid}&limit=40`, { auth: true }
-  );
-  const items = (Array.isArray(data?.collection) ? data.collection : [])
-    .map(normalizeTrack).filter(Boolean);
+  const seedArtists = [...new Set([
+    ...state.favorites.map(t => t.user && t.user.username),
+    ...state.history.slice(0, 30).map(t => t.user && t.user.username)
+  ].filter(Boolean))].slice(0, 8);
+  const known = new Set([...state.favorites, ...state.history].map(t => t.id));
+  const out = new Map();
+  if (seedArtists.length) {
+    const results = await Promise.all(seedArtists.map(a =>
+      scJson(`${SC_API2}/search/tracks?q=${encodeURIComponent(a)}&client_id=${cid}&limit=15`).catch(() => null)
+    ));
+    for (const d of results) {
+      (Array.isArray(d && d.collection) ? d.collection : []).forEach(t => {
+        const n = normalizeTrack(t);
+        if (n && !known.has(n.id) && !state.dislikes.includes(n.user && n.user.username)) out.set(n.id, n);
+      });
+    }
+  }
+  let items = [...out.values()].sort(() => Math.random() - 0.5).slice(0, 30);
+  if (items.length < 12) { // добираем свежими чартами
+    try {
+      const trend = await scJson(`${SC_API2}/charts?kind=trending&genre=soundcloud%3Agenres%3Aall-music&client_id=${cid}&limit=30`);
+      (Array.isArray(trend && trend.collection) ? trend.collection : []).forEach(x => {
+        const n = normalizeTrack(x && x.track ? x.track : x);
+        if (n && !known.has(n.id) && !items.some(i => i.id === n.id)) items.push(n);
+      });
+    } catch (_) {}
+  }
   items.forEach(rememberTrack);
   state.foryouTracks = items;
   $('#foryou-tracks').innerHTML = items.length
     ? items.map((t, i) => trackCardHTML(t, i, 'foryou')).join('')
-    : emptyHTML('i-spark', 'Поток пуст', 'Подпишись на артистов на SoundCloud — их новинки появятся здесь');
+    : emptyHTML('i-spark', 'Пока пусто', 'Лайкни пару треков — и этот поток соберётся под тебя');
   highlightPlaying();
 }
 
