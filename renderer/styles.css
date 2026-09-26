@@ -767,6 +767,23 @@ animation:gradShift 7s ease-in-out infinite}
 @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @media (prefers-reduced-motion: reduce){.grad-anim{animation:none}}
 
+/* ============ v7.3.2: 🫥 автоскрытие курсора при бездействии ============ */
+.cursor-ring,.cursor-dot{transition:opacity .45s ease}
+body.cursor-idle .cursor-ring,body.cursor-idle .cursor-dot{opacity:0 !important}
+
+/* ============ v7.3.2: 👤 меню аккаунта как топбар SC ============ */
+.account-card{position:relative}
+.account-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;z-index:80;
+background:linear-gradient(180deg,rgba(26,26,38,.97),rgba(14,14,22,.97));
+backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:16px;padding:6px;
+display:none;box-shadow:0 24px 60px -18px rgba(0,0,0,.85)}
+.account-menu.open{display:block;animation:menuUp .18s ease}
+@keyframes menuUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.account-menu-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+color:var(--text);font-size:12.5px;font-weight:600;cursor:none;transition:.13s}
+.account-menu-item:hover{background:color-mix(in srgb,var(--accent) 18%,rgba(255,255,255,.04))}
+.account-menu-item .ic{width:15px;height:15px;color:var(--acid)}
+
 /* ============ v7.2: 🎨 амбиент по обложке — цвет трека везде ============ */
 body.amb-on .player{border-color:color-mix(in srgb,var(--amb) 32%,rgba(255,255,255,.08));
 box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 46px -14px var(--amb-soft)}

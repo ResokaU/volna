@@ -229,6 +229,17 @@ function initCursor() {
       dot.style.left = mx + 'px'; dot.style.top = my + 'px';
     }
   });
+  // 🫥 бездействие мыши 3с — курсор тает, любое движение возвращает
+  let idleTimer = null;
+  const wake = () => {
+    document.body.classList.remove('cursor-idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => document.body.classList.add('cursor-idle'), 3000);
+  };
+  window.addEventListener('mousemove', wake, { passive: true });
+  window.addEventListener('mousedown', wake, { passive: true });
+  window.addEventListener('keydown', wake, { passive: true });
+  wake();
   (function loop() {
     if (!document.body.classList.contains('no-cursor')) {
       rx += (mx - rx) * .18; ry += (my - ry) * .18;

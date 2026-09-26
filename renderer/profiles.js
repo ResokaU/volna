@@ -220,3 +220,14 @@ function openProfilesModal() {
   openModal('profiles_modal');
   if (window.Profiles) Profiles.refresh();
 }
+
+/* меню аккаунта (как топбар SoundCloud) */
+function toggleAccountMenu(e) {
+  if (e) e.stopPropagation();
+  $('#account-menu')?.classList.toggle('open');
+}
+function closeAccountMenu() { $('#account-menu')?.classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('#account-menu') && !e.target.closest('#account-profile')) closeAccountMenu();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAccountMenu(); });

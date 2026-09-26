@@ -162,7 +162,7 @@
 
     <div class="account-card">
       <div class="ac-label">Аккаунт</div>
-      <div class="account-profile" id="account-profile" onclick="openProfilesModal()" title="Профили VOLNA">
+      <div class="account-profile" id="account-profile" onclick="toggleAccountMenu(event)" title="Меню аккаунта">
         <div class="profile-ava" id="ap-avatar">V</div>
         <div class="ap-info">
           <div class="ap-name" id="ap-name">Профиль</div>
@@ -170,7 +170,13 @@
         </div>
         <svg class="ic" viewBox="0 0 24 24" style="margin-left:auto;color:var(--dim)"><use href="#i-sort"/></svg>
       </div>
-      <div id="sc-auth-status"></div>
+      <div class="account-menu" id="account-menu">
+        <div class="account-menu-item" onclick="openProfilesModal(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Профили и облако</div>
+        <div class="account-menu-item" onclick="switchView('stats'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chart"/></svg>Статистика</div>
+        <div class="account-menu-item" onclick="switchView('settings'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sliders"/></svg>Настройки</div>
+        <div class="account-menu-item" onclick="toggleMiniPlayer(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Мини-плеер</div>
+        <div class="account-menu-item" onclick="switchView('vibe'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Вайб</div>
+      </div>
     </div>
 
     <div class="sidebar-footer">
