@@ -508,6 +508,7 @@ async function playTrack(track, listKey = null) {
   // пока резолвили стрим, могли переключить трек — не стартуем старый
   if (!native && state.playGen === gen && state.engine !== 'widget' && state.currentTrack?.id === track.id) startWidget(track);
   updateTitle(true);
+  if (window.Rooms) Rooms.notify(); // комната-волна: хост сменил трек — мгновенный паблик
 }
 
 /* заголовок окна = now playing (+ трей + Discord RPC) */
@@ -625,6 +626,7 @@ function updatePlayIcon() {
     const u = $(id);
     if (u) u.setAttribute('href', ref);
   });
+  if (window.Rooms) Rooms.notify(); // play/pause хоста → комната
 }
 
 function playNext() {
@@ -764,6 +766,7 @@ function bindVibeHotbar() {
     } else if (state.widget) {
       state.widget.getDuration(dur => { if (dur) state.widget.seekTo(pct * dur); });
     }
+    if (window.Rooms) Rooms.notify(); // сик хоста → комната
   });
   // клик по бару не должен проваливаться в .vp-info (открытие Now Playing)
   bar.addEventListener('click', e => e.stopPropagation());

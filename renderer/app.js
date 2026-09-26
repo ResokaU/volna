@@ -282,7 +282,8 @@ const PALETTE_CMDS = [
   { t: 'Очередь', k: '6', run: () => switchView('queue') },
   { t: 'Статистика', k: '7', run: () => switchView('stats') },
   { t: 'Настройки', k: '8', run: () => switchView('settings') },
-  { t: 'Текст песни', k: '', run: () => switchView('lyrics') }
+  { t: 'Текст песни', k: '', run: () => switchView('lyrics') },
+  { t: 'Комната-волна', k: '', run: () => openRooms() }
 ];
 
 let paletteItems = [], paletteIdx = 0, paletteTimer = null;
