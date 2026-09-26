@@ -200,6 +200,7 @@ window.Rooms = (function () {
     hostLoop();
     publishState();
     renderRooms();
+    if (window.Ach) Ach.event('room');
     toast('🌊 Комната создана: ' + code, 'success');
   }
 
@@ -216,6 +217,7 @@ window.Rooms = (function () {
     send({ type: 'hello', from: clientId });
     guestLoop();
     renderRooms();
+    if (window.Ach) Ach.event('room');
     toast('🌊 В комнате ' + code + ' — синкаюсь с хостом', 'success');
   }
 

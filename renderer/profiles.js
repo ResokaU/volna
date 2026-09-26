@@ -17,7 +17,9 @@ window.Profiles = (function () {
     return {
       favorites: state.favorites, history: state.history, playlists: state.playlists,
       stats: state.stats, lastTrack: state.lastTrack,
-      ach: state.ach || {}, listensA: state.listensA || {}, listensT: state.listensT || {}
+      ach: state.ach || {},
+      achx: state.achx || { ev: {}, streak: { last: '', n: 0 }, night: 0 },
+      listensA: state.listensA || {}, listensT: state.listensT || {}
     };
   }
 
@@ -28,6 +30,7 @@ window.Profiles = (function () {
     state.stats = d.stats || { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() };
     state.lastTrack = d.lastTrack || null;
     state.ach = d.ach || {};
+    state.achx = d.achx || { ev: {}, streak: { last: '', n: 0 }, night: 0 };
     state.listensA = d.listensA || {};
     state.listensT = d.listensT || {};
     state.serverLikes = []; state.favSource = 'local';
@@ -150,7 +153,8 @@ window.Profiles = (function () {
       if (p && p.avatar) { ava.style.backgroundImage = 'url(' + p.avatar + ')'; ava.textContent = ''; }
       else { ava.style.backgroundImage = ''; ava.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
       nm.textContent = p ? p.name : 'Профиль';
-      if (sub) sub.textContent = 'VoКаунт' + (p && p.name ? ' · ' + p.name : '');
+      if (sub) sub.textContent = 'VoКаунт' + (p && p.name ? ' · ' + p.name : '')
+        + (window.Ach ? ` · 🏆 Ур. ${Ach.summary().lvl} — ${Ach.summary().title}` : '');
     }
     if (window.Ach) Ach.renderInto($('#account-ach'), $('#ach-view-head'));
     renderList();

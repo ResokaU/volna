@@ -134,6 +134,8 @@ function switchView(name) {
   if (name === 'foryou') loadForyou();
   document.body.classList.toggle('vibe-on', name === 'vibe'); // весь UI прячется, остаётся плеер-бар
   document.body.classList.toggle('np-full', name === 'nowplaying'); // Now Playing во всё окно
+  if (window.Ach && (name === 'vibe' || name === 'lyrics' || name === 'nowplaying'))
+    Ach.event(name === 'vibe' ? 'vibe' : name === 'lyrics' ? 'karaoke' : 'np');
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
@@ -554,6 +556,14 @@ function applyWallpaper() {
   }
 }
 
+/* русское склонение: plural(3, 'плейлист', 'плейлиста', 'плейлистов') → 'плейлиста' */
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
 /* ---------- Главная: приветствие, продолжить, популярное ---------- */
 function renderHome() {
   const h = new Date().getHours();
@@ -564,7 +574,8 @@ function renderHome() {
     const p = Profiles.profiles.find(x => x.id === Profiles.active);
     pname = p ? p.name : '';
   }
-  if (g) g.textContent = greet + (pname ? ', ' + pname : '');
+  // «Основной» — имя дефолтного профиля, в приветствии выглядит странно
+  if (g) g.textContent = greet + (pname && pname !== 'Основной' ? ', ' + pname : '');
   const sub = $('#home-sub');
   if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
   // кинематографичный hero: размываем обложку трека в фон
@@ -597,11 +608,17 @@ function renderHome() {
   if (hs) {
     const totalH = Math.floor((state.stats.totalTime || 0) / 3600000);
     const totalM = Math.round(((state.stats.totalTime || 0) % 3600000) / 60000);
-    const timeLabel = totalH ? `${totalH} ч` : `${Math.round((state.stats.totalTime || 0) / 60000)} м`;
+    const timeLabel = totalH ? (totalM ? `${totalH} ч ${totalM} м` : `${totalH} ч`) : `${Math.round((state.stats.totalTime || 0) / 60000)} м`;
+    let achChip = '';
+    if (window.Ach) {
+      const s = Ach.summary();
+      achChip = `<span class="hero-chip hero-chip-lvl" onclick="switchView('account')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Ур. ${s.lvl} · ${s.title}</span>`;
+    }
     hs.innerHTML = `
-      <span class="hero-chip" onclick="switchView('favorites')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${state.favorites.length} лайков</span>
-      <span class="hero-chip" onclick="switchView('stats')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${timeLabel} слушал</span>
-      <span class="hero-chip" onclick="switchView('playlists')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>${state.playlists.length} плейлистов</span>`;
+      <span class="hero-chip" onclick="switchView('favorites')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${state.favorites.length} ${plural(state.favorites.length, 'лайк', 'лайка', 'лайков')}</span>
+      <span class="hero-chip" onclick="switchView('stats')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${timeLabel} музыки</span>
+      <span class="hero-chip" onclick="switchView('playlists')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>${state.playlists.length} ${plural(state.playlists.length, 'плейлист', 'плейлиста', 'плейлистов')}</span>
+      ${achChip}`;
   }
   // полка «Твои плейлисты»
   const plEl = $('#home-playlists');
@@ -624,10 +641,11 @@ function renderHome() {
   const rEl = $('#home-resume');
   if (rEl) {
     if (lt && lt.track && lt.track.id !== state.currentTrack?.id) {
+      const pos = (lt.posMs || 0) / 1000;
       rEl.innerHTML = '<button class="resume-btn" onclick="resumeLast()"><span class="rb-left">'
         + '<svg class="ic" viewBox="0 0 24 24"><use href="#i-play"/></svg><span>'
         + escapeHtml(lt.track.title || '') + '</span></span>'
-        + '<span class="resume-at">с ' + formatTime((lt.posMs || 0) / 1000) + '</span></button>';
+        + '<span class="resume-at">' + (pos >= 3 ? 'с ' + formatTime(pos) : 'сначала') + '</span></button>';
     } else rEl.innerHTML = '';
   }
   const pEl = $('#home-popular');
@@ -841,6 +859,7 @@ document.addEventListener('keydown', e => {
   if (_keyBuf === 'волна') {
     _keyBuf = '';
     confettiBurst();
+    if (window.Ach) Ach.event('wave'); // секретная ачивка «Поймал волну»
     toast('🌊 Ты поймал волну!', 'success');
   }
 });

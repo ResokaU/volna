@@ -80,6 +80,7 @@ function bindEq() {
       state.eqGains[i] = +el.value;
       applyEqGains();
       saveEq();
+      if (window.Ach) Ach.event('eq');
     });
   }
   $$('.eq-chip').forEach(c => c.addEventListener('click', () => applyEqPreset(c.dataset.eq)));
