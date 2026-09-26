@@ -32,6 +32,9 @@ font-weight:800;font-size:14.5px;text-decoration:none;transition:.2s}
 .btn-main{background:linear-gradient(90deg,#b14aff,#ff3d7f);color:#fff;
 box-shadow:0 10px 30px -8px rgba(177,74,255,.7)}
 .btn-main:hover{filter:brightness(1.12);transform:translateY(-2px)}
+.btn-boosty{background:linear-gradient(90deg,#f15f2c,#ff3d7f);color:#fff;
+box-shadow:0 10px 30px -8px rgba(241,95,44,.6)}
+.btn-boosty:hover{filter:brightness(1.1);transform:translateY(-2px)}
 .btn-alt{border:1px solid rgba(255,255,255,.2);color:#ddd}
 .btn-alt:hover{border-color:#d6ff3a;color:#d6ff3a}
 .goal{margin-top:44px;width:min(520px,92vw)}
@@ -40,11 +43,36 @@ box-shadow:0 10px 30px -8px rgba(177,74,255,.7)}
 .fill{height:100%;width:35%;border-radius:99px;
 background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);animation:glow 2.4s infinite}
 @keyframes glow{50%{filter:brightness(1.25)}}
+.discord{margin-top:40px;width:min(560px,94vw);background:rgba(88,101,242,.09);
+border:1px solid rgba(88,101,242,.45);border-radius:22px;padding:26px 22px;position:relative;overflow:hidden}
+.discord::before{content:'';position:absolute;inset:-40px;
+background:radial-gradient(300px 200px at 80% 0%,rgba(88,101,242,.3),transparent);pointer-events:none}
+.discord .lock{font-size:28px}
+.discord h2{font-size:19px;font-weight:900;margin:10px 0 4px;color:#c9d2ff}
+.discord p{font-size:13px;color:#9a9ab0;line-height:1.6}
+.perks{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 18px}
+.perk{background:rgba(88,101,242,.18);border:1px solid rgba(88,101,242,.4);border-radius:999px;
+padding:6px 14px;font-size:12px;font-weight:600;color:#c9d2ff}
+.btn-discord{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;border-radius:999px;
+font-weight:800;font-size:14px;text-decoration:none;background:#5865F2;color:#fff;transition:.2s}
+.btn-discord:hover{filter:brightness(1.15);transform:translateY(-2px)}
+.discord .fine{margin-top:12px;font-size:11px;color:#777}
 .note{margin-top:34px;font-size:12px;color:#666;line-height:1.6;max-width:480px}
 .note a{color:#b14aff;text-decoration:none}
 </style>
 </head>
 <body>
+<script>
+/* ═══ НАСТРОЙ ССЫЛКИ ЗДЕСЬ (один раз) ═══ */
+const LINKS = {
+  boosty:  'https://boosty.to/meerphys',
+  da:      'https://www.donationalerts.com/r/meerphys1',
+  discord: 'https://discord.gg/ЗАМЕНИ_НА_СВОЙ_ИНВАЙТ'
+};
+/* ═══════════════════════════════════════ */
+document.querySelectorAll('[data-link]').forEach(a => a.href = LINKS[a.dataset.link] || '#');
+</script>
+
 <svg class="wave" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#b14aff"/><stop offset="1" stop-color="#d6ff3a"/>
@@ -63,19 +91,33 @@ background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);animation:glow 2.4s in
 </div>
 
 <div class="cta">
-  <!-- ЗАМЕНИ ссылки на свои: Donationalerts и/или DonatePay -->
-  <a class="btn btn-main" href="https://www.donationalerts.com/r/meerphys1" target="_blank" rel="noopener">💜 Закинуть на волну</a>
-  <a class="btn btn-alt" href="https://boosty.to/" target="_blank" rel="noopener">Стать спонсором</a>
+  <a class="btn btn-main" data-link="da" target="_blank" rel="noopener">💜 Закинуть на волну</a>
+  <a class="btn btn-boosty" data-link="boosty" target="_blank" rel="noopener">🔥 Стать спонсором на Boosty</a>
 </div>
 
-<div class="cta" style="margin-top:18px">
-  <a class="btn btn-alt" href="https://github.com/ResokaU/volna/releases/latest" target="_blank" rel="noopener">⬇ Скачать VOLNA 6.1.0</a>
-  <a class="btn btn-alt" href="https://github.com/ResokaU/volna" target="_blank" rel="noopener">⭐ Исходники на GitHub</a>
+<div class="discord">
+  <div class="lock">🔒</div>
+  <h2>Секретный Discord для своих</h2>
+  <p>Задонатил — добро пожаловать в закрытую комнату волны. Там водятся такие штуки, которых нет ни у кого:</p>
+  <div class="perks">
+    <span class="perk">🎭 Секретная роль</span>
+    <span class="perk">🎧 Ранний доступ к билдам</span>
+    <span class="perk">🥚 Пасхалки и секретные маскоты</span>
+    <span class="perk">🗣 Комната с пацанами</span>
+    <span class="perk">📉 Инсайды о багах до релиза</span>
+  </div>
+  <a class="btn-discord" data-link="discord" target="_blank" rel="noopener">Войти в секретку</a>
+  <div class="fine">донатнул → кидай скрин в лс Boosty — и инвайт твой</div>
 </div>
 
 <div class="goal">
   <div class="goal-t"><span>Цель: серверы для комнат-волн</span><span>35%</span></div>
   <div class="bar"><div class="fill"></div></div>
+</div>
+
+<div class="cta">
+  <a class="btn btn-alt" href="https://github.com/ResokaU/volna/releases/latest" target="_blank" rel="noopener">⬇ Скачать VOLNA 6.1.0</a>
+  <a class="btn btn-alt" href="https://github.com/ResokaU/volna" target="_blank" rel="noopener">⭐ Исходники на GitHub</a>
 </div>
 
 <p class="note">Все функции VOLNA останутся бесплатными — всегда.<br>
