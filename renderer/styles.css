@@ -784,6 +784,16 @@ color:var(--text);font-size:12.5px;font-weight:600;cursor:none;transition:.13s}
 .account-menu-item:hover{background:color-mix(in srgb,var(--accent) 18%,rgba(255,255,255,.04))}
 .account-menu-item .ic{width:15px;height:15px;color:var(--acid)}
 
+/* ============ v7.4.2: 🖥 NP-фуллскрин — во всё окно без рамок ============ */
+body.np-full .titlebar{display:none}
+body.np-full .sidebar{display:none}
+body.np-full .grain{display:none}
+body.np-full{overflow:hidden}
+body.np-full .app{grid-template-columns:1fr}
+body.np-full .main{overflow:hidden}
+body.np-full #view-nowplaying{position:fixed;inset:0;z-index:150;overflow:hidden}
+body.np-full #np-body{max-width:1280px;margin:0 auto;padding:70px 48px 170px}
+
 /* ============ v7.2: 🎨 амбиент по обложке — цвет трека везде ============ */
 body.amb-on .player{border-color:color-mix(in srgb,var(--amb) 32%,rgba(255,255,255,.08));
 box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 46px -14px var(--amb-soft)}

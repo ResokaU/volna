@@ -133,6 +133,7 @@ function switchView(name) {
   if (name === 'stats') renderStats();
   if (name === 'foryou') loadForyou();
   document.body.classList.toggle('vibe-on', name === 'vibe'); // весь UI прячется, остаётся плеер-бар
+  document.body.classList.toggle('np-full', name === 'nowplaying'); // Now Playing во всё окно
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
