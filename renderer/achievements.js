@@ -155,8 +155,7 @@ window.Ach = (function () {
   }
 
   function openVoAch() {
-    openModal('ach_modal');
-    renderInto($('#ach-body'));
+    switchView('account'); // вкладка «Ваш аккаунт»: ачивки вверху
   }
 
   return { check, openVoAch, renderInto, catalog };

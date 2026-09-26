@@ -162,21 +162,13 @@
 
     <div class="account-card">
       <div class="ac-label">Аккаунт</div>
-      <div class="account-profile" id="account-profile" onclick="toggleAccountMenu(event)" title="Меню аккаунта">
+      <div class="account-profile" id="account-profile" onclick="switchView(&quot;account&quot;)" title="Ваш аккаунт">
         <div class="profile-ava" id="ap-avatar">V</div>
         <div class="ap-info">
           <div class="ap-name" id="ap-name">Профиль</div>
           <div class="ap-sub">Профили и данные</div>
         </div>
         <svg class="ic" viewBox="0 0 24 24" style="margin-left:auto;color:var(--dim)"><use href="#i-sort"/></svg>
-      </div>
-      <div class="account-menu" id="account-menu">
-        <div class="account-menu-item" onclick="openProfilesModal(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Профили и облако</div>
-        <div class="account-menu-item" onclick="openVoAch(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoАчивки</div>
-        <div class="account-menu-item" onclick="switchView('stats'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chart"/></svg>Статистика</div>
-        <div class="account-menu-item" onclick="switchView('settings'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sliders"/></svg>Настройки</div>
-        <div class="account-menu-item" onclick="toggleMiniPlayer(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Мини-плеер</div>
-        <div class="account-menu-item" onclick="switchView('vibe'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Вайб</div>
       </div>
     </div>
 
@@ -461,7 +453,7 @@
             <div class="section-sub">Твоя статистика</div>
           </div>
           <div style="display:flex;gap:8px">
-            <button class="toolbar-btn" onclick="openVoAch()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoАчивки</button>
+            <button class="toolbar-btn" onclick="switchView(&quot;account&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoАчивки</button>
             <button class="toolbar-btn" onclick="openWrapped()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна года</button>
             <button class="toolbar-btn danger" onclick="resetStats()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Сбросить</button>
           </div>
@@ -639,6 +631,47 @@
         </div>
       </section>
 
+      <section class="view" id="view-account">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Ваш аккаунт</h2>
+            <div class="section-sub">VoКаунты — профили, ачивки и облако</div>
+          </div>
+        </div>
+        <div class="acc-view">
+          <div class="acc-head">
+            <div class="profile-ava acc-ava-big" id="acc-ava">V</div>
+            <div class="acc-head-info">
+              <div class="acc-name" id="acc-name">Профиль</div>
+              <div class="acc-sub" id="acc-sub">VoКаунт</div>
+            </div>
+            <div class="acc-head-btns">
+              <button class="md-btn" onclick="Profiles.renameActive()">✏️ Переименовать</button>
+              <button class="md-btn" onclick="Profiles.pickAvatarActive()">🖼 Аватар</button>
+            </div>
+          </div>
+          <h4 class="ach-sec">🏆 Ачивки</h4>
+          <div class="ach-grid" id="account-ach"></div>
+          <h4 class="ach-sec">👥 Профили</h4>
+          <div id="profiles-list"></div>
+          <div class="profile-create">
+            <input type="text" id="profile-new-name" maxlength="24" placeholder="Имя нового профиля">
+            <button class="md-btn" onclick="Profiles.create()">+ Создать</button>
+          </div>
+          <h4 class="ach-sec">☁️ Облако (приватный GitHub Gist)</h4>
+          <div class="profile-create">
+            <input type="text" id="gh-token" placeholder="GitHub Personal Access Token (право gist)">
+            <button class="md-btn" onclick="Profiles.ghConnect()">Подключить</button>
+          </div>
+          <div class="cloud-status" id="gh-status">Не подключено</div>
+          <div class="cloud-btns">
+            <button class="md-btn" onclick="Profiles.cloudPush()">⬆ Выгрузить профили в облако</button>
+            <button class="md-btn" onclick="Profiles.cloudPull()">⬇ Загрузить профили из облака</button>
+          </div>
+          <p class="setting-hint">Токен: github.com/settings/tokens → Generate new token (classic) → отметь только <b>gist</b>. В облаке приватный gist «volna-profiles» — привяжи его на втором ПК, и профили переедут. Токен хранится локально.</p>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -713,41 +746,9 @@
   <div class="wr-nav" id="wr-dots"></div>
   <button class="wr-close" onclick="closeWrapped()">✕</button>
 </div>
-
-<div class="modal" id="profiles_modal">
-  <div class="modal-content rooms-modal">
-    <button class="modal-close" onclick="closeModal('profiles_modal')">×</button>
-    <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>VoКаунты</h3>
-    <div id="profiles-list"></div>
-    <div class="profile-create">
-      <input type="text" id="profile-new-name" maxlength="24" placeholder="Имя нового профиля">
-      <button class="md-btn" onclick="Profiles.create()">+ Создать</button>
-    </div>
-    <p class="setting-hint">У каждого профиля свои лайки, история, плейлисты и статистика. Данные хранятся локально на этом компьютере. 🖼 меняет аватар — картинка обрезается в круг и сжимается.</p>
-    <div class="cloud-block">
-      <div class="cloud-title">☁️ Облако (приватный GitHub Gist)</div>
-      <div class="profile-create">
-        <input type="text" id="gh-token" placeholder="GitHub Personal Access Token (право gist)">
-        <button class="md-btn" onclick="Profiles.ghConnect()">Подключить</button>
-      </div>
-      <div class="cloud-status" id="gh-status">Не подключено</div>
-      <div class="cloud-btns">
-        <button class="md-btn" onclick="Profiles.cloudPush()">⬆ Выгрузить профили в облако</button>
-        <button class="md-btn" onclick="Profiles.cloudPull()">⬇ Загрузить профили из облака</button>
-      </div>
-      <p class="setting-hint">Токен: github.com/settings/tokens → Generate new token (classic) → отметь только <b>gist</b>. В облаке приватный gist «volna-profiles» — привяжи его на втором ПК, и профили переедут. Токен хранится локально.</p>
-    </div>
-  </div>
-</div>
 <input type="file" id="avatar-file" accept="image/*" hidden>
 
-<div class="modal" id="ach_modal">
-  <div class="modal-content" style="max-width:860px">
-    <button class="modal-close" onclick="closeModal('ach_modal')">×</button>
-    <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoКаунты · Ачивки</h3>
-    <div id="ach-body" class="ach-body"></div>
-  </div>
-</div>
+
 
 <div class="modal" id="rooms_modal">
   <div class="modal-content rooms-modal">

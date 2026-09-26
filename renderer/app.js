@@ -137,6 +137,7 @@ function switchView(name) {
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
+  if (name === 'account' && window.Profiles) Profiles.refresh(); // вкладка VoКаунтов
   if (typeof updateMascot === 'function') updateMascot();
 }
 

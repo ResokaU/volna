@@ -1107,7 +1107,7 @@ app.whenReady().then(async () => {
     // Заголовки оригинала сохраняем (Content-Type нужен для svg/png!)
     const resp = await net.fetch(pathToFileURL(abs).toString());
     const h = new Headers(resp.headers);
-    h.set('Cache-Control', 'no-cache');
+    h.set('Cache-Control', 'no-store');
     return new Response(resp.body, { status: resp.status, headers: h });
   });
 

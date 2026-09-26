@@ -1,24 +1,23 @@
-/* VOLNA · profiles.js — 👤 профили: у каждого свои лайки, история, плейлисты, статистика.
-   Данные хранятся локально; активный профиль = топ-уровень стора (см. main.js). */
+/* VOLNA · profiles.js — 👤 VoКаунты: вкладка аккаунта (профили, ачивки, облако).
+   Активный профиль = топ-уровень стора (см. main.js); данные и ачивки — в profile.data. */
 window.Profiles = (function () {
   let cache = { profiles: [], active: null };
   let avatarTarget = null;
 
   async function init() {
     await refresh();
-    renderCloud();
   }
 
   async function refresh() {
     try { cache = await ipc.invoke('profiles:get') || cache; } catch (_) {}
-    renderAccount();
-    renderList();
+    renderView();
   }
 
   function stash() {
     return {
       favorites: state.favorites, history: state.history, playlists: state.playlists,
-      stats: state.stats, lastTrack: state.lastTrack, ach: state.ach || {}, listensA: state.listensA || {}, listensT: state.listensT || {}
+      stats: state.stats, lastTrack: state.lastTrack,
+      ach: state.ach || {}, listensA: state.listensA || {}, listensT: state.listensT || {}
     };
   }
 
@@ -28,13 +27,15 @@ window.Profiles = (function () {
     state.playlists = d.playlists || [];
     state.stats = d.stats || { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() };
     state.lastTrack = d.lastTrack || null;
-    state.ach = d.ach || {}; state.listensA = d.listensA || {}; state.listensT = d.listensT || {};
+    state.ach = d.ach || {};
+    state.listensA = d.listensA || {};
+    state.listensT = d.listensT || {};
     state.serverLikes = []; state.favSource = 'local';
     state.listenedCounted = false;
   }
 
   async function switchTo(id) {
-    if (!id || id === cache.active) { closeModal('profiles_modal'); return; }
+    if (!id || id === cache.active) return;
     await ipc.invoke('profiles:stash', stash());
     const data = await ipc.invoke('profiles:switch', id);
     cache.active = id;
@@ -63,26 +64,44 @@ window.Profiles = (function () {
     toast('👤 Профиль «' + name + '» создан — жми «Войти»', 'success');
   }
 
-  async function rename(id) {
-    const row = document.querySelector('.profile-row[data-id="' + id + '"] .profile-name');
-    if (!row) return;
-    const old = row.textContent;
-    row.innerHTML = '<input class="profile-rename" value="' + escapeHtml(old) + '">';
-    const input = row.querySelector('input');
+  function inlineRename(container, current, save) {
+    const el = $(container);
+    if (!el) return;
+    el.innerHTML = '<input class="profile-rename" value="' + escapeHtml(current) + '">';
+    const input = el.querySelector('input');
     input.focus(); input.select();
     let done = false;
-    const save = async () => {
+    const commit = async () => {
       if (done) return;
       done = true;
-      const name = input.value.trim() || old;
-      await ipc.invoke('profiles:rename', { id, name });
-      await refresh();
+      const name = input.value.trim() || current;
+      await save(name);
     };
     input.addEventListener('keydown', ev => {
-      if (ev.key === 'Enter') save();
+      if (ev.key === 'Enter') commit();
       if (ev.key === 'Escape') { done = true; refresh(); }
     });
-    input.addEventListener('blur', save);
+    input.addEventListener('blur', commit);
+  }
+
+  async function rename(id) {
+    inlineRename('.profile-row[data-id="' + id + '"] .profile-name', currentName(id), async name => {
+      await ipc.invoke('profiles:rename', { id, name });
+      await refresh();
+    });
+  }
+
+  async function renameActive() {
+    inlineRename('#acc-name', activeName(), async name => {
+      const id = cache.active;
+      await ipc.invoke('profiles:rename', { id, name });
+      await refresh();
+    });
+  }
+
+  function currentName(id) {
+    const p = cache.profiles.find(x => x.id === id);
+    return p ? p.name : 'Профиль';
   }
 
   async function remove(id) {
@@ -99,6 +118,7 @@ window.Profiles = (function () {
     const inp = $('#avatar-file');
     if (inp) { inp.value = ''; inp.click(); }
   }
+  function pickAvatarActive() { pickAvatar(cache.active); }
 
   function avatarChosen(ev) {
     const f = ev.target.files && ev.target.files[0];
@@ -122,14 +142,19 @@ window.Profiles = (function () {
     reader.readAsDataURL(f);
   }
 
-  function renderAccount() {
+  /* ---------- отрисовка вкладки ---------- */
+  function renderView() {
     const p = cache.profiles.find(x => x.id === cache.active);
-    const nameEl = $('#ap-name'), avEl = $('#ap-avatar'), subEl = $('#ap-sub');
-    if (!nameEl) return;
-    nameEl.textContent = p ? p.name : 'Профиль';
-    if (p && p.avatar) { avEl.style.backgroundImage = 'url(' + p.avatar + ')'; avEl.textContent = ''; }
-    else { avEl.style.backgroundImage = ''; avEl.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
-    if (subEl) subEl.textContent = 'VoКаунты · ачивки и данные';
+    const ava = $('#acc-ava'), nm = $('#acc-name'), sub = $('#acc-sub');
+    if (ava && nm) {
+      if (p && p.avatar) { ava.style.backgroundImage = 'url(' + p.avatar + ')'; ava.textContent = ''; }
+      else { ava.style.backgroundImage = ''; ava.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
+      nm.textContent = p ? p.name : 'Профиль';
+      if (sub) sub.textContent = 'VoКаунт' + (p && p.name ? ' · ' + p.name : '');
+    }
+    if (window.Ach) Ach.renderInto($('#account-ach'), $('#ach-view-head'));
+    renderList();
+    renderCloud();
   }
 
   function renderList() {
@@ -207,28 +232,13 @@ window.Profiles = (function () {
   }
 
   return {
-    init, refresh, switchTo, create, rename, remove, pickAvatar, avatarChosen,
-    renderAccount, renderList, ghConnect, cloudPush, cloudPull, renderCloud,
+    init, refresh, switchTo, create, rename, renameActive, remove,
+    pickAvatar, pickAvatarActive, avatarChosen, renderView,
+    ghConnect, cloudPush, cloudPull, renderCloud,
     get active() { return cache.active; },
     get profiles() { return cache.profiles; }
   };
 })();
 
 if ($('#avatar-file')) $('#avatar-file').addEventListener('change', ev => Profiles.avatarChosen(ev));
-Profiles.init();
-
-function openProfilesModal() {
-  openModal('profiles_modal');
-  if (window.Profiles) Profiles.refresh();
-}
-
-/* меню аккаунта (как топбар SoundCloud) */
-function toggleAccountMenu(e) {
-  if (e) e.stopPropagation();
-  $('#account-menu')?.classList.toggle('open');
-}
-function closeAccountMenu() { $('#account-menu')?.classList.remove('open'); }
-document.addEventListener('click', e => {
-  if (!e.target.closest('#account-menu') && !e.target.closest('#account-profile')) closeAccountMenu();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAccountMenu(); });
+window.Profiles.init();
