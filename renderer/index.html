@@ -261,7 +261,7 @@
           <div class="home-actions">
             <button class="toolbar-btn" onclick="feelingLucky()">🎲 Мне повезёт</button>
             <button class="toolbar-btn" onclick="enableRadio()">📻 Radio по треку</button>
-            <button class="toolbar-btn" onclick="playAllFavorites()">❤️ Играть лайки</button>
+            <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Играть лайки</button>
             <button class="toolbar-btn" onclick="switchView('discover')">🔍 Поиск</button>
           </div>
           <div id="home-resume"></div>
@@ -299,19 +299,19 @@
           </div>
         </div>
         <div class="vibe-icons">
-          <button class="vibe-ic" onclick="vibeToggle('fx')" title="Шейдеры">✨</button>
+          <button class="vibe-ic" onclick="vibeToggle('fx')" title="Шейдеры"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg></button>
           <button class="vibe-ic" onclick="vibeToggle('search')" title="Поиск фона">
             <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
-          <button class="vibe-ic" onclick="rerollVibe()" title="Другой фон">🔄</button>
+          <button class="vibe-ic" onclick="rerollVibe()" title="Другой фон"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg></button>
           <button class="vibe-ic vibe-ic-close" onclick="collapseVibe()" title="Закрыть (Esc)">✕</button>
         </div>
         <div class="vibe-panel" id="vibe-fx-panel">
           <div class="eq-presets" id="vshader-chips"></div>
           <div id="vibe-md-ctl">
-            <button class="md-btn" id="vibe-md-rand" title="Случайный пресет">🎲 Случайный</button>
-            <button class="md-btn" id="vibe-md-next" title="Следующий пресет">⏭ Следующий</button>
-            <button class="md-btn" id="vibe-md-auto" title="Автосмена пресетов по таймеру">⏱ Автосмена</button>
+            <button class="md-btn" id="vibe-md-rand" title="Случайный пресет"><svg class="ic" viewBox="0 0 24 24"><use href="#i-dice"/></svg>Случайный</button>
+            <button class="md-btn" id="vibe-md-next" title="Следующий пресет"><svg class="ic" viewBox="0 0 24 24"><use href="#i-next"/></svg>Следующий</button>
+            <button class="md-btn" id="vibe-md-auto" title="Автосмена пресетов по таймеру"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>Автосмена</button>
             <button class="md-btn" id="vibe-md-zout" title="Отдалить картинку">🔍−</button>
             <button class="md-btn" id="vibe-md-zin" title="Приблизить картинку">🔍+</button>
             <button class="md-btn" id="vibe-md-zreset" title="Сбросить зум">1:1</button>
@@ -331,7 +331,7 @@
           </div>
           <div class="vibe-results" id="vibe-results"></div>
         </div>
-        <button class="toolbar-btn vibe-reroll" onclick="rerollVibe()">🔄 Другой фон</button>
+        <button class="toolbar-btn vibe-reroll" onclick="rerollVibe()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Другой фон</button>
       </section>
 
       <section class="view" id="view-nowplaying">
@@ -541,7 +541,7 @@
         <div class="settings-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Пульт с телефона</h3>
           <div class="setting-row" style="margin-bottom:10px">
-            <button class="toolbar-btn" onclick="showRemoteQR()">📱 Показать QR и адрес</button>
+            <button class="toolbar-btn" onclick="showRemoteQR()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Показать QR и адрес</button>
           </div>
           <div id="remote-box"></div>
         </div>
@@ -694,7 +694,7 @@
         <p class="rooms-hint">Один включает музыку — остальные ловят волну в реальном времени.
         Синхрон идёт через публичный MQTT-брокер: без серверов, без регистрации.</p>
       </div>
-      <button class="rooms-create" onclick="Rooms.create()">🌊 Создать комнату</button>
+      <button class="rooms-create" onclick="Rooms.create()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Создать комнату</button>
       <div class="rooms-or"><span>или войди по коду</span></div>
       <div class="rooms-join">
         <input type="text" id="rooms-code" maxlength="6" placeholder="КОД" autocomplete="off">
@@ -704,7 +704,7 @@
     <div id="rooms-active" style="display:none">
       <div class="rooms-live"><span class="rooms-dot"></span><span id="rooms-status">…</span></div>
       <div class="rooms-code-row" id="rooms-code-row" title="Нажми, чтобы скопировать код"></div>
-      <button class="rooms-copy" onclick="Rooms.copyCode()">📋 Скопировать код</button>
+      <button class="rooms-copy" onclick="Rooms.copyCode()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Скопировать код</button>
       <button class="rooms-vote" id="rooms-vote" onclick="Rooms.vote()" style="display:none">⏭ Голосовать за следующий</button>
       <p class="rooms-hint" id="rooms-guest-hint" style="display:none">Пауза и переключение — у хоста. Когда большинство гостей голосует, трек переключается.</p>
       <p class="rooms-hint" id="rooms-host-hint">Не закрывай VOLNA — от тебя идёт волна. Код одноразовый.</p>

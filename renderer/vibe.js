@@ -73,7 +73,7 @@ function renderVibe() {
 function renderVShaderChips() {
   const box = $('#vshader-chips');
   if (!box) return;
-  const items = [{ id: 'off', label: '🖼 Выкл' }].concat(
+  const items = [{ id: 'off', label: '<svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-image"/></svg> Выкл' }].concat(
     Object.keys(window.VIBE_SHADERS || {}).map(k => ({ id: k, label: (window.VIBE_SHADERS[k].name || k) })),
     [{ id: 'milkdrop', label: '🌀 Милкдроп' }]
   );
