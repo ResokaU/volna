@@ -40,9 +40,10 @@ window.Profiles = (function () {
     state.listenedCounted = false;
   }
 
-  /* сохранить текущий профиль на диск (данные, ачивки, соц-слой) */
+  /* сохранить текущий профиль на диск (данные, ачивки, соц-слой) + автосинк в облако */
   async function persist() {
     try { await ipc.invoke('profiles:stash', stash()); } catch (_) {}
+    scheduleCloudPush();
   }
 
   async function switchTo(id) {
@@ -203,17 +204,26 @@ window.Profiles = (function () {
     toast('☁️ Облако подключено: ' + v.login, 'success');
   }
 
-  async function cloudPush() {
+  async function cloudPush(silent) {
     const tok = ghToken();
-    if (!tok) { toast('Сначала подключи GitHub', 'error'); return; }
+    if (!tok) { if (!silent) toast('Сначала подключи GitHub', 'error'); return false; }
     await ipc.invoke('profiles:stash', stash());
     const all = await ipc.invoke('profiles:get');
     const payload = JSON.stringify({ exportedAt: Date.now(), app: 'VOLNA', activeProfile: all.active, profiles: all.profiles });
     const r = await ipc.invoke('gh:push', { token: tok, gistId: state.settings.ghGistId || '', content: payload });
-    if (!r.ok) { toast('☁️ Ошибка выгрузки: ' + r.error, 'error'); return; }
+    if (!r.ok) { if (!silent) toast('☁️ Ошибка выгрузки: ' + r.error, 'error'); return false; }
     if (r.gistId) { state.settings.ghGistId = r.gistId; await saveSetting('ghGistId', r.gistId); }
     renderCloud();
-    toast('☁️ Профили выгружены в облако', 'success');
+    if (!silent) toast('☁️ Профили выгружены в облако', 'success');
+    return true;
+  }
+
+  /* автосинк: любые изменения профиля тихо уезжают в гист (трейлинг-дебаунс 30с) */
+  let _cloudT = 0;
+  function scheduleCloudPush() {
+    if (!ghToken() || !state.settings.ghGistId) return;
+    clearTimeout(_cloudT);
+    _cloudT = setTimeout(() => { cloudPush(true).catch(() => {}); }, 30000);
   }
 
   async function cloudPull() {
@@ -244,7 +254,7 @@ window.Profiles = (function () {
   }
 
   return {
-    init, refresh, switchTo, create, rename, renameActive, remove, persist,
+    init, refresh, switchTo, create, rename, renameActive, remove, persist, scheduleCloudPush,
     pickAvatar, pickAvatarActive, avatarChosen, renderView,
     ghConnect, cloudPush, cloudPull, renderCloud,
     get active() { return cache.active; },

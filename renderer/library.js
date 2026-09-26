@@ -328,6 +328,7 @@ async function toggleLike(track) {
   if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
   if ($('#view-home')?.classList.contains('active')) renderHome(); // полка лайков на главной
   if (window.Ach) Ach.check('like');
+  if (window.Profiles) Profiles.scheduleCloudPush(); // автосинк профиля в облако
   mirrorLikeToServer(track, !isFav); // двойной лайк: локально + на SoundCloud
 }
 
@@ -621,6 +622,7 @@ async function addHistory(track) {
   lsSet('listensA', state.listensA);
   lsSet('listensT', state.listensT);
   if (window.Ach) Ach.check('listen');
+  if (window.Profiles) Profiles.scheduleCloudPush(); // автосинк профиля в облако
   await persistHistory();
 }
 
@@ -658,6 +660,7 @@ async function createPlaylist() {
   if ($('#view-playlists')?.classList.contains('active')) renderPlaylists();
   toast('📁 Плейлист создан', 'success');
   if (window.Ach) Ach.check('playlist');
+  if (window.Profiles) Profiles.scheduleCloudPush(); // автосинк профиля в облако
 }
 
 /* мозаика из обложек первых 4 треков плейлиста */
