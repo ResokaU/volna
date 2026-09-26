@@ -555,7 +555,7 @@ function applyWallpaper() {
 /* ---------- Главная: приветствие, продолжить, популярное ---------- */
 function renderHome() {
   const h = new Date().getHours();
-  const greet = h < 5 ? 'Ночной эфир 🌙' : h < 12 ? 'Доброе утро ☀️' : h < 18 ? 'Добрый день 🌊' : 'Добрый вечер 🌆';
+  const greet = h < 5 ? 'Ночной эфир' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
   const g = $('#home-greeting'); if (g) g.textContent = greet;
   const sub = $('#home-sub');
   if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
@@ -577,8 +577,10 @@ function renderHome() {
   const rEl = $('#home-resume');
   if (rEl) {
     if (lt && lt.track && lt.track.id !== state.currentTrack?.id) {
-      rEl.innerHTML = '<button class="resume-btn" onclick="resumeLast()">▶ Продолжить: '
-        + escapeHtml(lt.track.title || '') + '<span class="resume-at">с ' + formatTime((lt.posMs || 0) / 1000) + '</span></button>';
+      rEl.innerHTML = '<button class="resume-btn" onclick="resumeLast()"><span class="rb-left">'
+        + '<svg class="ic" viewBox="0 0 24 24"><use href="#i-play"/></svg><span>'
+        + escapeHtml(lt.track.title || '') + '</span></span>'
+        + '<span class="resume-at">с ' + formatTime((lt.posMs || 0) / 1000) + '</span></button>';
     } else rEl.innerHTML = '';
   }
   const pEl = $('#home-popular');
