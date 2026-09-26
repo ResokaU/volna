@@ -258,10 +258,21 @@ window.Rooms = (function () {
   async function copyCode() {
     if (!code) return;
     let ok = false;
-    try { await navigator.clipboard.writeText(code); ok = true; } catch (_) {
+    // 1) через main-процесс — работает всегда (без фокуса и разрешений)
+    if (typeof ipc !== 'undefined' && ipc) {
+      try { ok = await ipc.invoke('clipboard:text', code) === true; } catch (_) {}
+    }
+    // 2) фолбэк: Clipboard API
+    if (!ok) {
+      try { await navigator.clipboard.writeText(code); ok = true; } catch (_) {}
+    }
+    // 3) фолбэк: execCommand
+    if (!ok) {
       try {
         const ta = document.createElement('textarea');
         ta.value = code;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
         document.body.appendChild(ta);
         ta.select();
         ok = document.execCommand('copy');

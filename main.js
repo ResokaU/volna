@@ -781,6 +781,11 @@ ipcMain.handle('share:clipboard', (_e, dataUrl) => {  try {
   } catch (_) { return false; }
 });
 
+// надёжное копирование текста: navigator.clipboard в Electron капризничает (фокус/разрешения)
+ipcMain.handle('clipboard:text', (_e, text) => {
+  try { clipboard.writeText(String(text)); return true; } catch (_) { return false; }
+});
+
 ipcMain.handle('notify', (_e, { title, body }) => {
   if (!Notification.isSupported()) return false;
   new Notification({ title, body, silent: false }).show();
