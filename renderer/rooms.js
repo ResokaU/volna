@@ -10,6 +10,7 @@ function openRooms() {
 window.Rooms = (function () {
   const BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
   let client = null, code = '', role = '', clientId = '';
+  let isUp = false, warnedDown = false;
   let guests = 0;
   const seenGuests = new Map(); // guestId -> lastSeen ts (только на хосте)
   const votes = new Map();      // guestId -> ts голоса (только на хосте)
@@ -36,11 +37,25 @@ window.Rooms = (function () {
     return new Promise((res, rej) => {
       let c;
       try {
-        c = mqtt.connect(url, { clientId: 'volna_' + clientId, keepalive: 30, connectTimeout: 12000, reconnectPeriod: 0 });
+        // reconnectPeriod: рвётся связь — mqtt.js сам переподключается и восстанавливает подписки
+        c = mqtt.connect(url, { clientId: 'volna_' + clientId, keepalive: 30, connectTimeout: 12000, reconnectPeriod: 4000 });
       } catch (e) { rej(e); return; }
-      const t = setTimeout(() => { try { c.end(true); } catch (_) {} rej(new Error('таймаут брокера')); }, 15000);
-      c.on('connect', () => { clearTimeout(t); client = c; wire(); res(); });
-      c.on('error', e => { clearTimeout(t); try { c.end(true); } catch (_) {} rej(e); });
+      let settled = false;
+      const t = setTimeout(() => { try { c.end(true); } catch (_) {} if (!settled) { settled = true; rej(new Error('таймаут брокера')); } }, 15000);
+      c.on('connect', () => {
+        isUp = true; warnedDown = false;
+        renderRooms();
+        if (!settled) { settled = true; clearTimeout(t); client = c; wire(); res(); }
+      });
+      c.on('error', e => { if (!settled) { settled = true; clearTimeout(t); rej(e); } });
+      c.on('message', onMessage);
+      c.on('close', () => {
+        isUp = false;
+        if (code) {
+          renderRooms();
+          if (!warnedDown) { warnedDown = true; toast('🌊 Связь потеряна — переподключаюсь…', 'error'); }
+        }
+      });
     });
   }
 
@@ -50,14 +65,6 @@ window.Rooms = (function () {
       try { await openSocket(BROKERS[i]); return i; } catch (e) { lastErr = e; }
     }
     throw lastErr || new Error('брокеры недоступны');
-  }
-
-  function wire() {
-    client.on('message', onMessage);
-    client.on('close', () => {
-      // reconnectPeriod: 0 — обрыв = выход из комнаты
-      if (code) { toast('🌊 Комната: соединение потеряно', 'error'); leave(false); }
-    });
   }
 
   function onMessage(_, payload) {
@@ -71,6 +78,8 @@ window.Rooms = (function () {
         if (role === 'host') {
           seenGuests.set(m.from, Date.now());
           pushPresence();
+          publishState(); // гость получает трек сразу, а не через heartbeat
+          console.info('[ROOMS] гость подключился: ' + m.from);
           renderRooms();
         }
         break;
@@ -139,9 +148,11 @@ window.Rooms = (function () {
     const wantPos = Math.max(0, (m.pos || 0) + drift);
     const cur = state.currentTrack;
     if (!cur || cur.id !== t.id) {
-      // новый трек у хоста — грузим сами и встаём на позицию
-      state._roomJoinPos = wantPos;
+      // новый трек у хоста — грузим сами; если у хоста пауза — загрузим и встанем на паузу
+      state._roomJoinPos = m.playing ? wantPos : 0;
+      state._roomJoinPaused = !m.playing;
       state._roomJoinAt = Date.now();
+      console.info('[ROOMS] гость: новый трек от хоста — ' + (t.title || ''));
       playTrack(t, null);
       renderRooms();
       return;
@@ -169,6 +180,7 @@ window.Rooms = (function () {
       if (state._roomJoinPos == null) return;
       if (state.isPlaying && state._lastDurMs) {
         seekTo(state._roomJoinPos + (Date.now() - state._roomJoinAt));
+        if (state._roomJoinPaused && state.isPlaying) togglePlay(); // у хоста пауза — гость молчит
         state._roomJoinPos = null;
       }
     }, 700);
@@ -184,7 +196,6 @@ window.Rooms = (function () {
     code = String(idx + 1) + genCodeSuffix();
     client.subscribe(topic());
     role = 'host';
-    wire2();
     seenGuests.clear(); votes.clear();
     hostLoop();
     publishState();
@@ -202,14 +213,13 @@ window.Rooms = (function () {
     try { await openSocket(brokerOf(c)); } catch (e) { code = ''; toast('Брокер хоста недоступен: ' + e.message, 'error'); return; }
     client.subscribe(topic());
     role = 'guest';
-    wire2();
     send({ type: 'hello', from: clientId });
     guestLoop();
     renderRooms();
     toast('🌊 В комнате ' + code + ' — синкаюсь с хостом', 'success');
   }
 
-  function wire2() { client.removeAllListeners('connect'); client.removeAllListeners('error'); }
+  function wire2() { /* v6.7.0: обработчики живут в openSocket (переподключение) */ }
 
   function vote() {
     if (role !== 'guest') return;
@@ -227,9 +237,9 @@ window.Rooms = (function () {
     try { client && client.end(true); } catch (_) {}
     clearInterval(hbTimer); clearInterval(guestPingTimer); clearInterval(joinTimer);
     hbTimer = guestPingTimer = joinTimer = 0;
-    client = null; code = ''; role = ''; guests = 0;
+    client = null; code = ''; role = ''; guests = 0; isUp = false; warnedDown = false;
     seenGuests.clear(); votes.clear();
-    state._roomJoinPos = null;
+    state._roomJoinPos = null; state._roomJoinPaused = false;
     renderRooms();
   }
 
@@ -248,8 +258,8 @@ window.Rooms = (function () {
     }
     const st = $('#rooms-status');
     if (st) st.textContent = role === 'host'
-      ? 'Ты хост · гостей: ' + (seenGuests ? seenGuests.size : 0)
-      : 'Гость · участников: ' + (guests || '…');
+      ? (isUp ? 'Ты хост' : 'Переподключение…') + ' · гостей: ' + (seenGuests ? seenGuests.size : 0)
+      : (isUp ? 'Гость' : 'Переподключение…') + ' · участников: ' + (guests || '…');
     const vb = $('#rooms-vote'), gh = $('#rooms-guest-hint');
     if (vb) vb.style.display = role === 'guest' ? '' : 'none';
     if (gh) gh.style.display = role === 'guest' ? '' : 'none';

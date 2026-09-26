@@ -145,6 +145,8 @@ function applySettings() {
   $('#set-discord').checked = state.settings.discordRpc !== false;
   const dt = $('#set-discord-token');
   if (dt) dt.value = state.settings.discordBotToken || '';
+  const nightcomp = $('#set-nightcomp');
+  if (nightcomp) nightcomp.checked = state.settings.nightCompressor === true;
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
@@ -198,6 +200,12 @@ function bindLibraryUI() {
     saveSetting('discordRpc', e.target.checked);
     if (ipc) ipc.invoke(e.target.checked ? 'rpc:enable' : 'rpc:disable').catch(() => {});
     toast(e.target.checked ? '🎮 Discord RPC включён — перезапусти трек для статуса' : 'Discord RPC выключен');
+  });
+  const nightcomp = $('#set-nightcomp');
+  if (nightcomp) nightcomp.addEventListener('change', e => {
+    saveSetting('nightCompressor', e.target.checked);
+    if (typeof applyNightCompressor === 'function') applyNightCompressor();
+    toast(e.target.checked ? '🔇 Ночной компрессор включён' : 'Ночной компрессор выключен');
   });
 
   $('#set-scproxy').addEventListener('change', async e => {
@@ -1077,7 +1085,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '6.6.4', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '6.7.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

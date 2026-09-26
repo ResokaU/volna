@@ -120,6 +120,12 @@ function ensureAudioEl(corsOk) {
     state.isPlaying = false; updatePlayIcon(); setPowerSave(false); updateTitle();
   });
   el.addEventListener('ended', () => {
+    if (state.sleepAfterTrack) { // «доиграет трек и уснём»
+      state.sleepAfterTrack = false;
+      $('#sleep-timer')?.classList.remove('active');
+      fadeOutStop();
+      return;
+    }
     if (state.repeat) { el.currentTime = 0; el.play().catch(() => {}); }
     else playNext();
   });
@@ -148,10 +154,30 @@ function setupAudioGraph() {
     });
     const an = ctx.createAnalyser();
     an.fftSize = 128; an.smoothingTimeConstant = .8;
-    node.connect(an); an.connect(ctx.destination);
+    // ночной компрессор живёт в цепи постоянно; ratio 1 = прозрачный байпас
+    const comp = ctx.createDynamicsCompressor();
+    node.connect(comp); comp.connect(an);
+    state.compressor = comp;
+    an.connect(ctx.destination);
     state.audioCtx = ctx; state.analyser = an;
     state.vizData = new Uint8Array(an.frequencyBinCount);
+    applyNightCompressor();
   } catch (_) { state.analyser = null; state.eqNodes = null; }
+}
+
+/* ночной компрессор: DynamicsCompressor в цепи; ratio 1 = прозрачный байпас */
+function applyNightCompressor() {
+  const c = state.compressor;
+  if (!c) return;
+  const on = state.settings.nightCompressor === true;
+  try {
+    c.threshold.value = on ? -35 : 0;
+    c.ratio.value = on ? 8 : 1;
+    c.knee.value = 30;
+    c.attack.value = 0.003;
+    c.release.value = 0.25;
+  } catch (_) {}
+  console.info('[EQ] night compressor: ' + (on ? 'on' : 'off'));
 }
 
 /* применить текущие ползунки EQ к фильтрам (плавно) */
@@ -1065,9 +1091,20 @@ function sendMiniSync(force) {
 
 /* ---------- sleep timer ---------- */
 function setSleepTimer() {
-  const mins = parseInt($('#sleep-duration').value, 10);
+  const raw = $('#sleep-duration').value;
+  const mins = parseInt(raw, 10);
   if (state.sleepTimer) { clearInterval(state.sleepTimer); state.sleepTimer = null; }
   const chip = $('#sleep-timer');
+  state.sleepAfterTrack = false;
+  if (raw === 'track') {
+    // «доиграет трек и уснём»: без таймера — сработает на ended текущего трека
+    state.sleepEnd = 0;
+    chip.classList.add('active');
+    $('#sleep-countdown').textContent = 'трек';
+    toast('😴 Доиграет трек — и уснём', 'success');
+    closeModal('sleep_modal');
+    return;
+  }
   if (!mins) {
     state.sleepEnd = 0;
     chip.classList.remove('active');

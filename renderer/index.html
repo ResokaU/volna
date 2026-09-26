@@ -553,6 +553,7 @@
             <button class="toolbar-btn" onclick="checkUpdate(true)">📦 Проверить обновления сейчас</button>
           </div>
           <label class="toggle-row"><input type="checkbox" id="set-discord" checked><span>Discord Rich Presence — статус «слушает…» с обложкой</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-nightcomp"><span>Ночной компрессор — выравнивает громкие и тихие места (комфортно на тихой громкости)</span></label>
           <div class="setting-row" style="margin-top:10px">
             <button class="toolbar-btn" onclick="resetDislikes()">🚫 Скрытых артистов из Radio: <strong id="dislike-count">0</strong> — сбросить</button>
           </div>
@@ -730,6 +731,7 @@
     <p style="color:var(--dim);margin-bottom:20px;font-size:14px">Остановить через:</p>
     <select id="sleep-duration">
       <option value="0">Выключить</option>
+      <option value="track">Доиграет трек и уснём</option>
       <option value="5">5 минут</option>
       <option value="15">15 минут</option>
       <option value="30">30 минут</option>
