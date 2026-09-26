@@ -1,4 +1,4 @@
-/* VOLNA · achievements.js — 🏆 VoКаунты 2.0: система ачивок.
+/* VOLNA · achievements.js — 🏆 Ачивки Волна ID: уровни, редкости, секретки.
    Каталог: общие (треки/время/лайки/плейлисты/серии/фичи) + артисты чарта Я.Музыки (3 тира)
    + треки чарта. У каждой ачивки редкость (common/rare/epic/legendary) и XP;
    XP складывается в уровень волны с титулом. Прогресс считается из данных профиля;
@@ -236,18 +236,28 @@ window.Ach = (function () {
     return { lvl: lv.n, title: lv.title, xp, next: lv.next, pct: lv.pct, unlocked: unlocked.length, total: cat.length };
   }
 
-  /* фильтры просмотра: all | done | wip */
+  /* фильтры просмотра: all | done | wip; компактный режим — для профиля Волна ID */
   let _filter = localStorage.getItem('ga:achf') || 'all';
-  let _lastBox = null;
+  let _lastBox = null, _lastOpts = {};
+  let _expanded = localStorage.getItem('ga:achexp') === '1';
   function setFilter(f) {
     _filter = f;
     localStorage.setItem('ga:achf', f);
-    renderInto(_lastBox, null);
+    renderInto(_lastBox, null, _lastOpts);
+  }
+  function toggleExpand() {
+    _expanded = !_expanded;
+    localStorage.setItem('ga:achexp', _expanded ? '1' : '0');
+    renderInto(_lastBox, null, _lastOpts);
+    const a = document.getElementById('vp-ach');
+    if (a) a.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function renderInto(box, headEl) {
+  function renderInto(box, headEl, opts) {
     if (!box) return;
     _lastBox = box;
+    _lastOpts = opts || {};
+    const compact = !!_lastOpts.compact && !_expanded;
     const cat = catalog();
     const ach = state.ach || {};
     const unlocked = cat.filter(a => a.unlocked);
@@ -261,13 +271,32 @@ window.Ach = (function () {
           <div class="ach-headbar"><div style="width:${Math.round(unlocked.length / cat.length * 100)}%"></div></div>
           <div class="ach-next">${lv.next ? `До ур. ${lv.n + 1}: ещё ${lv.next - xp} XP (${lv.pct}%)` : 'Максимальный уровень — ты Миф волны 🌊'}</div>
         </div>
-      </div>
+      </div>`;
+    if (headEl) headEl.innerHTML = head;
+
+    if (compact) {
+      // компактный режим: бейдж уровня + недавние ачивки + кнопка раскрытия
+      const recent = unlocked
+        .map(a => ({ a, ts: ach[a.id] || 0 }))
+        .sort((x, y) => y.ts - x.ts).slice(0, 6)
+        .map(({ a }) => {
+          const R = RAR[a.rarity] || RAR.common;
+          return `<div class="ach-mini ${R.cls}" title="${R.label} · +${R.xp} XP">
+            <span class="ach-mini-emoji">${a.emoji}</span>
+            <span class="ach-mini-name">${escapeHtml(a.name)}</span></div>`;
+        }).join('');
+      box.innerHTML = `${head}
+        <div class="ach-minirow">${recent || '<div class="ach-next">Пока пусто — включи первый трек 🌊</div>'}</div>
+        <button class="ach-expand" onclick="Ach.toggleExpand()">🏆 Все ачивки · ${unlocked.length} / ${cat.length}</button>`;
+      return;
+    }
+
+    const filters = `
       <div class="ach-filters">
         <button class="ach-fbtn${_filter === 'all' ? ' on' : ''}" onclick="Ach.setFilter('all')">Все · ${cat.length}</button>
         <button class="ach-fbtn${_filter === 'done' ? ' on' : ''}" onclick="Ach.setFilter('done')">✓ Получено · ${unlocked.length}</button>
         <button class="ach-fbtn${_filter === 'wip' ? ' on' : ''}" onclick="Ach.setFilter('wip')">⏳ В процессе · ${cat.length - unlocked.length}</button>
       </div>`;
-    if (headEl) headEl.innerHTML = head;
     const applyF = arr => _filter === 'all' ? arr : _filter === 'done' ? arr.filter(a => a.unlocked) : arr.filter(a => !a.unlocked);
     const card = a => {
       const R = RAR[a.rarity] || RAR.common;
@@ -293,16 +322,17 @@ window.Ach = (function () {
       return `<h4 class="ach-sec">${title} <em>${got} / ${all.length}</em></h4>
         <div class="ach-grid">${shown.map(card).join('')}</div>`;
     };
-    box.innerHTML = head + '<div class="ach-body">'
+    box.innerHTML = head + filters + '<div class="ach-body">'
       + sec('Общие', a => a.id.startsWith('g_'))
       + sec('🎤 Артисты чарта Я.Музыки', a => a.id.startsWith('art'))
       + sec('🎵 Треки чарта', a => a.id.startsWith('trk_'))
+      + `<button class="ach-expand" onclick="Ach.toggleExpand()" style="margin-top:14px">⌃ Свернуть</button>`
       + '</div>';
   }
 
   function openVoAch() {
-    switchView('account'); // вкладка «Ваш аккаунт»: ачивки вверху
+    switchView('vprofile'); // ачивки живут в профиле Волна ID
   }
 
-  return { check, event, openVoAch, renderInto, catalog, summary, setFilter, levelInfo };
+  return { check, event, openVoAch, renderInto, catalog, summary, setFilter, levelInfo, toggleExpand };
 })();

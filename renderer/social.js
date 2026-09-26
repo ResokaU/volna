@@ -413,6 +413,9 @@ window.Social = (function () {
     }
     const lv = window.Ach ? Ach.summary() : null;
     const fw = followersOf(s.handle);
+    // кинематографичный баннер: размытая обложка последнего трека
+    const bsrc = state.currentTrack || (state.lastTrack && state.lastTrack.track) || null;
+    const bart = bsrc ? artwork(bsrc) : '';
     const friendsHTML = s.friends.length
       ? s.friends.map(h => {
           const c = findUser(h);
@@ -427,7 +430,7 @@ window.Social = (function () {
     if (hist.length) state.homeContinue = hist; // карточки «home» играют по этому списку
     box.innerHTML = `
       <div class="vp-card">
-        <div class="vp-banner"></div>
+        <div class="vp-banner">${bart ? `<img class="vp-banner-img" src="${esc(bart)}" alt="">` : ''}</div>
         <div class="vp-head">
           <div class="vp-ava">${myAvatar() ? `<img src="${esc(myAvatar())}" alt="">` : esc(myName()[0].toUpperCase())}<span class="vp-on"></span></div>
           <div class="vp-id">
@@ -451,13 +454,15 @@ window.Social = (function () {
           <span class="hero-chip" onclick="Social.setTab('friends');switchView('people')">🤝 ${s.friends.length} ${plural(s.friends.length, 'друг', 'друга', 'друзей')}</span>
           <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')">👥 ${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
           <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')">⭐ ${s.follows.length} ${plural(s.follows.length, 'подписка', 'подписки', 'подписок')}</span>
-          ${lv ? `<span class="hero-chip" onclick="switchView('account')">🏆 Ур. ${lv.lvl} · ${lv.title}</span>` : ''}
+          ${lv ? `<span class="hero-chip" onclick="var a=$('#vp-ach'); if(a) a.scrollIntoView({behavior:'smooth',block:'center'})">🏆 Ур. ${lv.lvl} · ${lv.title}</span>` : ''}
         </div>
         <h4 class="ach-sec">🤝 Друзья</h4>
         <div class="vp-friends">${friendsHTML}</div>
+        <div id="vp-ach"></div>
         <h4 class="ach-sec">🎧 Недавно слушал</h4>
-        <div class="shelf">${hist.length ? hist.map((t, i) => trackCardHTML(t, i, 'home')).join('') : '<div class="vp-empty">Включи первый трек</div>'}</div>
+        <div class="tracks shelf vp-recent">${hist.length ? hist.map((t, i) => trackCardHTML(t, i, 'home')).join('') : '<div class="vp-empty">Включи первый трек</div>'}</div>
       </div>`;
+    if (window.Ach) Ach.renderInto($('#vp-ach'), null, { compact: true });
     highlightPlaying();
   }
   function editToggle() {

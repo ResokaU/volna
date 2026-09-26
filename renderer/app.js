@@ -141,7 +141,7 @@ function switchView(name) {
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
-  if (name === 'account' && window.Profiles) Profiles.refresh(); // вкладка VoКаунтов
+  if (name === 'account' && window.Profiles) Profiles.refresh(); // вкладка аккаунта (профили и облако)
   if (typeof updateMascot === 'function') updateMascot();
 }
 
@@ -614,7 +614,7 @@ function renderHome() {
     let achChip = '';
     if (window.Ach) {
       const s = Ach.summary();
-      achChip = `<span class="hero-chip hero-chip-lvl" onclick="switchView('account')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Ур. ${s.lvl} · ${s.title}</span>`;
+      achChip = `<span class="hero-chip hero-chip-lvl" onclick="switchView('vprofile')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Ур. ${s.lvl} · ${s.title}</span>`;
     }
     hs.innerHTML = `
       <span class="hero-chip" onclick="switchView('favorites')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${state.favorites.length} ${plural(state.favorites.length, 'лайк', 'лайка', 'лайков')}</span>

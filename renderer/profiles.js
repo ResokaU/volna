@@ -1,4 +1,4 @@
-/* VOLNA · profiles.js — 👤 VoКаунты: вкладка аккаунта (профили, ачивки, облако).
+/* VOLNA · profiles.js — 👤 Аккаунт: профили, аватары и облако (ачивки живут в профиле Волна ID).
    Активный профиль = топ-уровень стора (см. main.js); данные и ачивки — в profile.data. */
 window.Profiles = (function () {
   let cache = { profiles: [], active: null };
@@ -162,10 +162,14 @@ window.Profiles = (function () {
       if (p && p.avatar) { ava.style.backgroundImage = 'url(' + p.avatar + ')'; ava.textContent = ''; }
       else { ava.style.backgroundImage = ''; ava.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
       nm.textContent = p ? p.name : 'Профиль';
-      if (sub) sub.textContent = 'VoКаунт' + (p && p.name ? ' · ' + p.name : '')
-        + (window.Ach ? ` · 🏆 Ур. ${Ach.summary().lvl} — ${Ach.summary().title}` : '');
+      if (sub) {
+        // Волна ID: хэндл + уровень ачивок (ачивки живут в профиле)
+        const hs = window.Social ? Social.summary() : null;
+        const lv = window.Ach ? Ach.summary() : null;
+        sub.textContent = 'Волна ID' + (hs && hs.handle ? ' · @' + hs.handle : '')
+          + (lv ? ` · 🏆 Ур. ${lv.lvl} — ${lv.title}` : '');
+      }
     }
-    if (window.Ach) Ach.renderInto($('#account-ach'), $('#ach-view-head'));
     renderList();
     renderCloud();
   }
