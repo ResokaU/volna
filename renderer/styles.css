@@ -1520,7 +1520,8 @@ border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--text)}
 }
 /* сгенерированные SVG-иконки ачивок (артисты/треки/общие) */
 .ach-gen{width:30px;height:30px;display:block;fill:none;stroke:currentColor;stroke-width:2;
-stroke-linecap:round;stroke-linejoin:round;border-radius:8px}
+stroke-linecap:round;stroke-linejoin:round;border-radius:8px;transition:transform .18s ease}
+.ach-card:hover .ach-gen,.ach-mini:hover .ach-gen{transform:scale(1.08)}
 .ach-gen text{stroke:none;fill:#fff}
 .ach-emoji{color:var(--rc)}
 .ach-emoji .ach-gen{width:30px;height:30px}

@@ -61,7 +61,7 @@ window.Ach = (function () {
     { need: 10, label: 'Фанат', rarity: 'rare' },
     { need: 25, label: 'Одержимый', rarity: 'epic' }
   ];
-  // треки чарта: 3+ прослушиваний конкретного трека
+  // треки волны: 3+ прослушиваний конкретного трека
   const ACH_TRACKS = [
     { title: 'ДИНАСТИЯ', emoji: '👑', name: 'Династия' },
     { title: 'летник', emoji: '🌴', name: 'Летник' },
@@ -72,6 +72,14 @@ window.Ach = (function () {
     { title: 'ты в моих мыслях навсегда', emoji: '⛓', name: 'Навсегда' },
     { title: 'Омут', emoji: '💧', name: 'Омут' },
     { title: 'Тону', emoji: '🔥', name: 'Тону' }
+  ];
+  // 🔥 тренды тиктока 2026: вирусные звуки, разорвавшие рек
+  const ACH_TRENDS = [
+    { title: 'яра яра', emoji: '🌀', name: 'Яра Яра', who: 'фонк-тренд с «тун-тун»' },
+    { title: 'она безумна', emoji: '🥃', name: 'Она безумна', who: 'Wallem & Mult96' },
+    { title: 'по барам', emoji: '🍸', name: 'По барам', who: 'ANNA ASTI · 2026' },
+    { title: 'chiki', emoji: '🇧🇷', name: 'Phonk Chiki', who: 'бразильский фонк' },
+    { title: 'will carry on', emoji: '🚬', name: 'Will Carry On', who: 'звук едитов' }
   ];
   // общие ачивки: [id, icon(svg-символ), emoji, name, desc, need, metric, rarity, secret?, hint?]
   // названия — в духе тикток-культуры волны
@@ -100,9 +108,9 @@ window.Ach = (function () {
     // история
     ['g_h25', 'i-history', '📜', 'Летопись', '25 треков в истории', 25, 'history', 'common'],
     ['g_h100', 'i-database', '📚', 'Хроника волны', '100 треков в истории', 100, 'history', 'rare'],
-    // серии — стрики, как в тиктоке
-    ['g_s3', 'i-flame', '🔥', 'Стрик 3', 'Слушай 3 дня подряд', 3, 'streak', 'rare'],
-    ['g_s7', 'i-flame', '🌟', 'Стрик 7', 'Неделя без пропуска — стрик горит', 7, 'streak', 'epic'],
+    // серии — «огонёк», как в тиктоке
+    ['g_s3', 'i-flame', '🔥', 'Огонёк 3', 'Не теряй огонёк: 3 дня подряд', 3, 'streak', 'rare'],
+    ['g_s7', 'i-flame', '🌟', 'Огонёк недели', '7 дней подряд — огонёк горит ярче всех', 7, 'streak', 'epic'],
     // ночь
     ['g_n10', 'i-owl', '🦉', 'Ночной доскролл', '10 треков после полуночи', 10, 'night', 'rare'],
     // фичи приложения
@@ -144,8 +152,13 @@ window.Ach = (function () {
       ev_wave: x.ev.wave || 0,
       artistCount: name => (state.history || []).filter(t =>
         String(t.user && t.user.username || '').toLowerCase() === name.toLowerCase()).length,
-      trackCount: title => (state.history || []).filter(t =>
-        String(t.title || '').toLowerCase() === title.toLowerCase()).length
+      trackCount: title => {
+        const q = String(title || '').toLowerCase();
+        return (state.history || []).filter(t => {
+          const tt = String(t.title || '').toLowerCase();
+          return tt === q || tt.includes(q) || q.includes(tt); // title на SC бывает с ремиксами/версиями
+        }).length;
+      }
     };
   }
 
@@ -188,9 +201,23 @@ window.Ach = (function () {
       <text x="24" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#fff">${letter}</text>
     </svg>`;
   }
+  /* винил тренда тиктока: та же пластинка + огонёк-мотив */
+  function trendSVG(name) {
+    const grad = 'ag' + (hashStr(name + 't') % 12);
+    const letter = escapeHtml((name.trim()[0] || '?').toUpperCase());
+    return `<svg class="ach-gen" viewBox="0 0 48 48" aria-hidden="true">
+      <circle cx="24" cy="24" r="21" fill="#17171f"/>
+      <circle cx="24" cy="24" r="15" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
+      <path d="${MOTIFS.flame}" transform="translate(21 9) scale(.42)" fill="url(#${grad})" stroke="none"/>
+      <circle cx="24" cy="30" r="7" fill="url(#${grad})"/>
+      <circle cx="24" cy="30" r="1.6" fill="#17171f"/>
+      <text x="24" y="33.5" text-anchor="middle" font-size="8.5" font-weight="900" fill="#fff">${letter}</text>
+    </svg>`;
+  }
   function iconSVG(a) {
     if (a.kind === 'artist') return artistSVG(a.name);
     if (a.kind === 'track') return vinylSVG(a.name);
+    if (a.kind === 'trend') return trendSVG(a.name);
     return `<svg class="ach-gen" viewBox="0 0 24 24"><use href="#${a.icon || 'i-spark'}"/></svg>`;
   }
 
@@ -221,6 +248,14 @@ window.Ach = (function () {
         id: 'trk_' + t.name.toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_'), kind: 'track', emoji: t.emoji,
         name: t.name, desc: 'Трек волны: ' + t.title + ' — 3+ прослушиваний', tier: -1, value: cnt, need: 3,
         rarity: 'rare', unlocked: cnt >= 3
+      });
+    }
+    for (const t of ACH_TRENDS) {
+      const cnt = m.trackCount(t.title);
+      out.push({
+        id: 'tt_' + t.name.toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_'), kind: 'trend', emoji: t.emoji,
+        name: t.name, desc: 'Тренд тиктока 2026: ' + t.title + ' · ' + t.who, tier: -1, value: cnt, need: 3,
+        rarity: 'epic', unlocked: cnt >= 3
       });
     }
     return out;
@@ -372,8 +407,9 @@ window.Ach = (function () {
     };
     box.innerHTML = head + filters + '<div class="ach-body">'
       + sec('Общие', a => a.id.startsWith('g_'))
-      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Артисты волны', a => a.id.startsWith('art'))
+      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Артисты волны', a => a.id.startsWith('art'))
       + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Треки волны', a => a.id.startsWith('trk_'))
+      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Тренды тиктока 2026', a => a.id.startsWith('tt_'))
       + `<button class="ach-expand" onclick="Ach.toggleExpand()" style="margin-top:14px"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Свернуть</button>`
       + '</div>';
   }
