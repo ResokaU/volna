@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Поддержать волну · VOLNA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;color:#eee;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;
+background:#08080f;
+background-image:radial-gradient(640px 420px at 50% -8%,rgba(177,74,255,.4),transparent),
+radial-gradient(520px 340px at 92% 108%,rgba(214,255,58,.14),transparent),
+radial-gradient(420px 320px at 8% 102%,rgba(255,61,127,.18),transparent)}
+.wave{width:120px;animation:float 3.2s ease-in-out infinite;
+filter:drop-shadow(0 10px 34px rgba(177,74,255,.6))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+h1{margin:18px 0 8px;font-size:clamp(26px,5vw,40px);font-weight:900;
+background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:#9a9ab0;font-size:15px;max-width:520px;line-height:1.6}
+.cards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:34px;max-width:760px}
+.card{flex:1 1 200px;max-width:240px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+border-radius:18px;padding:22px 16px;transition:.2s}
+.card:hover{transform:translateY(-4px);border-color:rgba(214,255,58,.5)}
+.card .em{font-size:30px}
+.card b{display:block;margin:10px 0 6px;font-size:15px}
+.card span{font-size:12.5px;color:#9a9ab0;line-height:1.5;display:block}
+.cta{margin-top:38px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;
+font-weight:800;font-size:14.5px;text-decoration:none;transition:.2s}
+.btn-main{background:linear-gradient(90deg,#b14aff,#ff3d7f);color:#fff;
+box-shadow:0 10px 30px -8px rgba(177,74,255,.7)}
+.btn-main:hover{filter:brightness(1.12);transform:translateY(-2px)}
+.btn-alt{border:1px solid rgba(255,255,255,.2);color:#ddd}
+.btn-alt:hover{border-color:#d6ff3a;color:#d6ff3a}
+.goal{margin-top:44px;width:min(520px,92vw)}
+.goal-t{display:flex;justify-content:space-between;font-size:13px;color:#9a9ab0;margin-bottom:8px}
+.bar{height:10px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.fill{height:100%;width:35%;border-radius:99px;
+background:linear-gradient(90deg,#b14aff,#ff3d7f,#d6ff3a);animation:glow 2.4s infinite}
+@keyframes glow{50%{filter:brightness(1.25)}}
+.note{margin-top:34px;font-size:12px;color:#666;line-height:1.6;max-width:480px}
+.note a{color:#b14aff;text-decoration:none}
+</style>
+</head>
+<body>
+<svg class="wave" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#b14aff"/><stop offset="1" stop-color="#d6ff3a"/>
+  </linearGradient></defs>
+  <path d="M96 328 C 104 216, 190 152, 300 160 C 384 166, 436 222, 430 284 C 425 340, 372 372, 322 352 C 288 338, 276 300, 296 272 C 312 250, 344 250, 358 272"
+    fill="none" stroke="url(#g)" stroke-width="58" stroke-linecap="round"/>
+</svg>
+
+<h1>Поддержать волну</h1>
+<p class="sub">VOLNA — бесплатный плеер без рекламы и подписок. Серверы, разработка и музыка волны живут благодаря тем, кто кидает монетку.</p>
+
+<div class="cards">
+  <div class="card"><div class="em">🖥️</div><b>Серверы</b><span>Хостинг комнат-волн и синхронизации — чтобы друзья слушали вместе из любых городов</span></div>
+  <div class="card"><div class="em">🌊</div><b>Разработка</b><span>Новые функции: шейдеры, караоке-студия, плагины — всё бесплатно и навсегда</span></div>
+  <div class="card"><div class="em">🎧</div><b>Кофе создателю</b><span>Ночной код, багфиксы в 4 утра и волны в хорошем настроении</span></div>
+</div>
+
+<div class="cta">
+  <!-- ЗАМЕНИ ссылки на свои: Donationalerts и/или DonatePay -->
+  <a class="btn btn-main" href="https://www.donationalerts.com/r/meerphys1" target="_blank" rel="noopener">💜 Закинуть на волну</a>
+  <a class="btn btn-alt" href="https://boosty.to/" target="_blank" rel="noopener">Стать спонсором</a>
+</div>
+
+<div class="goal">
+  <div class="goal-t"><span>Цель: серверы для комнат-волн</span><span>35%</span></div>
+  <div class="bar"><div class="fill"></div></div>
+</div>
+
+<p class="note">Все функции VOLNA останутся бесплатными — всегда.<br>
+Плеер: <a href="https://github.com/ResokaU/volna" target="_blank" rel="noopener">github.com/ResokaU/volna</a></p>
+</body>
+</html>
