@@ -149,6 +149,8 @@ function applySettings() {
   if (nightcomp) nightcomp.checked = state.settings.nightCompressor === true;
   const fadeT = $('#set-fade');
   if (fadeT) fadeT.checked = state.settings.fade !== false;
+  const ambT = $('#set-ambient');
+  if (ambT) ambT.checked = state.settings.ambient !== false;
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
@@ -214,6 +216,12 @@ function bindLibraryUI() {
     saveSetting('fade', e.target.checked);
     if (!e.target.checked) { state.fadeFactor = 1; if (typeof applyVolume === 'function') applyVolume(); }
     toast(e.target.checked ? '🎚 Плавные переходы включены' : 'Плавные переходы выключены');
+  });
+  const ambT = $('#set-ambient');
+  if (ambT) ambT.addEventListener('change', e => {
+    saveSetting('ambient', e.target.checked);
+    if (typeof applyAmbient === 'function') applyAmbient(state.currentTrack);
+    toast(e.target.checked ? '🎨 Амбиент по обложке включён' : 'Амбиент по обложке выключен');
   });
 
   $('#set-scproxy').addEventListener('change', async e => {
@@ -1182,7 +1190,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '7.3.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '7.3.1', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

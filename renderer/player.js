@@ -519,6 +519,7 @@ async function playTrack(track, listKey = null) {
   $('#player').style.setProperty('--ambient', art ? `url(${art})` : 'none');
   $('#player').classList.toggle('no-ambient', !art);
   document.body.style.setProperty('--ambient', art ? `url(${art})` : 'none');
+  applyAmbient(track); // 🎨 доминирующий цвет обложки красит всё приложение
   $('#time-dur').textContent = formatTime((track.duration || 0) / 1000);
   $('#progress').style.width = '0%';
   $('#time-cur').textContent = '0:00';
@@ -717,6 +718,45 @@ function engSeek(ms) {
   }
   if (!state.widget) return;
   state.widget.seekTo(Math.max(0, ms));
+}
+
+/* 🎨 амбиент по обложке: доминирующий цвет трека красит всё приложение */
+let _ambUrl = '';
+function applyAmbient(track) {
+  const url = track ? artwork(track) : '';
+  if (!url) { document.body.classList.remove('amb-on'); return; }
+  if (state.settings.ambient === false) { document.body.classList.remove('amb-on'); return; }
+  if (url === _ambUrl) { document.body.classList.add('amb-on'); return; } // цвет уже извлекли
+  _ambUrl = url;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const c = document.createElement('canvas');
+      c.width = c.height = 24;
+      const x = c.getContext('2d');
+      x.drawImage(img, 0, 0, 24, 24);
+      const data = x.getImageData(0, 0, 24, 24).data;
+      const buckets = {};
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+        if (mx < 34 || mx - mn < 22) continue; // пропускаем чёрное и серое
+        const k = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+        buckets[k] = (buckets[k] || 0) + (mx - mn); // вес — насыщенность
+      }
+      let best = -1, score = -1;
+      for (const k in buckets) if (buckets[k] > score) { score = buckets[k]; best = +k; }
+      if (best < 0) { document.body.classList.remove('amb-on'); return; }
+      const r = ((best >> 8) & 15) * 17, g = ((best >> 4) & 15) * 17, b = (best & 15) * 17;
+      document.body.style.setProperty('--amb', `rgb(${r},${g},${b})`);
+      document.body.style.setProperty('--amb-soft', `rgba(${r},${g},${b},.30)`);
+      document.body.style.setProperty('--amb-faint', `rgba(${r},${g},${b},.10)`);
+      document.body.classList.add('amb-on');
+    } catch (_) { document.body.classList.remove('amb-on'); }
+  };
+  img.onerror = () => {};
+  img.src = url;
 }
 
 /* ---------- прогресс и громкость ---------- */

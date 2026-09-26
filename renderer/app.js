@@ -599,7 +599,9 @@ function renderNp() {
     <div class="np-ambient" style="background-image:url('${escapeHtml(art)}')"></div>
     ${state.npClip && state.npClip.trackId === t.id && state.npClip.on
         ? `<div class="np-video"><iframe src="https://www.youtube-nocookie.com/embed/${state.npClip.videoId}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`
-        : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`}
+        : (art
+          ? `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="if(this.dataset.fb){this.src=this.dataset.fb;delete this.dataset.fb}else{this.closest('.np-cover-wrap').classList.add('np-noart');this.remove()}"></div>`
+          : `<div class="np-cover-wrap np-noart"><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg></div>`)}
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(displayArtist(t))}</div>
@@ -614,11 +616,6 @@ function renderNp() {
         <button class="pbtn ${state.npClip && state.npClip.trackId === t.id && state.npClip.on ? 'active' : ''}" onclick="toggleNpClip()" title="Клип с YouTube (звук трека глушится)">🎬</button>
       </div>
       <canvas id="np-wave" width="600" height="46" title="Волновая форма — клик для перемотки"></canvas>
-      <div class="np-progress-row">
-        <span id="np-time-cur">0:00</span>
-        <div class="np-progress-wrap" id="np-progress-wrap" title="Перемотка"><div class="np-progress" id="np-progress"></div></div>
-        <span id="np-time-dur">${formatTime((t.duration || 0) / 1000)}</span>
-      </div>
       ${L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}
       ${L.status === 'synced'
         ? `<div class="np-lyrics-wrap" id="np-lyrics-wrap"><div id="np-lyrics">${L.lines.map(l => `<div class="lyr" onclick="seekLyric(${l.t})">${escapeHtml(l.text || '♪')}</div>`).join('')}</div></div>`

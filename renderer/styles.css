@@ -767,6 +767,19 @@ animation:gradShift 7s ease-in-out infinite}
 @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @media (prefers-reduced-motion: reduce){.grad-anim{animation:none}}
 
+/* ============ v7.2: 🎨 амбиент по обложке — цвет трека везде ============ */
+body.amb-on .player{border-color:color-mix(in srgb,var(--amb) 32%,rgba(255,255,255,.08));
+box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 46px -14px var(--amb-soft)}
+body.amb-on .b1{background:var(--amb)}
+body.amb-on .b2{background:color-mix(in srgb,var(--amb) 65%,var(--accent2))}
+body.amb-on .b3{background:color-mix(in srgb,var(--amb) 45%,var(--accent3))}
+body.amb-on .sidebar{border-right-color:color-mix(in srgb,var(--amb) 16%,transparent)}
+body.amb-on .nav-item.active{background:color-mix(in srgb,var(--amb) 14%,rgba(255,255,255,.05));
+border-color:color-mix(in srgb,var(--amb) 22%,transparent)}
+body.amb-on .account-profile{border-color:color-mix(in srgb,var(--amb) 26%,transparent)}
+body.amb-on .pbtn.main{box-shadow:0 8px 26px -8px var(--amb-soft)}
+body.amb-on .toast.success{border-color:color-mix(in srgb,var(--amb) 45%,transparent)}
+
 /* ============ v7.1: 🎬 кинематографичный Home + NP-амбиент ============ */
 .home-hero{position:relative;overflow:hidden;padding:38px 34px 26px;border-radius:26px;
 background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-bottom:20px}
