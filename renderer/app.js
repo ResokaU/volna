@@ -141,7 +141,7 @@ function switchView(name) {
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
-  if (name === 'account' && window.Profiles) Profiles.refresh(); // вкладка аккаунта (профили и облако)
+  if ((name === 'vprofile' || name === 'people') && window.Profiles) Profiles.refresh(); // профили и облако живут в профиле Волна ID
   if (typeof updateMascot === 'function') updateMascot();
 }
 

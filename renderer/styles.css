@@ -1464,3 +1464,25 @@ background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid col
 color:var(--text);font-size:12.5px;font-weight:800;transition:.15s}
 .ach-expand:hover{background:color-mix(in srgb,var(--accent) 18%,transparent);
 border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+/* SVG-иконки в кнопках, табах и заголовках секций */
+.ptab{display:inline-flex;align-items:center;gap:7px}
+.ptab .ic{width:14px;height:14px;flex-shrink:0}
+.ach-sec .ic{width:14px;height:14px;color:var(--acid);flex-shrink:0}
+.soc-uacts .ic,.vp-actions .ic,.ach-expand .ic{width:13px;height:13px;flex-shrink:0}
+.md-btn{display:inline-flex;align-items:center;gap:6px;justify-content:center}
+/* кнопки поверх баннера */
+.vp-banner-edit{position:absolute;right:16px;top:14px;z-index:2;width:34px;height:34px;border-radius:10px;
+display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;font-family:inherit;
+background:rgba(10,10,18,.55);border:1px solid rgba(255,255,255,.14);color:#ddd;backdrop-filter:blur(8px)}
+.vp-banner-edit:hover{background:rgba(10,10,18,.8);color:#fff;border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.vp-banner-edit .ic{width:15px;height:15px}
+.vp-banner-img.crisp{opacity:.92;filter:saturate(1.06);inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px)}
+/* «Слушает сейчас» */
+.vp-listening{display:inline-flex;align-items:center;gap:7px;margin-top:7px;font-size:12px;font-weight:800;
+color:var(--acid);padding:5px 12px;border-radius:99px;max-width:100%;
+background:color-mix(in srgb,var(--acid) 10%,transparent);border:1px solid color-mix(in srgb,var(--acid) 32%,transparent)}
+.vp-listening .ic{width:13px;height:13px;animation:vpPulse 1.6s ease-in-out infinite}
+@keyframes vpPulse{0%,100%{opacity:1}50%{opacity:.45}}
+.vp-listening{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* раздел профилей и облака внутри профиля */
+.vp-settings{margin-top:28px;padding-top:4px;border-top:1px solid rgba(255,255,255,.06)}

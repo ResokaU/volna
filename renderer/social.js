@@ -404,18 +404,20 @@ window.Social = (function () {
           По @хэндлу тебя найдут другие пользователи волны.</p>
           <div class="vp-claim-row">
             <input type="text" id="vp-handle" maxlength="16" placeholder="хэндл" value="${esc(sug)}">
-            <button class="md-btn accent" onclick="Social.claimHandle($('#vp-handle').value)">🪪 Забрать ID</button>
+            <button class="md-btn accent" onclick="Social.claimHandle($('#vp-handle').value)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Забрать ID</button>
           </div>
-          <p class="vp-claim-hint">Справочник живёт в GitHub-облаке (токен во вкладке «Ваш аккаунт»).
+          <p class="vp-claim-hint">Справочник живёт в GitHub-облаке (токен в «Профили и облако» ниже).
           Хочешь свой сервер? Модуль принимает любой адаптер хранилища — см. docs/volna-id.md.</p>
         </div>`;
       return;
     }
     const lv = window.Ach ? Ach.summary() : null;
     const fw = followersOf(s.handle);
-    // кинематографичный баннер: размытая обложка последнего трека
+    // баннер: своя картинка → размытая обложка последнего трека → градиент
     const bsrc = state.currentTrack || (state.lastTrack && state.lastTrack.track) || null;
     const bart = bsrc ? artwork(bsrc) : '';
+    const bimg = s.banner || bart;
+    const t = state.currentTrack;
     const friendsHTML = s.friends.length
       ? s.friends.map(h => {
           const c = findUser(h);
@@ -430,37 +432,41 @@ window.Social = (function () {
     if (hist.length) state.homeContinue = hist; // карточки «home» играют по этому списку
     box.innerHTML = `
       <div class="vp-card">
-        <div class="vp-banner">${bart ? `<img class="vp-banner-img" src="${esc(bart)}" alt="">` : ''}</div>
+        <div class="vp-banner">${bimg ? `<img class="vp-banner-img${s.banner ? ' crisp' : ''}" src="${esc(bimg)}" alt="">` : ''}
+          <button class="vp-banner-edit" onclick="Social.pickBanner()" title="Своя картинка баннера"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg></button>
+          ${s.banner ? `<button class="vp-banner-edit" style="right:56px" onclick="Social.removeBanner()" title="Убрать баннер">✕</button>` : ''}
+        </div>
         <div class="vp-head">
           <div class="vp-ava">${myAvatar() ? `<img src="${esc(myAvatar())}" alt="">` : esc(myName()[0].toUpperCase())}<span class="vp-on"></span></div>
           <div class="vp-id">
             <h2 class="vp-name">${esc(myName())}</h2>
             <div class="vp-handle">@${esc(s.handle)} <span class="soc-dot${meOnline ? ' on' : ''}"></span> <span class="vp-online-lbl">${meOnline ? 'в сети' : 'офлайн'}</span></div>
+            ${t ? `<div class="vp-listening"><svg class="ic" viewBox="0 0 24 24"><use href="#i-headphones"/></svg>Слушает: ${esc(t.title)}</div>` : ''}
             ${s.bio ? `<div class="vp-bio">${esc(s.bio)}</div>` : ''}
-            ${s.status ? `<div class="vp-status">🌊 ${esc(s.status)}</div>` : ''}
+            ${s.status ? `<div class="vp-status"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>${esc(s.status)}</div>` : ''}
           </div>
           <div class="vp-actions">
-            <button class="md-btn" onclick="Social.editToggle()">✏️ Редактировать</button>
-            <button class="md-btn" onclick="Social.shareProfile()">📋 Поделиться</button>
+            <button class="md-btn" onclick="Social.editToggle()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-edit"/></svg>Редактировать</button>
+            <button class="md-btn" onclick="Social.shareProfile()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Поделиться</button>
           </div>
         </div>
         <div class="vp-edit" id="vp-edit" style="display:none">
           <input type="text" id="vp-name" maxlength="32" placeholder="Имя" value="${esc(s.name || myName())}">
           <input type="text" id="vp-status" maxlength="40" placeholder="Статус — что сейчас?" value="${esc(s.status)}">
           <textarea id="vp-bio" maxlength="160" rows="2" placeholder="О себе (до 160 символов)">${esc(s.bio)}</textarea>
-          <button class="md-btn accent" onclick="Social.saveEdit()">Сохранить</button>
+          <button class="md-btn accent" onclick="Social.saveEdit()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Сохранить</button>
         </div>
         <div class="vp-stats">
-          <span class="hero-chip" onclick="Social.setTab('friends');switchView('people')">🤝 ${s.friends.length} ${plural(s.friends.length, 'друг', 'друга', 'друзей')}</span>
-          <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')">👥 ${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
-          <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')">⭐ ${s.follows.length} ${plural(s.follows.length, 'подписка', 'подписки', 'подписок')}</span>
-          ${lv ? `<span class="hero-chip" onclick="var a=$('#vp-ach'); if(a) a.scrollIntoView({behavior:'smooth',block:'center'})">🏆 Ур. ${lv.lvl} · ${lv.title}</span>` : ''}
+          <span class="hero-chip" onclick="Social.setTab('friends');switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>${s.friends.length} ${plural(s.friends.length, 'друг', 'друга', 'друзей')}</span>
+          <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
+          <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>${s.follows.length} ${plural(s.follows.length, 'подписка', 'подписки', 'подписок')}</span>
+          ${lv ? `<span class="hero-chip" onclick="var a=$('#vp-ach'); if(a) a.scrollIntoView({behavior:'smooth',block:'center'})"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Ур. ${lv.lvl} · ${lv.title}</span>` : ''}
         </div>
-        <h4 class="ach-sec">🤝 Друзья</h4>
+        <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Друзья</h4>
         <div class="vp-friends">${friendsHTML}</div>
         <div id="vp-ach"></div>
-        <h4 class="ach-sec">🎧 Недавно слушал</h4>
-        <div class="tracks shelf vp-recent">${hist.length ? hist.map((t, i) => trackCardHTML(t, i, 'home')).join('') : '<div class="vp-empty">Включи первый трек</div>'}</div>
+        <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-headphones"/></svg>Недавно слушал</h4>
+        <div class="tracks shelf vp-recent">${hist.length ? hist.map((t2, i) => trackCardHTML(t2, i, 'home')).join('') : '<div class="vp-empty">Включи первый трек</div>'}</div>
       </div>`;
     if (window.Ach) Ach.renderInto($('#vp-ach'), null, { compact: true });
     highlightPlaying();
@@ -472,6 +478,46 @@ window.Social = (function () {
   function saveEdit() {
     saveProfileCard({ name: $('#vp-name')?.value, status: $('#vp-status')?.value, bio: $('#vp-bio')?.value });
     toast('🪪 Профиль сохранён', 'success');
+  }
+
+  /* баннер профиля: своя картинка (кроп 1200×340, сжатие) или фолбэк — обложка трека */
+  function pickBanner() {
+    const el = $('#banner-file');
+    if (!el) return;
+    el.onchange = bannerChosen;
+    el.value = '';
+    el.click();
+  }
+  async function bannerChosen(ev) {
+    const f = ev.target && ev.target.files && ev.target.files[0];
+    if (!f) return;
+    try {
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result); r.onerror = rej;
+        r.readAsDataURL(f);
+      });
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+      let q = 0.85, out;
+      const cv = document.createElement('canvas'); cv.width = 1200; cv.height = 340;
+      const x = cv.getContext('2d');
+      const sc = Math.max(1200 / img.width, 340 / img.height);
+      x.drawImage(img, (img.width - 1200 / sc) / 2, (img.height - 340 / sc) / 2, 1200 / sc, 340 / sc, 0, 0, 1200, 340);
+      out = cv.toDataURL('image/jpeg', q);
+      while (out.length > 220000 && q > 0.45) { q -= 0.15; out = cv.toDataURL('image/jpeg', q); }
+      S().banner = out;
+      save();
+      adapter && adapter.publishProfile();
+      toast('🖼 Баннер обновлён', 'success');
+      renderIfOpen();
+    } catch (_) { toast('Не удалось загрузить картинку', 'error'); }
+  }
+  function removeBanner() {
+    S().banner = '';
+    save();
+    adapter && adapter.publishProfile();
+    toast('Баннер сброшен — снова обложка трека');
+    renderIfOpen();
   }
 
   /* ================================================================
@@ -489,12 +535,12 @@ window.Social = (function () {
       const reqOut = s.requestsOut.map(h => userCard(h,
         `<span class="soc-pending">⏳ ждём</span><button class="md-btn" onclick="Social.rejectFriend('${esc(h)}')">✕</button>`)).join('');
       const fr = s.friends.map(h => userCard(h,
-        `<button class="md-btn accent" onclick="Social.openChat('${esc(h)}')">💬</button>
+        `<button class="md-btn accent" onclick="Social.openChat('${esc(h)}')">💬<svg class="ic" viewBox="0 0 24 24"><use href="#i-chat"/></svg></button>
          <button class="md-btn" onclick="Social.unfriend('${esc(h)}')" title="Удалить из друзей">✕</button>`)).join('');
       body.innerHTML = `
-        ${s.requestsIn.length ? `<h4 class="ach-sec">📥 Заявки <em>${s.requestsIn.length}</em></h4>${reqIn}` : ''}
-        ${s.requestsOut.length ? `<h4 class="ach-sec">⏳ Отправленные</h4>${reqOut}` : ''}
-        <h4 class="ach-sec">🤝 Друзья <em>${s.friends.length}</em></h4>
+        ${s.requestsIn.length ? `<h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-inbox"/></svg>Заявки <em>${s.requestsIn.length}</em></h4>${reqIn}` : ''}
+        ${s.requestsOut.length ? `<h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>Отправленные</h4>${reqOut}` : ''}
+        <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Друзья <em>${s.friends.length}</em></h4>
         ${fr || '<div class="vp-empty">Друзей пока нет. Вкладка «Найти» → заявка по @хэндлу</div>'}`;
     } else if (_tab === 'chats') {
       if (_openChat) return renderChat(body, _openChat);
@@ -524,9 +570,9 @@ window.Social = (function () {
       const fwers = followersOf(s.handle).map(h => userCard(h,
         s.friends.includes(h) ? '' : `<button class="md-btn accent" onclick="Social.addFriend('${esc(h)}')">＋ В друзья</button>`)).join('');
       body.innerHTML = `
-        <h4 class="ach-sec">⭐ Мои подписки <em>${s.follows.length}</em></h4>
+        <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>Мои подписки <em>${s.follows.length}</em></h4>
         ${fl || '<div class="vp-empty">Подписок нет — найди кого-нибудь во вкладке «Найти»</div>'}
-        <h4 class="ach-sec">👥 Подписчики <em>${followersOf(s.handle).length}</em></h4>
+        <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Подписчики <em>${followersOf(s.handle).length}</em></h4>
         ${fwers || '<div class="vp-empty">Пока никто не подписался</div>'}`;
     } else if (_tab === 'find') {
       body.innerHTML = `
@@ -592,8 +638,8 @@ window.Social = (function () {
     const s = S();
     res.innerHTML = keys.map(h => userCard(h,
       (s.friends.includes(h) ? '' : `<button class="md-btn accent" onclick="Social.addFriend('${esc(h)}')">＋ В друзья</button>`) +
-      (s.follows.includes(h) ? '' : `<button class="md-btn" onclick="Social.toggleFollow('${esc(h)}')">⭐ Подписаться</button>`) +
-      `<button class="md-btn" onclick="Social.openChat('${esc(h)}')">💬</button>`)).join('');
+      (s.follows.includes(h) ? '' : `<button class="md-btn" onclick="Social.toggleFollow('${esc(h)}')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>Подписаться</button>`) +
+      `<button class="md-btn" onclick="Social.openChat('${esc(h)}')">💬<svg class="ic" viewBox="0 0 24 24"><use href="#i-chat"/></svg></button>`)).join('');
   }
 
   function renderIfOpen() {
@@ -624,6 +670,7 @@ window.Social = (function () {
     init, use, claimHandle, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
+    pickBanner, bannerChosen, removeBanner,
     summary: () => ({ handle: S().handle, friends: S().friends.length, online: meOnline })
   };
 })();

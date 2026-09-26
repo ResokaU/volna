@@ -154,22 +154,8 @@ window.Profiles = (function () {
     reader.readAsDataURL(f);
   }
 
-  /* ---------- отрисовка вкладки ---------- */
+  /* ---------- отрисовка раздела профилей и облака (в профиле Волна ID) ---------- */
   function renderView() {
-    const p = cache.profiles.find(x => x.id === cache.active);
-    const ava = $('#acc-ava'), nm = $('#acc-name'), sub = $('#acc-sub');
-    if (ava && nm) {
-      if (p && p.avatar) { ava.style.backgroundImage = 'url(' + p.avatar + ')'; ava.textContent = ''; }
-      else { ava.style.backgroundImage = ''; ava.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
-      nm.textContent = p ? p.name : 'Профиль';
-      if (sub) {
-        // Волна ID: хэндл + уровень ачивок (ачивки живут в профиле)
-        const hs = window.Social ? Social.summary() : null;
-        const lv = window.Ach ? Ach.summary() : null;
-        sub.textContent = 'Волна ID' + (hs && hs.handle ? ' · @' + hs.handle : '')
-          + (lv ? ` · 🏆 Ур. ${lv.lvl} — ${lv.title}` : '');
-      }
-    }
     renderList();
     renderCloud();
   }

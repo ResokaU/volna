@@ -287,7 +287,7 @@ window.Ach = (function () {
         }).join('');
       box.innerHTML = `${head}
         <div class="ach-minirow">${recent || '<div class="ach-next">Пока пусто — включи первый трек 🌊</div>'}</div>
-        <button class="ach-expand" onclick="Ach.toggleExpand()">🏆 Все ачивки · ${unlocked.length} / ${cat.length}</button>`;
+        <button class="ach-expand" onclick="Ach.toggleExpand()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Все ачивки · ${unlocked.length} / ${cat.length}</button>`;
       return;
     }
 
@@ -324,9 +324,9 @@ window.Ach = (function () {
     };
     box.innerHTML = head + filters + '<div class="ach-body">'
       + sec('Общие', a => a.id.startsWith('g_'))
-      + sec('🎤 Артисты чарта Я.Музыки', a => a.id.startsWith('art'))
-      + sec('🎵 Треки чарта', a => a.id.startsWith('trk_'))
-      + `<button class="ach-expand" onclick="Ach.toggleExpand()" style="margin-top:14px">⌃ Свернуть</button>`
+      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Артисты чарта Я.Музыки', a => a.id.startsWith('art'))
+      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Треки чарта', a => a.id.startsWith('trk_'))
+      + `<button class="ach-expand" onclick="Ach.toggleExpand()" style="margin-top:14px"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Свернуть</button>`
       + '</div>';
   }
 

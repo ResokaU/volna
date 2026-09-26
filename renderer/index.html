@@ -109,6 +109,11 @@
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 2.9-5.5 6.5-5.5s6.5 2 6.5 5.5"/><circle cx="17" cy="9" r="2.8"/><path d="M17.5 14.6c2.6.4 4 2.2 4 4.9"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2.2-2.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9 2.9-6z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></symbol>
+  <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="6" rx="2"/><rect x="16.5" y="14" width="4.5" height="6" rx="2"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6l3.5-7z"/></symbol>
 </svg>
 
 <div class="cursor-ring"></div>
@@ -167,18 +172,6 @@
       <div class="nav-item" onclick="openRooms()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-globe"/></svg>Комната-волна</div>
       <div class="nav-item" onclick="openShortcuts()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-keyboard"/></svg>Шорткаты</div>
       <div class="nav-item" onclick="openAbout()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-info"/></svg>О приложении</div>
-    </div>
-
-    <div class="account-card">
-      <div class="ac-label">Аккаунт</div>
-      <div class="account-profile" id="account-profile" onclick="switchView(&quot;account&quot;)" title="Ваш аккаунт">
-        <div class="profile-ava" id="ap-avatar">V</div>
-        <div class="ap-info">
-          <div class="ap-name" id="ap-name">Профиль</div>
-          <div class="ap-sub">Профили и данные</div>
-        </div>
-        <svg class="ic" viewBox="0 0 24 24" style="margin-left:auto;color:var(--dim)"><use href="#i-sort"/></svg>
-      </div>
     </div>
 
     <div class="sidebar-footer">
@@ -462,7 +455,7 @@
             <div class="section-sub">Твоя статистика</div>
           </div>
           <div style="display:flex;gap:8px">
-            <button class="toolbar-btn" onclick="switchView(&quot;account&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoАчивки</button>
+            <button class="toolbar-btn" onclick="switchView(&quot;vprofile&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Ачивки</button>
             <button class="toolbar-btn" onclick="openWrapped()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна года</button>
             <button class="toolbar-btn danger" onclick="resetStats()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Сбросить</button>
           </div>
@@ -640,47 +633,27 @@
         </div>
       </section>
 
-      <section class="view" id="view-account">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Ваш аккаунт</h2>
-            <div class="section-sub">Волна ID — профили и облако</div>
-          </div>
-        </div>
-        <div class="acc-view">
-          <div class="acc-head">
-            <div class="profile-ava acc-ava-big" id="acc-ava">V</div>
-            <div class="acc-head-info">
-              <div class="acc-name" id="acc-name">Профиль</div>
-              <div class="acc-sub" id="acc-sub">Волна ID</div>
-            </div>
-            <div class="acc-head-btns">
-              <button class="md-btn" onclick="Profiles.renameActive()">✏️ Переименовать</button>
-              <button class="md-btn" onclick="Profiles.pickAvatarActive()">🖼 Аватар</button>
-            </div>
-          </div>
-          <h4 class="ach-sec">👥 Профили</h4>
+      <section class="view" id="view-vprofile">
+        <div id="vprofile-wrap"></div>
+        <div class="acc-view vp-settings">
+          <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Профили устройства</h4>
           <div id="profiles-list"></div>
           <div class="profile-create">
             <input type="text" id="profile-new-name" maxlength="24" placeholder="Имя нового профиля">
             <button class="md-btn" onclick="Profiles.create()">+ Создать</button>
           </div>
-          <h4 class="ach-sec">☁️ Облако (приватный GitHub Gist)</h4>
+          <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-cloud"/></svg>Облако (приватный GitHub Gist)</h4>
           <div class="profile-create">
             <input type="text" id="gh-token" placeholder="GitHub Personal Access Token (право gist)">
             <button class="md-btn" onclick="Profiles.ghConnect()">Подключить</button>
           </div>
           <div class="cloud-status" id="gh-status">Не подключено</div>
           <div class="cloud-btns">
-            <button class="md-btn" onclick="Profiles.cloudPush()">⬆ Выгрузить профили в облако</button>
-            <button class="md-btn" onclick="Profiles.cloudPull()">⬇ Загрузить профили из облака</button>
+            <button class="md-btn" onclick="Profiles.cloudPush()">⬆ Выгрузить в облако</button>
+            <button class="md-btn" onclick="Profiles.cloudPull()">⬇ Загрузить из облака</button>
           </div>
-          <p class="setting-hint">Токен: github.com/settings/tokens → Generate new token (classic) → отметь только <b>gist</b>. В облаке приватный gist «volna-profiles» — привяжи его на втором ПК, и профили переедут. Токен хранится локально.</p>
+          <p class="setting-hint">Токен: github.com/settings/tokens → Generate new token (classic) → отметь только <b>gist</b>. В облаке — все профили устройства и справочник Волна ID. Токен хранится локально.</p>
         </div>
-      </section>
-
-      <section class="view" id="view-vprofile">
-        <div id="vprofile-wrap"></div>
       </section>
 
       <section class="view" id="view-people">
@@ -690,10 +663,10 @@
             <div class="section-sub">VOLNA ID — друзья, чаты и подписки</div>
           </div>
           <div class="people-tabs" id="people-tabs">
-            <button class="ptab on" data-p="friends" onclick="Social.setTab('friends')">🤝 Друзья</button>
-            <button class="ptab" data-p="chats" onclick="Social.setTab('chats')">💬 Чаты</button>
-            <button class="ptab" data-p="follow" onclick="Social.setTab('follow')">⭐ Подписки</button>
-            <button class="ptab" data-p="find" onclick="Social.setTab('find')">🔍 Найти</button>
+            <button class="ptab on" data-p="friends" onclick="Social.setTab('friends')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Друзья</button>
+            <button class="ptab" data-p="chats" onclick="Social.setTab('chats')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chat"/></svg>Чаты</button>
+            <button class="ptab" data-p="follow" onclick="Social.setTab('follow')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>Подписки</button>
+            <button class="ptab" data-p="find" onclick="Social.setTab('find')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Найти</button>
           </div>
         </div>
         <div id="people-body"></div>
@@ -774,6 +747,7 @@
   <button class="wr-close" onclick="closeWrapped()">✕</button>
 </div>
 <input type="file" id="avatar-file" accept="image/*" hidden>
+<input type="file" id="banner-file" accept="image/*" hidden>
 
 
 
