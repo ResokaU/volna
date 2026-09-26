@@ -1,4 +1,6 @@
-/* VOLNA · achievements.js — 🏆 Ачивки Волна ID: уровни, редкости, секретки.
+/* VOLNA · achievements.js — 🏆 Ачивки Волна ID: тикток-культура волны.
+   У каждой ачивки свой SVG-значок: общие — символы спрайта, артисты — генерированные
+   бейджи (градиент по имени + монограмма + мотив), треки — виниловые пластинки.
    Каталог: общие (треки/время/лайки/плейлисты/серии/фичи) + артисты чарта Я.Музыки (3 тира)
    + треки чарта. У каждой ачивки редкость (common/rare/epic/legendary) и XP;
    XP складывается в уровень волны с титулом. Прогресс считается из данных профиля;
@@ -71,46 +73,47 @@ window.Ach = (function () {
     { title: 'Омут', emoji: '💧', name: 'Омут' },
     { title: 'Тону', emoji: '🔥', name: 'Тону' }
   ];
-  // общие ачивки: [id, emoji, name, desc, need, metric, rarity, secret?, hint?]
+  // общие ачивки: [id, icon(svg-символ), emoji, name, desc, need, metric, rarity, secret?, hint?]
+  // названия — в духе тикток-культуры волны
   const ACH_GENERAL = [
-    // треки
-    ['g_pl1', '🌊', 'Первая волна', 'Прослушай первый трек', 1, 'played', 'common'],
-    ['g_pl10', '⚡', 'Разогрев', 'Прослушай 10 треков', 10, 'played', 'common'],
-    ['g_pl50', '🎧', 'В потоке', 'Прослушай 50 треков', 50, 'played', 'rare'],
-    ['g_pl100', '💯', 'Сотка', 'Прослушай 100 треков', 100, 'played', 'rare'],
-    ['g_pl250', '🌋', 'Маньяк волны', 'Прослушай 250 треков', 250, 'played', 'epic'],
-    ['g_pl1000', '👑', 'Легенда волны', 'Прослушай 1000 треков', 1000, 'played', 'legendary'],
+    // прослушано
+    ['g_pl1', 'i-wave', '🌊', 'Попал в рек', 'Прослушай первый трек', 1, 'played', 'common'],
+    ['g_pl10', 'i-zap', '⚡', 'Разогрев', '10 треков — флоу пошёл', 10, 'played', 'common'],
+    ['g_pl50', 'i-headphones', '🎧', 'Залип на волне', '50 треков, остановиться уже нельзя', 50, 'played', 'rare'],
+    ['g_pl100', 'i-spark', '💯', 'Сотка', '100 треков в копилке', 100, 'played', 'rare'],
+    ['g_pl250', 'i-flame', '🔥', 'Форсишь', '250 треков — алгоритм влюблён', 250, 'played', 'epic'],
+    ['g_pl1000', 'i-trophy', '👑', 'Легенда флоу', '1000 треков. Тикток отдыхает', 1000, 'played', 'legendary'],
     // время
-    ['g_t1', '⏱', 'Первый час', 'Прослушай 1 час музыки', 1, 'hours', 'common'],
-    ['g_t10', '🌙', 'Десять часов в волнах', 'Прослушай 10 часов', 10, 'hours', 'common'],
-    ['g_t50', '🌆', 'Полсотни часов', 'Прослушай 50 часов', 50, 'hours', 'rare'],
-    ['g_t100', '🌌', 'Сутки волн', 'Прослушай 100 часов', 100, 'hours', 'epic'],
+    ['g_t1', 'i-clock', '⏱', 'Первый час', 'Час музыки без остановки', 1, 'hours', 'common'],
+    ['g_t10', 'i-moon', '🌙', 'В теме', '10 часов в волнах', 10, 'hours', 'common'],
+    ['g_t50', 'i-history', '🌆', 'Полсотни часов', '50 часов — полжизни в реке', 50, 'hours', 'rare'],
+    ['g_t100', 'i-chart', '🌌', 'Сутки волн', '100 часов нон-стоп', 100, 'hours', 'epic'],
     // лайки
-    ['g_l1', '❤', 'Первое сердечко', 'Поставь первый лайк', 1, 'likes', 'common'],
-    ['g_l10', '💞', 'Коллекционер чувств', 'Набери 10 лайков', 10, 'likes', 'common'],
-    ['g_l50', '💘', 'Сердцеед', 'Набери 50 лайков', 50, 'likes', 'rare'],
-    ['g_l100', '💜', 'Сердце VOLNA', 'Набери 100 лайков', 100, 'likes', 'epic'],
+    ['g_l1', 'i-heart', '❤', 'Первое сердечко', 'Поставь первый лайк', 1, 'likes', 'common'],
+    ['g_l10', 'i-crownheart', '💞', 'Коллекция звуков', '10 лайков — формируешь вкус', 10, 'likes', 'common'],
+    ['g_l50', 'i-star', '💘', 'Лайк-машина', '50 лайков — сердечки сыплются', 50, 'likes', 'rare'],
+    ['g_l100', 'i-crownheart', '💜', 'Сердце волны', '100 лайков — ты по уши влюблён', 100, 'likes', 'epic'],
     // плейлисты
-    ['g_p1', '📁', 'Сборщик', 'Создай первый плейлист', 1, 'playlists', 'common'],
-    ['g_p5', '🗂', 'Архитектор', 'Создай 5 плейлистов', 5, 'playlists', 'common'],
-    ['g_p10', '🏛', 'Магнат плейлистов', 'Создай 10 плейлистов', 10, 'playlists', 'rare'],
+    ['g_p1', 'i-folder', '📁', 'Сборщик', 'Создай первый плейлист', 1, 'playlists', 'common'],
+    ['g_p5', 'i-folder', '🗂', 'Куратор', '5 плейлистов — свои подборки', 5, 'playlists', 'common'],
+    ['g_p10', 'i-database', '🏛', 'Магнат подборок', '10 плейлистов — целая дискография', 10, 'playlists', 'rare'],
     // история
-    ['g_h25', '📜', 'Летопись', '25 треков в истории', 25, 'history', 'common'],
-    ['g_h100', '📚', 'Хроника волны', '100 треков в истории', 100, 'history', 'rare'],
-    // серии
-    ['g_s3', '🔥', 'Три дня волны', 'Слушай 3 дня подряд', 3, 'streak', 'rare'],
-    ['g_s7', '🌟', 'Неделя волн', 'Слушай 7 дней подряд', 7, 'streak', 'epic'],
+    ['g_h25', 'i-history', '📜', 'Летопись', '25 треков в истории', 25, 'history', 'common'],
+    ['g_h100', 'i-database', '📚', 'Хроника волны', '100 треков в истории', 100, 'history', 'rare'],
+    // серии — стрики, как в тиктоке
+    ['g_s3', 'i-flame', '🔥', 'Стрик 3', 'Слушай 3 дня подряд', 3, 'streak', 'rare'],
+    ['g_s7', 'i-flame', '🌟', 'Стрик 7', 'Неделя без пропуска — стрик горит', 7, 'streak', 'epic'],
     // ночь
-    ['g_n10', '🦉', 'Совиный час', '10 треков после полуночи', 10, 'night', 'rare'],
+    ['g_n10', 'i-owl', '🦉', 'Ночной доскролл', '10 треков после полуночи', 10, 'night', 'rare'],
     // фичи приложения
-    ['g_vibe', '🎆', 'Светомузыка', 'Включи режим Вайб', 1, 'ev_vibe', 'common'],
-    ['g_vibe10', '🪩', 'Дискотека', 'Загляни в Вайб 10 раз', 10, 'ev_vibe', 'rare'],
-    ['g_karaoke', '🎤', 'Караоке-волна', 'Открой экран с текстом трека', 1, 'ev_karaoke', 'common'],
-    ['g_np', '🎬', 'На весь экран', 'Открой Now Playing', 1, 'ev_np', 'common'],
-    ['g_eq', '🎚', 'Твой звук', 'Подкрути эквалайзер', 1, 'ev_eq', 'common'],
-    ['g_room', '📡', 'Слушаем вместе', 'Создай или войди в комнату-волну', 1, 'ev_room', 'rare'],
+    ['g_vibe', 'i-disco', '🎆', 'Светомузыка', 'Включи режим Вайб', 1, 'ev_vibe', 'common'],
+    ['g_vibe10', 'i-disco', '🪩', 'Дискотека', 'Загляни в Вайб 10 раз', 10, 'ev_vibe', 'rare'],
+    ['g_karaoke', 'i-mic', '🎤', 'Караоке-тренд', 'Открой экран с текстом трека', 1, 'ev_karaoke', 'common'],
+    ['g_np', 'i-expand', '🎬', 'На весь экран', 'Открой Now Playing', 1, 'ev_np', 'common'],
+    ['g_eq', 'i-sliders', '🎚', 'Твой звук', 'Подкрути эквалайзер', 1, 'ev_eq', 'common'],
+    ['g_room', 'i-globe', '📡', 'Слушаем вместе', 'Создай или войди в комнату-волну', 1, 'ev_room', 'rare'],
     // секретка: набери «волна» на клавиатуре
-    ['g_wave', '🌊', 'Поймал волну', 'Ты поймал волну — буквально', 1, 'ev_wave', 'legendary',
+    ['g_wave', 'i-spark', '🌊', 'Поймал волну', 'Ты поймал волну — буквально', 1, 'ev_wave', 'legendary',
       true, 'Пасхалка где-то в приложении. Попробуй поймать волну…']
   ];
 
@@ -146,13 +149,58 @@ window.Ach = (function () {
     };
   }
 
-  // каталог карточек: {id, emoji, name, desc, tier, value, need, unlocked, rarity, secret, hint}
+  /* ---------- SVG-иконки ачивок ----------
+     общие → символы из спрайта; артисты/треки → генерированные бейджи:
+     уникальный градиент (по имени) + монограмма + мотив в углу. */
+  const MOTIFS = {
+    flame: 'M24 8c.6 3-1.2 4.6-2.4 6.1-1.3 1.5-2.6 3-2.6 5.4a7 7 0 1 0 14 0c0-1.9-.9-3.4-1.9-4.8-.3 1-.8 1.9-1.6 2.4.3-2.7-.4-6.4-1.6-9.1-.5 1.7-1.9 3-2.5 4.6-.4-1.5-1-3.2-1.4-4.6z',
+    bolt: 'M25 6L15 18h7l-1 8 10-12h-7l1-8z',
+    star: 'M24 5l3.4 7 7.6 1-5.6 5.4 1.4 7.6L24 22.2l-6.8 3.8 1.4-7.6L13 13l7.6-1L24 5z',
+    crown: 'M10 32h28l-2.4-11-4.8 4.8L24 17l-6.8 8.8L12.4 21 10 32z',
+    diamond: 'M24 8l9 14-9 16-9-16 9-14z',
+    wave: 'M8 22c3-6 6-6 9 0s6 6 9 0 6-6 9 0M8 30c3-6 6-6 9 0s6 6 9 0 6-6 9 0',
+    cross: 'M24 12v24M12 24h24',
+    tri: 'M24 10l12 24H12l12-24z'
+  };
+  function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+  function motifSVG(name, x, y) {
+    const d = MOTIFS[Object.keys(MOTIFS)[hashStr(name + '#m') % Object.keys(MOTIFS).length]];
+    return `<path d="${d}" transform="translate(${x} ${y}) scale(.42)" fill="rgba(255,255,255,.28)" stroke="none"/>`;
+  }
+  function artistSVG(name) {
+    const grad = 'ag' + (hashStr(name) % 12);
+    const letter = escapeHtml((name.trim()[0] || '?').toUpperCase());
+    return `<svg class="ach-gen" viewBox="0 0 48 48" aria-hidden="true">
+      <rect x="2" y="2" width="44" height="44" rx="13" fill="url(#${grad})"/>
+      ${motifSVG(name, 26, 2)}
+      <text x="24" y="32" text-anchor="middle" font-family="inherit" font-size="23" font-weight="900" fill="#fff">${letter}</text>
+    </svg>`;
+  }
+  function vinylSVG(name) {
+    const grad = 'ag' + (hashStr(name + 'v') % 12);
+    const letter = escapeHtml((name.trim()[0] || '?').toUpperCase());
+    return `<svg class="ach-gen" viewBox="0 0 48 48" aria-hidden="true">
+      <circle cx="24" cy="24" r="21" fill="#17171f"/>
+      <circle cx="24" cy="24" r="15" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
+      <circle cx="24" cy="24" r="11.5" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+      <circle cx="24" cy="24" r="8.5" fill="url(#${grad})"/>
+      <circle cx="24" cy="24" r="1.8" fill="#17171f"/>
+      <text x="24" y="28" text-anchor="middle" font-size="10" font-weight="900" fill="#fff">${letter}</text>
+    </svg>`;
+  }
+  function iconSVG(a) {
+    if (a.kind === 'artist') return artistSVG(a.name);
+    if (a.kind === 'track') return vinylSVG(a.name);
+    return `<svg class="ach-gen" viewBox="0 0 24 24"><use href="#${a.icon || 'i-spark'}"/></svg>`;
+  }
+
+  // каталог карточек: {id, icon, emoji, name, desc, tier, value, need, unlocked, rarity, secret, hint}
   function catalog() {
     const m = metrics();
     const out = [];
-    for (const [id, emoji, name, desc, need, metric, rarity, secret, hint] of ACH_GENERAL) {
+    for (const [id, icon, emoji, name, desc, need, metric, rarity, secret, hint] of ACH_GENERAL) {
       const v = m[metric] || 0;
-      out.push({ id, emoji, name, desc, tier: -1, value: v, need, rarity, secret: !!secret, hint, unlocked: v >= need });
+      out.push({ id, icon, emoji, name, desc, tier: -1, value: v, need, rarity, secret: !!secret, hint, unlocked: v >= need });
     }
     ACH_ARTISTS.forEach((a, ai) => {
       const cnt = m.artistCount(a.name);
@@ -160,8 +208,8 @@ window.Ach = (function () {
       ARTIST_TIERS.forEach((t, ti) => { if (cnt >= t.need) tier = ti; });
       const next = ARTIST_TIERS[tier + 1] || ARTIST_TIERS[0];
       out.push({
-        id: 'art' + ai, emoji: a.emoji, name: a.name,
-        desc: 'Треки артиста в истории: ' + ARTIST_TIERS.map(t => t.label + ' ' + t.need).join(' → '),
+        id: 'art' + ai, kind: 'artist', emoji: a.emoji, name: a.name,
+        desc: 'Треки артиста тикток-сцены волны: ' + ARTIST_TIERS.map(t => t.label + ' ' + t.need).join(' → '),
         tier, value: cnt,
         need: tier >= ARTIST_TIERS.length - 1 ? ARTIST_TIERS[2].need : (tier >= 0 ? ARTIST_TIERS[tier + 1].need : ARTIST_TIERS[0].need),
         rarity: ARTIST_TIERS[Math.max(0, tier)].rarity, unlocked: tier >= 0
@@ -170,8 +218,8 @@ window.Ach = (function () {
     for (const t of ACH_TRACKS) {
       const cnt = m.trackCount(t.title);
       out.push({
-        id: 'trk_' + t.name.toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_'), emoji: t.emoji,
-        name: t.name, desc: 'Трек из чарта: ' + t.title, tier: -1, value: cnt, need: 3,
+        id: 'trk_' + t.name.toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_'), kind: 'track', emoji: t.emoji,
+        name: t.name, desc: 'Трек волны: ' + t.title + ' — 3+ прослушиваний', tier: -1, value: cnt, need: 3,
         rarity: 'rare', unlocked: cnt >= 3
       });
     }
@@ -185,7 +233,7 @@ window.Ach = (function () {
     const R = RAR[a.rarity] || RAR.common;
     const el = document.createElement('div');
     el.className = 'ach-pop ' + R.cls;
-    el.innerHTML = `<div class="ach-pop-emoji">${a.emoji}</div>
+    el.innerHTML = `<div class="ach-pop-emoji">${iconSVG(a)}</div>
       <div class="ach-pop-txt"><div class="ach-pop-cap">Ачивка открыта · ${R.label}</div>
       <div class="ach-pop-name">${escapeHtml(a.name)}</div>
       <div class="ach-pop-xp">+${R.xp} XP</div></div>`;
@@ -282,7 +330,7 @@ window.Ach = (function () {
         .map(({ a }) => {
           const R = RAR[a.rarity] || RAR.common;
           return `<div class="ach-mini ${R.cls}" title="${R.label} · +${R.xp} XP">
-            <span class="ach-mini-emoji">${a.emoji}</span>
+            <span class="ach-mini-emoji">${iconSVG(a)}</span>
             <span class="ach-mini-name">${escapeHtml(a.name)}</span></div>`;
         }).join('');
       box.innerHTML = `${head}
@@ -304,7 +352,7 @@ window.Ach = (function () {
       const pct = Math.min(100, Math.round(a.value / a.need * 100));
       return `
       <div class="ach-card ${a.unlocked ? 'unlocked ' + R.cls : ''}${secret ? ' secret' : ''}" title="${R.label} · +${R.xp} XP">
-        <div class="ach-top"><div class="ach-emoji">${secret ? '❓' : a.emoji}</div><span class="ach-rar">${R.label}</span></div>
+        <div class="ach-top"><div class="ach-emoji">${secret ? '❓' : iconSVG(a)}</div><span class="ach-rar">${R.label}</span></div>
         <div class="ach-name">${secret ? '???' : escapeHtml(a.name) + (a.tier >= 0 ? ` <span class="ach-tier">${['I', 'II', 'III'][a.tier] || ''}</span>` : '')}</div>
         <div class="ach-desc">${secret ? escapeHtml(a.hint || 'Секретная ачивка') : escapeHtml(a.desc)}</div>
         ${a.unlocked
@@ -324,8 +372,8 @@ window.Ach = (function () {
     };
     box.innerHTML = head + filters + '<div class="ach-body">'
       + sec('Общие', a => a.id.startsWith('g_'))
-      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Артисты чарта Я.Музыки', a => a.id.startsWith('art'))
-      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Треки чарта', a => a.id.startsWith('trk_'))
+      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Артисты волны', a => a.id.startsWith('art'))
+      + sec('<svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Треки волны', a => a.id.startsWith('trk_'))
       + `<button class="ach-expand" onclick="Ach.toggleExpand()" style="margin-top:14px"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Свернуть</button>`
       + '</div>';
   }

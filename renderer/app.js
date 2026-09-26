@@ -142,6 +142,7 @@ function switchView(name) {
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
   if ((name === 'vprofile' || name === 'people' || name === 'settings') && window.Profiles) Profiles.refresh(); // профили и облако — в настройках
+  if (name === 'settings') setSettingsPane(localStorage.getItem('ga:setpane') || 'look');
   if (typeof updateMascot === 'function') updateMascot();
 }
 
@@ -150,6 +151,13 @@ function updateBadges() {
   const f = $('#fav-badge'); if (f) f.textContent = state.favorites.length;
   const p = $('#pl-badge'); if (p) p.textContent = state.playlists.length;
   const q = $('#queue-badge'); if (q) q.textContent = state.queue.length;
+}
+
+/* ---------- настройки: свой сайдбар с категориями ---------- */
+function setSettingsPane(p) {
+  $$('#view-settings .set-pane').forEach(el => el.classList.toggle('on', el.dataset.pane === p));
+  $$('#view-settings .set-navbtn').forEach(b => b.classList.toggle('on', b.dataset.pane === p));
+  try { localStorage.setItem('ga:setpane', p); } catch (_) {}
 }
 
 /* ---------- контекст-меню трека ---------- */

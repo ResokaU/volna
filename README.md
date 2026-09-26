@@ -4,7 +4,7 @@
 
 <img src="docs/banner.svg" alt="VOLNA" width="100%">
 
-[![версия](https://img.shields.io/badge/версия-1.0-b14aff?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
+[![версия](https://img.shields.io/badge/версия-1.1-b14aff?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
 [![лицензия](https://img.shields.io/badge/License-MIT-d6ff3a?style=for-the-badge)](LICENSE)
 [![платформа](https://img.shields.io/badge/Windows-10%2F11-ff3d7f?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
 [![донат](https://img.shields.io/badge/💜_поддержать-волну-8a2be2?style=for-the-badge)](https://resokau.github.io/volna/donate)

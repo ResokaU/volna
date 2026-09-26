@@ -34,6 +34,19 @@
       <feGaussianBlur stdDeviation="10" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <!-- 🎨 палитра бейджей артистов/треков (achievements.js) -->
+    <linearGradient id="ag0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b14aff"/><stop offset="1" stop-color="#ff3d7f"/></linearGradient>
+    <linearGradient id="ag1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6ff3a"/><stop offset="1" stop-color="#4affa3"/></linearGradient>
+    <linearGradient id="ag2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d7f"/><stop offset="1" stop-color="#ff9a3d"/></linearGradient>
+    <linearGradient id="ag3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc9ff"/><stop offset="1" stop-color="#b14aff"/></linearGradient>
+    <linearGradient id="ag4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e5e"/><stop offset="1" stop-color="#b14aff"/></linearGradient>
+    <linearGradient id="ag5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4affa3"/><stop offset="1" stop-color="#4cc9ff"/></linearGradient>
+    <linearGradient id="ag6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd75e"/><stop offset="1" stop-color="#ff9a3d"/></linearGradient>
+    <linearGradient id="ag7" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e05cff"/><stop offset="1" stop-color="#4cc9ff"/></linearGradient>
+    <linearGradient id="ag8" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ffd75e"/></linearGradient>
+    <linearGradient id="ag9" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a2bff"/><stop offset="1" stop-color="#4affd6"/></linearGradient>
+    <linearGradient id="ag10" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d7f"/><stop offset="1" stop-color="#e05cff"/></linearGradient>
+    <linearGradient id="ag11" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4affd6"/><stop offset="1" stop-color="#d6ff3a"/></linearGradient>
   </defs>
 
   <symbol id="i-logo" viewBox="0 0 512 512">
@@ -109,6 +122,10 @@
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 2.9-5.5 6.5-5.5s6.5 2 6.5 5.5"/><circle cx="17" cy="9" r="2.8"/><path d="M17.5 14.6c2.6.4 4 2.2 4 4.9"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2.2-2.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+  <symbol id="i-owl" viewBox="0 0 24 24"><path d="M4 13a8 8 0 0 1 16 0v7h-4v-4h-8v4H4v-7z"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M12 12l-1 1.6h2L12 12z"/></symbol>
+  <symbol id="i-disco" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6.5"/><path d="M12 4v3.5M12 7.5v13M5.8 11h12.4M5.5 14h13M6.8 17h10.4M12 4l-2 1.5M12 4l2 1.5"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></symbol>
+  <symbol id="i-crownheart" viewBox="0 0 24 24"><path d="M12 20.5l-7.2-6.7a4.2 4.2 0 1 1 7.2-4.3 4.2 4.2 0 1 1 7.2 4.3L12 20.5z"/><path d="M8.5 6.2L10 8l2-2.8L14 8l1.5-1.8"/></symbol>
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9 2.9-6z"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></symbol>
@@ -481,7 +498,14 @@
             <div class="section-sub">Персонализируй приложение</div>
           </div>
         </div>
-        <div class="settings-group">
+        <div class="set-nav">
+          <button class="set-navbtn on" data-pane="look" onclick="setSettingsPane(&quot;look&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-palette"/></svg>Вид</button>
+          <button class="set-navbtn" data-pane="sound" onclick="setSettingsPane(&quot;sound&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-volume"/></svg>Звук</button>
+          <button class="set-navbtn" data-pane="app" onclick="setSettingsPane(&quot;app&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Приложение</button>
+          <button class="set-navbtn" data-pane="id" onclick="setSettingsPane(&quot;id&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Волна ID</button>
+          <button class="set-navbtn" data-pane="data" onclick="setSettingsPane(&quot;data&quot;)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-database"/></svg>Данные</button>
+        </div>
+        <div class="settings-group set-pane" data-pane="look">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-palette"/></svg>Акцент</h3>
           <div class="accent-picker" id="accent-picker">
             <button class="accent-chip" data-accent="neon" style="--ac:#b14aff" title="Неон"></button>
@@ -504,7 +528,7 @@
             <button class="accent-chip" data-accent="slate" style="--ac:#27303f" title="Сланец"></button>
           </div>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="sound">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Эквалайзер <span style="opacity:.5;font-weight:400">(нативный звук)</span></h3>
           <div class="eq-presets">
             <button class="eq-chip active" data-eq="flat">Ровный</button>
@@ -526,7 +550,7 @@
             <div class="eq-col"><input type="range" id="eq-9" min="-12" max="12" step="1" value="0"><span>16k</span></div>
           </div>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="look">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Масштаб интерфейса</h3>
           <div class="setting-row ui-scale-row">
             <button class="sc-btn" onclick="nudgeZoom(-.1)" title="Меньше (Ctrl+-)">−</button>
@@ -535,7 +559,7 @@
             <button class="sc-btn" onclick="setZoom(1)" title="Сброс (Ctrl+0)" style="width:auto;padding:0 12px;font-size:12px">Сброс</button>
           </div>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="sound">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Качество аудио (нативный движок)</h3>
           <div class="eq-presets">
             <div class="eq-presets">
@@ -543,7 +567,7 @@
               <button class="bit-chip" data-bit="small">📉 Экономия трафика</button>
             </div>
           </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="look">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Стиль фонов (Вайб)</h3>
           <div class="eq-presets" id="vcat-chips" title="Перетаскивай, чтобы менять порядок"></div>
           <div style="margin-top:10px">
@@ -551,21 +575,21 @@
           </div>
         </div>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="app">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Пульт с телефона</h3>
           <div class="setting-row" style="margin-bottom:10px">
             <button class="toolbar-btn" onclick="showRemoteQR()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Показать QR и адрес</button>
           </div>
           <div id="remote-box"></div>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="sound">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-volume"/></svg>Громкость по умолчанию</h3>
           <div class="setting-row">
             <input type="range" id="default-volume" min="0" max="1" step="0.05" style="flex:1">
             <span id="default-volume-val">100%</span>
           </div>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="app">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Поведение</h3>
           <label class="toggle-row"><input type="checkbox" id="set-notify"><span>Уведомления при лайке</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-savewin"><span>Запоминать позицию/размер окна</span></label>
@@ -590,7 +614,7 @@
           </div>
           <p class="setting-hint">Без токена Discord показывает логотип вместо обложки. Токен: discord.com/developers → твоё приложение VOLNA → Bot → Reset Token. Токен хранится только на этом компьютере.</p>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="look">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Фон и волны</h3>
           <label class="toggle-row"><input type="checkbox" id="set-waves" checked><span>Динамичные волны внизу экрана</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-mascot" checked><span>Танцующий маскот в караоке (клик по нему — сменить)</span></label>
@@ -605,7 +629,7 @@
           </div>
           <p style="color:var(--muted);font-size:12px;margin-top:10px">Обои хранятся локально в приложении и никуда не отправляются.</p>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="app">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-shield"/></svg>Антиблок — доступ в РФ</h3>
           <label class="toggle-row"><input type="checkbox" id="set-doh" checked><span>DoH: DNS через Cloudflare — обходит DNS-блокировки <em style="color:var(--muted);font-style:normal">(применится после перезапуска)</em></span></label>
           <div class="setting-row" style="margin:6px 0 12px">
@@ -623,7 +647,7 @@
             Если запущен Запрет2/zapret — он работает системно, и VOLNA ходит через него автоматически.
           </p>
         </div>
-        <div class="settings-group">
+        <div class="settings-group set-pane" data-pane="data">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-database"/></svg>Данные</h3>
           <div class="toolbar-actions" style="flex-wrap:wrap">
             <button class="toolbar-btn" onclick="exportFullBackup()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-box"/></svg>Полный backup</button>
@@ -631,7 +655,7 @@
             <button class="toolbar-btn danger" onclick="wipeAll()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bomb"/></svg>Стереть всё</button>
           </div>
         </div>
-        <div class="settings-group" id="profiles-cloud-group">
+        <div class="settings-group set-pane" data-pane="id" id="profiles-cloud-group">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Профили устройства</h3>
           <div id="profiles-list"></div>
           <div class="profile-create">
