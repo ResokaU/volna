@@ -69,6 +69,53 @@ window.Social = (function () {
   }
   const validHandle = h => /^[a-z0-9_]{3,16}$/.test(h || '');
 
+  /* SHA-256 (FIPS 180-4, компактно) — хэш пароля; работает в любом контексте */
+  function sha256(str) {
+    let ascii = unescape(encodeURIComponent(str));
+    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+    const maxWord = Math.pow(2, 32);
+    let result = '';
+    const words = [], bitLen = ascii.length * 8;
+    const hash = [], k = [];
+    let pc = 0;
+    const isComposite = {};
+    for (let cand = 2; pc < 64; cand++) {
+      if (!isComposite[cand]) {
+        for (let i = 0; i < 313; i += cand) isComposite[i] = cand;
+        hash[pc] = (Math.pow(cand, .5) * maxWord) | 0;
+        k[pc++] = (Math.pow(cand, 1 / 3) * maxWord) | 0;
+      }
+    }
+    ascii += '\x80';
+    while (ascii.length % 64 - 56) ascii += '\x00';
+    for (let i = 0; i < ascii.length; i++) words[i >> 2] |= ascii.charCodeAt(i) << ((3 - i) % 4) * 8;
+    words[words.length] = (bitLen / maxWord) | 0;
+    words[words.length] = bitLen;
+    for (let j = 0; j < words.length;) {
+      const w = words.slice(j, j += 16);
+      const oldHash = hash.slice(0, 8);
+      for (let i = 0; i < 64; i++) {
+        const w15 = w[i - 15], w2 = w[i - 2];
+        const a = hash[0], e = hash[4];
+        const t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ (~e & hash[6])) + k[i]
+          + (w[i] = i < 16 ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7]
+            + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        const t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash.unshift((t1 + t2) | 0);
+        hash.pop();
+        hash[4] = (hash[4] + t1) | 0;
+      }
+      for (let i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (let i = 0; i < 8; i++)
+      for (let j = 3; j + 1; j--) {
+        const b = (hash[i] >> (j * 8)) & 255;
+        result += (b < 16 ? '0' : '') + b.toString(16);
+      }
+    return result;
+  }
+  const passHash = (h, p) => sha256('volna-id·' + h + '·' + p);
+
   /* ================================================================
      SocialStore — контракт адаптера хранилища
      ================================================================ */
@@ -108,18 +155,7 @@ window.Social = (function () {
       if (!validHandle(s.handle) || !this.available()) return;
       clearTimeout(_regSyncT);
       _regSyncT = setTimeout(async () => {
-        try {
-          const gid = await this.ensureGist();
-          const users = await this.fetchDirectory();
-          users[s.handle] = {
-            name: myName(), bio: s.bio || '', status: s.status || '',
-            avatar: (myAvatar() || '').slice(0, 40000),
-            friends: s.friends.slice(0, 100), follows: s.follows.slice(0, 100),
-            updated: Date.now()
-          };
-          await ipc.invoke('gh:filePut', { token: this.ghToken(), gistId: gid, file: REG_FILE, content: JSON.stringify({ v: 1, updated: Date.now(), users }) });
-          renderIfOpen();
-        } catch (_) {}
+        try { await writeCard(); renderIfOpen(); } catch (_) {}
       }, 1500);
     },
 
@@ -171,6 +207,23 @@ window.Social = (function () {
     presenceBeat() { ws.send(JSON.stringify({ type: 'beat' })); }
   };
   Social.use = adapter => { adapter = adapter; }; // ← так хост подключается одной строкой */
+
+  /* записать свою карточку в реестр (сохраняя пароль и чужие записи) */
+  async function writeCard(extra) {
+    const s = S();
+    if (!validHandle(s.handle)) return;
+    const users = await MeshAdapter.fetchDirectory();
+    const prev = users[s.handle] || {};
+    users[s.handle] = {
+      name: myName(), bio: s.bio || '', status: s.status || '',
+      avatar: (myAvatar() || '').slice(0, 40000),
+      friends: s.friends.slice(0, 100), follows: s.follows.slice(0, 100),
+      pass: extra && extra.pass !== undefined ? extra.pass : (prev.pass || ''),
+      updated: Date.now()
+    };
+    const gid = await MeshAdapter.ensureGist();
+    await ipc.invoke('gh:filePut', { token: MeshAdapter.ghToken(), gistId: gid, file: REG_FILE, content: JSON.stringify({ v: 1, updated: Date.now(), users }) });
+  }
 
   /* ---------- MQTT: присутствие + мгновенные события ---------- */
   function pairTopic(a, b) { return 'volna-id/dm/' + [a, b].sort().join('__'); }
@@ -256,29 +309,63 @@ window.Social = (function () {
     try {
       directory = await adapter.fetchDirectory();
       delete directory[S().handle]; // свою карточку рисуем из локальных данных
-      renderIfOpen();
     } catch (_) {}
   }
   const isOnline = h => h === S().handle ? meOnline : (lastSeen[h] || 0) > Date.now() - ONLINE_MS;
 
-  /* ---------- действия ---------- */
-  async function claimHandle(h) {
-    h = (h || '').trim().toLowerCase();
-    if (!validHandle(h)) { toast('🪪 Хэндл: 3–16 символов, a-z 0-9 _', 'error'); return; }
-    if (!MeshAdapter.available()) { toast('Подключи GitHub-облако во вкладке «Ваш аккаунт»', 'error'); return; }
+  /* ---------- регистрация и вход (пароль → SHA-256 хэш в реестре) ---------- */
+  let _regMode = 'reg';
+  function regTab(m) { _regMode = m; renderIfOpen(); }
+  const _err = m => toast(m, 'error');
+
+  async function register() {
+    const h = ($('#vp-reg-handle')?.value || '').trim().toLowerCase();
+    const name = ($('#vp-reg-name')?.value || '').trim().slice(0, 32);
+    const bio = ($('#vp-reg-bio')?.value || '').trim().slice(0, 160);
+    const p1 = $('#vp-reg-pass')?.value || '', p2 = $('#vp-reg-pass2')?.value || '';
+    if (!validHandle(h)) return _err('Хэндл: 3–16 символов, a-z 0-9 _');
+    if (!name) return _err('Введи имя профиля');
+    if (p1.length < 4) return _err('Пароль: минимум 4 символа');
+    if (p1 !== p2) return _err('Пароли не совпадают');
+    if (!MeshAdapter.available()) return _err('Подключи GitHub-облако в Настройках');
     try {
       const users = await MeshAdapter.fetchDirectory();
-      if (users[h]) { toast('@' + h + ' уже занят — попробуй другой', 'error'); return; }
+      if (users[h]) return _err('@' + h + ' уже занят — вкладка «Вход»');
+      S().handle = h; S().name = name; S().bio = bio;
+      save();
+      if (!adapter) adapter = MeshAdapter;
+      await writeCard({ pass: passHash(h, p1) });
+      connectRealtime();
+      await MeshAdapter.flushMyInbox();
+      refreshDirectory();
+      toast('🪪 Аккаунт создан: @' + h, 'success');
+      renderIfOpen();
+    } catch (e) { _err('🪪 ' + e.message); }
+  }
+
+  async function login() {
+    const h = ($('#vp-login-handle')?.value || '').trim().toLowerCase();
+    const p = $('#vp-login-pass')?.value || '';
+    if (!validHandle(h)) return _err('Неверный хэндл');
+    if (!MeshAdapter.available()) return _err('Подключи GitHub-облако в Настройках');
+    try {
+      const users = await MeshAdapter.fetchDirectory();
+      const card = users[h];
+      if (!card) return _err('Аккаунт @' + h + ' не найден в справочнике');
+      if (!card.pass) return _err('У @' + h + ' старый аккаунт без пароля — зарегистрируй другой хэндл');
+      if (card.pass !== passHash(h, p)) return _err('Неверный пароль');
       S().handle = h;
+      if (card.name && !S().name) S().name = card.name;
+      if (card.bio && !S().bio) S().bio = card.bio;
       save();
       if (!adapter) adapter = MeshAdapter;
       connectRealtime();
       await MeshAdapter.flushMyInbox();
       adapter.publishProfile();
       refreshDirectory();
-      toast('🪪 VOLNA ID создан: @' + h, 'success');
+      toast('🪪 Вошёл как @' + h, 'success');
       renderIfOpen();
-    } catch (e) { toast('🪪 ' + e.message, 'error'); }
+    } catch (e) { _err('🪪 ' + e.message); }
   }
   function saveProfileCard(fields) {
     const s = S();
@@ -396,18 +483,38 @@ window.Social = (function () {
     const s = S();
     if (!validHandle(s.handle)) {
       const sug = suggestHandle();
+      const reg = _regMode !== 'login';
       box.innerHTML = `
         <div class="vp-claim">
           <div class="vp-claim-ic"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg></div>
-          <h2>Заведи свой VOLNA ID</h2>
-          <p>Профиль внутри VOLNA: своё имя, био и статус, друзья, подписки и личные чаты.<br>
-          По @хэндлу тебя найдут другие пользователи волны.</p>
-          <div class="vp-claim-row">
-            <input type="text" id="vp-handle" maxlength="16" placeholder="хэндл" value="${esc(sug)}">
-            <button class="md-btn accent" onclick="Social.claimHandle($('#vp-handle').value)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Забрать ID</button>
+          <h2>VOLNA ID</h2>
+          <p>Аккаунт волны: профиль, друзья, подписки и чаты.<br>Хэндл и пароль — твой ключ, пароль хранится только хэшем.</p>
+          <div class="vp-regtabs">
+            <button class="ptab${reg ? ' on' : ''}" onclick="Social.regTab('reg')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Регистрация</button>
+            <button class="ptab${reg ? '' : ' on'}" onclick="Social.regTab('login')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-keyboard"/></svg>Вход</button>
           </div>
-          <p class="vp-claim-hint">Справочник живёт в GitHub-облаке (токен в «Профили и облако» ниже).
-          Хочешь свой сервер? Модуль принимает любой адаптер хранилища — см. docs/volna-id.md.</p>
+          ${reg ? `
+          <div class="vp-regform">
+            <div class="vp-regrow">
+              <div class="vp-regfield"><label>Хэндл</label><input type="text" id="vp-reg-handle" maxlength="16" placeholder="ник волны" value="${esc(sug)}"></div>
+              <div class="vp-regfield"><label>Имя</label><input type="text" id="vp-reg-name" maxlength="32" placeholder="Как показывать" value="${esc(myName())}"></div>
+            </div>
+            <div class="vp-regrow">
+              <div class="vp-regfield"><label>Пароль (от 4 символов)</label><input type="password" id="vp-reg-pass" maxlength="64" placeholder="••••••"></div>
+              <div class="vp-regfield"><label>Повтори пароль</label><input type="password" id="vp-reg-pass2" maxlength="64" placeholder="••••••"></div>
+            </div>
+            <div class="vp-regfield"><label>О себе (необязательно)</label><input type="text" id="vp-reg-bio" maxlength="160" placeholder="пара слов о себе"></div>
+            <button class="md-btn accent vp-regbtn" onclick="Social.register()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Создать аккаунт</button>
+          </div>` : `
+          <div class="vp-regform">
+            <div class="vp-regrow">
+              <div class="vp-regfield"><label>Хэндл</label><input type="text" id="vp-login-handle" maxlength="16" placeholder="твой хэндл"></div>
+              <div class="vp-regfield"><label>Пароль</label><input type="password" id="vp-login-pass" maxlength="64" placeholder="••••••"></div>
+            </div>
+            <button class="md-btn accent vp-regbtn" onclick="Social.login()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-keyboard"/></svg>Войти</button>
+          </div>`}
+          <p class="vp-claim-hint">Аккаунты живут в GitHub-облаке (токен в Настройках внизу). Вход с любого ПК:
+          хэндл + пароль. Пароль хранится только как SHA-256 хэш — никто не увидит исходный.</p>
         </div>`;
       return;
     }
@@ -454,6 +561,7 @@ window.Social = (function () {
           <input type="text" id="vp-name" maxlength="32" placeholder="Имя" value="${esc(s.name || myName())}">
           <input type="text" id="vp-status" maxlength="40" placeholder="Статус — что сейчас?" value="${esc(s.status)}">
           <textarea id="vp-bio" maxlength="160" rows="2" placeholder="О себе (до 160 символов)">${esc(s.bio)}</textarea>
+          <input type="password" id="vp-pass" maxlength="64" placeholder="Новый пароль (необязательно, от 4 символов)">
           <button class="md-btn accent" onclick="Social.saveEdit()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Сохранить</button>
         </div>
         <div class="vp-stats">
@@ -477,6 +585,15 @@ window.Social = (function () {
   }
   function saveEdit() {
     saveProfileCard({ name: $('#vp-name')?.value, status: $('#vp-status')?.value, bio: $('#vp-bio')?.value });
+    const np = $('#vp-pass')?.value || '';
+    if (np) {
+      if (np.length < 4) { toast('Пароль: минимум 4 символа', 'error'); return; }
+      writeCard({ pass: passHash(S().handle, np) })
+        .then(() => toast('🔒 Пароль установлен', 'success'))
+        .catch(() => toast('Не удалось записать пароль в облако', 'error'));
+      const f = $('#vp-pass'); if (f) f.value = '';
+      return;
+    }
     toast('🪪 Профиль сохранён', 'success');
   }
 
@@ -626,13 +743,17 @@ window.Social = (function () {
   function backToChats() { _openChat = null; renderIfOpen(); }
 
   async function find() {
-    const q = ($('#find-handle')?.value || '').trim().toLowerCase().replace(/^@/, '');
-    const res = $('#find-results');
+    const inp = $('#find-handle');
+    const q = (inp?.value || '').trim().toLowerCase().replace(/^@/, '');
+    let res = $('#find-results');
     if (!res) return;
     if (!q) { res.innerHTML = '<div class="vp-empty">Введи @хэндл</div>'; return; }
-    if (!MeshAdapter.available()) { res.innerHTML = '<div class="vp-empty">Нет облака — подключи GitHub во вкладке «Ваш аккаунт»</div>'; return; }
+    if (!MeshAdapter.available()) { res.innerHTML = '<div class="vp-empty">Нет облака — подключи GitHub в Настройках (внизу)</div>'; return; }
     res.innerHTML = '<div class="vp-empty">Ищу в волне…</div>';
     await refreshDirectory();
+    res = $('#find-results'); // вкладка могла перерисоваться — ловим контейнер заново
+    if (!res) return;
+    if (inp) inp.value = q; // вернуть запрос, если поле пересоздалось
     const keys = Object.keys(directory).filter(h => h.includes(q));
     if (!keys.length) { res.innerHTML = `<div class="vp-empty">Никого с «${esc(q)}» нет в справочнике</div>`; return; }
     const s = S();
@@ -643,8 +764,12 @@ window.Social = (function () {
   }
 
   function renderIfOpen() {
-    if ($('#view-people')?.classList.contains('active')) renderPeople();
-    if ($('#view-vprofile')?.classList.contains('active')) renderProfile($('#vprofile-wrap'));
+    const ae = document.activeElement;
+    // не перерисовываем вьюху, пока пользователь печатает в поле поиска или в редакторе профиля
+    const typingFind = ae && ae.id === 'find-handle';
+    const typingEdit = ae && ae.closest && ae.closest('#vp-edit');
+    if ($('#view-people')?.classList.contains('active') && !typingFind) renderPeople();
+    if ($('#view-vprofile')?.classList.contains('active') && !typingEdit) renderProfile($('#vprofile-wrap'));
     updateBadge();
   }
 
@@ -667,10 +792,11 @@ window.Social = (function () {
   function use(a) { adapter = a; } // подключение своего хранилища одной строкой
 
   return {
-    init, use, claimHandle, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
+    init, use, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
     pickBanner, bannerChosen, removeBanner,
+    register, login, regTab,
     summary: () => ({ handle: S().handle, friends: S().friends.length, online: meOnline })
   };
 })();

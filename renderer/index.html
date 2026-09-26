@@ -631,20 +631,16 @@
             <button class="toolbar-btn danger" onclick="wipeAll()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bomb"/></svg>Стереть всё</button>
           </div>
         </div>
-      </section>
-
-      <section class="view" id="view-vprofile">
-        <div id="vprofile-wrap"></div>
-        <div class="acc-view vp-settings">
-          <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Профили устройства</h4>
+        <div class="settings-group" id="profiles-cloud-group">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Профили устройства</h3>
           <div id="profiles-list"></div>
           <div class="profile-create">
             <input type="text" id="profile-new-name" maxlength="24" placeholder="Имя нового профиля">
             <button class="md-btn" onclick="Profiles.create()">+ Создать</button>
           </div>
-          <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-cloud"/></svg>Облако (приватный GitHub Gist)</h4>
+          <h3 style="margin-top:20px"><svg class="ic" viewBox="0 0 24 24"><use href="#i-cloud"/></svg>Облако (приватный GitHub Gist)</h3>
           <div class="profile-create">
-            <input type="text" id="gh-token" placeholder="GitHub Personal Access Token (право gist)">
+            <input type="text" id="gh-token" placeholder="GitHub Personal Access Token (право gist)" style="max-width:460px">
             <button class="md-btn" onclick="Profiles.ghConnect()">Подключить</button>
           </div>
           <div class="cloud-status" id="gh-status">Не подключено</div>
@@ -654,6 +650,10 @@
           </div>
           <p class="setting-hint">Токен: github.com/settings/tokens → Generate new token (classic) → отметь только <b>gist</b>. В облаке — все профили устройства и справочник Волна ID. Токен хранится локально.</p>
         </div>
+      </section>
+
+      <section class="view" id="view-vprofile">
+        <div id="vprofile-wrap"></div>
       </section>
 
       <section class="view" id="view-people">

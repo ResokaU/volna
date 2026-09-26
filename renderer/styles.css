@@ -1395,6 +1395,16 @@ box-shadow:0 10px 34px -8px color-mix(in srgb,var(--accent) 75%,transparent)}
 padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;font-weight:700;outline:none}
 .vp-claim-row input:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 .vp-claim-hint{font-size:11.5px !important;color:#77778c !important}
+/* рег-форма с паролем: регистрация / вход */
+.vp-regtabs{display:flex;gap:8px;justify-content:center;margin:16px 0 14px}
+.vp-regform{display:flex;flex-direction:column;gap:10px;max-width:540px;margin:0 auto;text-align:left}
+.vp-regrow{display:flex;gap:10px;flex-wrap:wrap}
+.vp-regfield{flex:1;min-width:200px;display:flex;flex-direction:column;gap:5px}
+.vp-regfield label{font-size:10.5px;font-weight:800;color:#9a9ab0;text-transform:uppercase;letter-spacing:.06em}
+.vp-regfield input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+padding:11px 14px;color:var(--text);font-family:inherit;font-size:13.5px;outline:none;width:100%}
+.vp-regfield input:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.vp-regbtn{justify-content:center;margin-top:4px}
 /* --- карточки пользователей --- */
 .soc-user{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;
 background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);margin-bottom:8px;transition:.15s}
@@ -1486,3 +1496,7 @@ background:color-mix(in srgb,var(--acid) 10%,transparent);border:1px solid color
 .vp-listening{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* раздел профилей и облака внутри профиля */
 .vp-settings{margin-top:28px;padding-top:4px;border-top:1px solid rgba(255,255,255,.06)}
+/* размеры: профили/облако в настройках не растягиваются на весь экран */
+#profiles-cloud-group{max-width:880px}
+#profiles-cloud-group .profile-create input{max-width:520px}
+#profiles-cloud-group .setting-hint{max-width:720px;line-height:1.55}
