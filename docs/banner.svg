@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380">
+  <defs>
+    <linearGradient id="wave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b14aff"/><stop offset="1" stop-color="#d6ff3a"/>
+    </linearGradient>
+    <linearGradient id="txt" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b14aff"/><stop offset="0.5" stop-color="#ff3d7f"/><stop offset="1" stop-color="#d6ff3a"/>
+    </linearGradient>
+    <radialGradient id="b1" cx="0.5" cy="0.5"><stop offset="0" stop-color="#b14aff" stop-opacity="0.5"/><stop offset="1" stop-color="#b14aff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="b2" cx="0.5" cy="0.5"><stop offset="0" stop-color="#ff3d7f" stop-opacity="0.4"/><stop offset="1" stop-color="#ff3d7f" stop-opacity="0"/></radialGradient>
+    <radialGradient id="b3" cx="0.5" cy="0.5"><stop offset="0" stop-color="#d6ff3a" stop-opacity="0.3"/><stop offset="1" stop-color="#d6ff3a" stop-opacity="0"/></radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="380" fill="#08080f"/>
+  <circle cx="220" cy="60" r="260" fill="url(#b1)"/>
+  <circle cx="1050" cy="330" r="300" fill="url(#b2)"/>
+  <circle cx="620" cy="360" r="240" fill="url(#b3)"/>
+  <g opacity="0.9">
+    <circle cx="905" cy="70" r="3" fill="#d6ff3a" opacity="0.7"/>
+    <circle cx="985" cy="140" r="2" fill="#ff3d7f" opacity="0.8"/>
+    <circle cx="1080" cy="55" r="2.5" fill="#b14aff" opacity="0.7"/>
+    <circle cx="140" cy="300" r="2.5" fill="#d6ff3a" opacity="0.5"/>
+    <circle cx="70" cy="120" r="2" fill="#ff3d7f" opacity="0.6"/>
+  </g>
+  <g transform="translate(80,86)" filter="url(#glow)">
+    <path d="M96 328 C 104 216, 190 152, 300 160 C 384 166, 436 222, 430 284 C 425 340, 372 372, 322 352 C 288 338, 276 300, 296 272 C 312 250, 344 250, 358 272"
+      fill="none" stroke="url(#wave)" stroke-width="58" stroke-linecap="round" transform="scale(0.42)"/>
+  </g>
+  <text x="210" y="185" font-family="Segoe UI,Arial,sans-serif" font-size="86" font-weight="900" fill="url(#txt)" letter-spacing="2">VOLNA</text>
+  <text x="212" y="232" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="600" fill="#9a9ab0">бесплатный SoundCloud-плеер · без рекламы · без подписок</text>
+  <g font-family="Segoe UI,Arial,sans-serif" font-size="15" font-weight="700">
+    <rect x="212" y="262" width="170" height="36" rx="18" fill="rgba(177,74,255,0.18)" stroke="rgba(177,74,255,0.5)"/>
+    <text x="297" y="285" fill="#d3b8ff" text-anchor="middle">🖼 тикток-вайб</text>
+    <rect x="392" y="262" width="196" height="36" rx="18" fill="rgba(255,61,127,0.15)" stroke="rgba(255,61,127,0.5)"/>
+    <text x="490" y="285" fill="#ff9ec4" text-anchor="middle">🌌 шейдер-визуал</text>
+    <rect x="598" y="262" width="200" height="36" rx="18" fill="rgba(214,255,58,0.13)" stroke="rgba(214,255,58,0.5)"/>
+    <text x="698" y="285" fill="#e6ffa3" text-anchor="middle">📝 караоке любой песни</text>
+    <rect x="808" y="262" width="184" height="36" rx="18" fill="rgba(58,240,255,0.12)" stroke="rgba(58,240,255,0.45)"/>
+    <text x="900" y="285" fill="#9be8ff" text-anchor="middle">📱 пульт с телефона</text>
+  </g>
+  <g transform="translate(1075,120)">
+    <rect x="0" y="0" width="86" height="180" rx="14" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+    <rect x="10" y="12" width="66" height="66" rx="10" fill="url(#wave)" opacity="0.85"/>
+    <rect x="10" y="88" width="40" height="8" rx="4" fill="rgba(255,255,255,0.25)"/>
+    <rect x="10" y="104" width="56" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
+    <rect x="10" y="120" width="66" height="5" rx="2.5" fill="rgba(255,255,255,0.12)"/>
+    <circle cx="43" cy="150" r="18" fill="#ff3d7f" opacity="0.9"/>
+    <path d="M39 142 l14 8 -14 8 z" fill="#fff"/>
+  </g>
+</svg>
