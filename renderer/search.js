@@ -79,9 +79,21 @@ const CHIPS = [
 
 function bindSearchUI() {
   const input = $('#search-input');
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  input.addEventListener('keydown', e => {
+    clearTimeout(state._liveTimer);
+    if (e.key === 'Enter') doSearch();
+  });
   input.addEventListener('focus', showRecent);
   input.addEventListener('blur', () => setTimeout(hideRecent, 150));
+  // 🔍 живой поиск: печатаем — результаты появляются (дебаунс 650мс)
+  input.addEventListener('input', () => {
+    const clearBtn = $('#search-clear');
+    if (clearBtn) clearBtn.style.display = input.value ? 'flex' : 'none';
+    clearTimeout(state._liveTimer);
+    const q = input.value.trim();
+    if (q.length < 2) return;
+    state._liveTimer = setTimeout(() => { hideRecent(); doSearch(q); }, 650);
+  });
 
   // режимы поиска
   $('#mode-seg').addEventListener('click', e => {
@@ -416,6 +428,14 @@ function showRecent() {
   box.style.display = 'flex';
 }
 function hideRecent() { const b = $('#recent-searches'); if (b) b.style.display = 'none'; }
+function clearSearchInput() {
+  const input = $('#search-input');
+  if (input) { input.value = ''; input.focus(); }
+  const cb = $('#search-clear');
+  if (cb) cb.style.display = 'none';
+  clearTimeout(state._liveTimer);
+  showRecent();
+}
 
 /* ---------- тренды: мировые чарты + русские табы ---------- */
 const TRENDS = [

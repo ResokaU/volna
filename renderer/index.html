@@ -202,6 +202,7 @@
             <div class="search-field">
               <svg class="ic search-ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>
               <input type="text" class="search-input" id="search-input" placeholder="Поиск треков, артистов, жанров..." autocomplete="off">
+              <button class="search-clear" id="search-clear" onclick="clearSearchInput()" title="Очистить" style="display:none">✕</button>
             </div>
             <button class="search-btn" onclick="doSearch()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Найти</button>
           </div>
@@ -274,6 +275,8 @@
         <div class="tracks shelf" id="home-likes"></div>
         <div class="section-head"><div><h2 class="section-title">Продолжить</h2><div class="section-sub">Недавно игравшие</div></div></div>
         <div class="tracks shelf" id="home-continue"></div>
+        <div class="section-head"><div><h2 class="section-title">Твои плейлисты</h2><div class="section-sub">Быстрый доступ</div></div><button class="toolbar-btn" onclick="openNewPlaylistModal()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>Новый</button></div>
+        <div class="tracks shelf" id="home-playlists"></div>
         <div class="section-head"><div><h2 class="section-title">Популярное сейчас</h2><div class="section-sub">Мировые чарты</div></div></div>
         <div class="tracks shelf" id="home-popular"></div>
       </section>

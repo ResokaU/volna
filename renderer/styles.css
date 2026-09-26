@@ -853,6 +853,15 @@ animation:npAmb 22s ease-in-out infinite alternate}
 @keyframes npAmb{0%,100%{transform:scale(1.05)}50%{transform:scale(1.16)}}
 #view-nowplaying{position:relative;overflow:hidden}
 
+/* ============ v7.6.0: 🔍 редизайн поиска + полка плейлистов ============ */
+.search-field{position:relative}
+.search-input{padding-right:46px}
+.search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,.1);
+color:var(--dim);font-size:12px;cursor:none;transition:.15s;display:flex;
+align-items:center;justify-content:center;font-family:inherit}
+.search-clear:hover{background:rgba(255,61,110,.25);color:#fff}
+
 /* ============ v2.1: тултип времени на прогресс-баре ============ */
 
 .progress-wrap{position:relative}

@@ -557,7 +557,13 @@ function applyWallpaper() {
 function renderHome() {
   const h = new Date().getHours();
   const greet = h < 5 ? 'Ночной эфир' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
-  const g = $('#home-greeting'); if (g) g.textContent = greet;
+  const g = $('#home-greeting');
+  let pname = '';
+  if (window.Profiles) {
+    const p = Profiles.profiles.find(x => x.id === Profiles.active);
+    pname = p ? p.name : '';
+  }
+  if (g) g.textContent = greet + (pname ? ', ' + pname : '');
   const sub = $('#home-sub');
   if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
   // кинематографичный hero: размываем обложку трека в фон
@@ -595,6 +601,23 @@ function renderHome() {
       <span class="hero-chip" onclick="switchView('favorites')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${state.favorites.length} лайков</span>
       <span class="hero-chip" onclick="switchView('stats')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${timeLabel} слушал</span>
       <span class="hero-chip" onclick="switchView('playlists')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>${state.playlists.length} плейлистов</span>`;
+  }
+  // полка «Твои плейлисты»
+  const plEl = $('#home-playlists');
+  if (plEl) {
+    plEl.innerHTML = state.playlists.length
+      ? state.playlists.slice(0, 12).map(pl => `
+        <div class="track-card" onclick="openPlaylist(${pl.id})">
+          <div class="track-art">${mosaicHTML(pl)}</div>
+          <div class="track-info">
+            <div class="track-title">${escapeHtml(pl.name)}</div>
+            <div class="track-artist">${(pl.tracks || []).length} треков</div>
+          </div>
+        </div>`).join('')
+      : `<div class="like-cta" onclick="openNewPlaylistModal()">
+           <div class="like-cta-ic"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg></div>
+           <h3>Плейлистов нет</h3><p>Создай первый — или импортируй по ссылке</p>
+         </div>`;
   }
   const lt = state.lastTrack;
   const rEl = $('#home-resume');
@@ -767,6 +790,14 @@ function bindVcatChips() {
 function collapseNp() {
   switchView(state.npBack || 'home');
 }
+
+/* 🖱 колесо мыши над полкой — горизонтальный скролл */
+document.addEventListener('wheel', e => {
+  const sh = e.target.closest && e.target.closest('.shelf');
+  if (!sh) return;
+  e.preventDefault();
+  sh.scrollLeft += (e.deltaY || 0) + (e.deltaX || 0);
+}, { passive: false });
 
 /* 🎊 пасхалка: набери на клавиатуре «волна» */
 let _keyBuf = '';
