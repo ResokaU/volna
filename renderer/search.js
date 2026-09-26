@@ -120,7 +120,7 @@ function bindSearchUI() {
     if (chip) { input.value = chip.textContent; doSearch(chip.textContent); hideRecent(); }
   });
 
-  renderTrendTabs();
+  if ($('#trend-tabs')) renderTrendTabs(); // вкладки трендов удалены вместе с Trending-вью
 
   (async () => {
     if (ipc) { try { state.recentCache = (await ipc.invoke('recentSearches:get')) || []; return; } catch (_) {} }
@@ -488,12 +488,12 @@ function renderForyou() {
 async function loadTrending(force) {
   if (state.trending.length && !force && state.trendTabId === state.trendTab) { renderTrending(); return; }
   const grid = $('#trending-tracks');
-  grid.innerHTML = Array(8).fill('<div class="skeleton"></div>').join('');
+  if (grid) grid.innerHTML = Array(8).fill('<div class="skeleton"></div>').join('');
   try {
     await runTrending();
   } catch (_) {
     try { await ensureClientId(true); await runTrending(); return; } catch (_) {}
-    grid.innerHTML = emptyHTML('i-alert', 'Тренды недоступны', 'SoundCloud не ответил — попробуй обновить позже');
+    if (grid) grid.innerHTML = emptyHTML('i-alert', 'Тренды недоступны', 'SoundCloud не ответил — попробуй позже');
   }
 }
 
@@ -521,7 +521,8 @@ async function runTrending() {
 }
 
 function renderTrending() {
-  $('#trending-tracks').innerHTML = state.trending.map((t, i) => trackCardHTML(t, i, 'trending')).join('');
+  const grid = $('#trending-tracks');
+  if (grid) grid.innerHTML = state.trending.map((t, i) => trackCardHTML(t, i, 'trending')).join('');
   const hp = $('#home-popular');
   if (hp && $('#view-home')?.classList.contains('active')) {
     hp.innerHTML = state.trending.slice(0, 8).map((t, i) => trackCardHTML(t, i, 'trending')).join('');

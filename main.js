@@ -923,9 +923,12 @@ app.whenReady().then(async () => {
     const rel = decodeURIComponent(u.pathname.replace(/^\//, '')) || 'index.html';
     const abs = path.join(rendererDir, path.normalize(rel));
     if (!abs.startsWith(rendererDir)) return new Response(null, { status: 403 });
-    // no-cache: без заголовков Chromium кэширует ответы намертво и обновы не подхватывает
+    // no-cache: без заголовков Chromium кэширует ответы намертво и обновы не подхватывает.
+    // Заголовки оригинала сохраняем (Content-Type нужен для svg/png!)
     const resp = await net.fetch(pathToFileURL(abs).toString());
-    return new Response(resp.body, { status: resp.status, headers: { 'Cache-Control': 'no-cache' } });
+    const h = new Headers(resp.headers);
+    h.set('Cache-Control', 'no-cache');
+    return new Response(resp.body, { status: resp.status, headers: h });
   });
 
   createWindow();

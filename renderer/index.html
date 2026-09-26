@@ -125,7 +125,7 @@
     <div class="logo-block">
       <img class="logo-mark" src="logo.svg" alt="VOLNA">
       <div>
-        <div class="logo">VOLNA</div>
+        <div class="logo grad-anim">VOLNA</div>
         <div class="logo-sub">слушай волну</div>
       </div>
     </div>
@@ -138,7 +138,7 @@
       <div class="nav-label">Discover</div>
       <div class="nav-item active" data-view="discover"><svg class="ic" viewBox="0 0 24 24"><use href="#i-head"/></svg>Поиск</div>
       <div class="nav-item" data-view="foryou"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Для вас</div>
-      <div class="nav-item" data-view="trending"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Trending</div>
+      <div class="nav-item" data-view="favorites"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Лайки<span class="badge" id="fav-badge">0</span></div>
     </div>
 
     <div class="nav-group">
@@ -242,21 +242,9 @@
         <div class="tracks" id="foryou-tracks"></div>
       </section>
 
-      <section class="view" id="view-trending">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Trending</h2>
-            <div class="section-sub">Мировые чарты и русские тренды</div>
-          </div>
-          <button class="toolbar-btn" onclick="loadTrending(true)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Обновить</button>
-        </div>
-        <div class="trend-tabs" id="trend-tabs"></div>
-        <div class="tracks" id="trending-tracks"></div>
-      </section>
-
       <section class="view" id="view-home">
         <div class="home-hero">
-          <div class="home-greet" id="home-greeting">Привет</div>
+          <div class="home-greet grad-anim" id="home-greeting">Привет</div>
           <div class="home-sub" id="home-sub"></div>
           <div class="home-actions">
             <button class="toolbar-btn" onclick="feelingLucky()">🎲 Мне повезёт</button>
@@ -691,7 +679,7 @@
     <div id="rooms-idle">
       <div class="rooms-hero">
         <div class="rooms-wave">🌊</div>
-        <div class="rooms-title">Слушай вместе</div>
+        <div class="rooms-title grad-anim">Слушай вместе</div>
         <p class="rooms-hint">Один включает музыку — остальные ловят волну в реальном времени.
         Синхрон идёт через публичный MQTT-брокер: без серверов, без регистрации.</p>
       </div>

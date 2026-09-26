@@ -131,7 +131,6 @@ function switchView(name) {
   if (name === 'history') renderHistory();
   if (name === 'queue') renderQueue();
   if (name === 'stats') renderStats();
-  if (name === 'trending') loadTrending();
   if (name === 'foryou') loadForyou();
   document.body.classList.toggle('vibe-on', name === 'vibe'); // весь UI прячется, остаётся плеер-бар
   if (name === 'home') renderHome();
@@ -275,7 +274,6 @@ const PALETTE_CMDS = [
   { t: 'Поиск', k: 'F', run: () => switchView('discover') },
   { t: 'Главная', k: '1', run: () => switchView('home') },
   { t: 'Вайб (тикток-режим)', k: '9', run: () => switchView('vibe') },
-  { t: 'Тренды', k: '2', run: () => switchView('trending') },
   { t: 'Лайки', k: '3', run: () => switchView('favorites') },
   { t: 'Плейлисты', k: '4', run: () => switchView('playlists') },
   { t: 'История', k: '5', run: () => switchView('history') },
@@ -392,7 +390,7 @@ function onKeydown(e) {
   if (k === 'l') { likeCurrent(); return; }
   if (k === 'm') { toggleMiniPlayer(); return; }
 
-  const views = { '1': 'home', '2': 'trending', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings', '9': 'vibe' };
+  const views = { '1': 'home', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings', '9': 'vibe' };
   if (views[e.key]) switchView(views[e.key]);
 }
 

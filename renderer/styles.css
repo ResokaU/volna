@@ -151,8 +151,8 @@ letter-spacing:-.02em;line-height:1.1}
 .search-input{width:100%;padding:19px 24px 19px 54px;background:rgba(255,255,255,.04);
 backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:999px;color:var(--text);
 font-size:16px;outline:none;transition:.35s;font-family:inherit}
-.search-input:focus{border-color:var(--neon);background:rgba(177,74,255,.06);
-box-shadow:0 0 0 4px rgba(177,74,255,.15)}
+.search-input:focus{border-color:var(--neon);background:color-mix(in srgb,var(--accent) 6%,transparent);
+box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 15%,transparent)}
 .search-input::placeholder{color:var(--dim)}
 .search-ic{position:absolute;left:20px;width:20px;height:20px;color:var(--dim);
 pointer-events:none;transition:.3s}
@@ -230,7 +230,7 @@ transition:.4s cubic-bezier(.2,.8,.2,1);animation:cardIn .5s ease backwards}
 .track-card:nth-child(7){animation-delay:.21s}.track-card:nth-child(8){animation-delay:.24s}
 @keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .track-card::before{content:'';position:absolute;inset:0;
-background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(177,74,255,.18),transparent 60%);
+background:radial-gradient(circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%);
 opacity:0;transition:.4s;pointer-events:none;z-index:1}
 .track-card:hover::before{opacity:1}
 .track-card::after{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -698,6 +698,19 @@ font-family:inherit;font-size:12px;font-weight:700;transition:.15s}
 
 /* ============ v6.6: подсказки в настройках ============ */
 .setting-hint{font-size:11px;color:#8a8aa0;line-height:1.5;margin:6px 0 0}
+
+/* ============ v6.6.2: акценты везде + анимированный градиент ============ */
+/* блобы фона следуют теме */
+.b1{background:var(--accent)}
+.b2{background:var(--accent2)}
+.b3{background:var(--accent3)}
+.b4{background:var(--accent2)}
+/* анимированный градиентный текст */
+.grad-anim{background:var(--grad);background-size:220% 100%;
+-webkit-background-clip:text;background-clip:text;color:transparent;
+animation:gradShift 7s ease-in-out infinite}
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media (prefers-reduced-motion: reduce){.grad-anim{animation:none}}
 
 /* ============ v2.1: тултип времени на прогресс-баре ============ */
 
