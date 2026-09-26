@@ -1327,3 +1327,115 @@ box-shadow:0 8px 26px -8px color-mix(in srgb,var(--accent) 75%,transparent)}
 .vp-row .vp-main .ic{width:20px;height:20px}
 .vp-row .like-btn .ic{width:16px;height:16px}
 .vp-row .like-btn.liked .ic{filter:drop-shadow(0 0 6px var(--hot))}
+
+/* ============ v7.10.0: 🪪 VOLNA ID — профиль, люди, чаты ============ */
+/* (префикс vp- здесь не пересекается с Now Playing: те живут в .vp-bar/.vp-row) */
+.people-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.ptab{padding:8px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);
+color:#b9b9cc;font-size:12.5px;font-weight:800;cursor:pointer;transition:.15s;font-family:inherit}
+.ptab:hover{border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:var(--text)}
+.ptab.on{background:color-mix(in srgb,var(--accent) 18%,transparent);
+border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--text)}
+/* --- карточка профиля --- */
+.vp-card{position:relative;overflow:hidden;border-radius:26px;background:rgba(255,255,255,.025);
+border:1px solid rgba(255,255,255,.07);padding-bottom:22px}
+.vp-banner{height:150px;background:
+radial-gradient(120% 180% at 15% 0%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 60%),
+radial-gradient(120% 180% at 85% 10%,color-mix(in srgb,var(--accent2) 45%,transparent),transparent 55%),
+linear-gradient(120deg,rgba(255,255,255,.04),transparent 55%)}
+.vp-banner::after{content:'';position:absolute;inset:0;height:150px;
+background:repeating-linear-gradient(-8deg,transparent 0 26px,rgba(255,255,255,.022) 26px 27px)}
+.vp-head{display:flex;gap:18px;align-items:flex-end;padding:0 28px;margin-top:-46px;position:relative;flex-wrap:wrap}
+.vp-ava{width:104px;height:104px;border-radius:50%;background:var(--grad);flex-shrink:0;
+display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;
+border:4px solid rgba(10,10,18,.9);box-shadow:0 10px 34px -10px color-mix(in srgb,var(--accent) 75%,transparent);overflow:hidden}
+.vp-ava img{width:100%;height:100%;object-fit:cover}
+.vp-on{position:absolute;left:76px;top:76px;width:16px;height:16px;border-radius:50%;
+background:#3ddc84;border:3px solid rgba(10,10,18,.9);box-shadow:0 0 10px #3ddc84}
+.vp-id{flex:1;min-width:200px;padding-bottom:4px}
+.vp-name{font-size:26px;font-weight:900;color:var(--text);margin:0;
+background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.vp-handle{font-size:13px;font-weight:800;color:var(--acid);display:flex;align-items:center;gap:7px;margin-top:2px}
+.vp-online-lbl{color:#9a9ab0;font-weight:700;font-size:11.5px}
+.vp-bio{font-size:13px;color:#c9c9da;margin-top:7px;line-height:1.5;max-width:520px}
+.vp-status{display:inline-flex;align-items:center;gap:6px;margin-top:7px;font-size:12px;font-weight:800;color:var(--text);
+padding:5px 12px;border-radius:99px;background:color-mix(in srgb,var(--accent) 14%,transparent);
+border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.vp-actions{display:flex;gap:8px;padding-bottom:8px}
+.vp-edit{display:flex;flex-direction:column;gap:8px;margin:14px 28px 0;padding:14px;border-radius:16px;
+background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+.vp-edit input,.vp-edit textarea{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;
+padding:9px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;resize:vertical}
+.vp-edit input:focus,.vp-edit textarea:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.vp-edit .md-btn{align-self:flex-start}
+.vp-stats{display:flex;gap:8px;flex-wrap:wrap;padding:16px 28px 0}
+.vp-friends{display:flex;gap:14px;flex-wrap:wrap;padding:4px 28px 0}
+.soc-friend{display:flex;flex-direction:column;align-items:center;gap:6px;width:76px;cursor:pointer;position:relative}
+.soc-friend:hover .soc-fname{color:var(--text)}
+.soc-fname{font-size:11.5px;font-weight:800;color:#b9b9cc;max-width:76px;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.soc-friend .soc-dot{position:absolute;top:34px;right:8px}
+.vp-empty{padding:14px 16px;border-radius:14px;border:1px dashed rgba(255,255,255,.12);
+color:#8a8aa0;font-size:12.5px;text-align:center}
+/* --- заведение ID --- */
+.vp-claim{max-width:560px;margin:8vh auto 0;text-align:center;padding:34px 30px;border-radius:26px;
+background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)}
+.vp-claim-ic{width:74px;height:74px;margin:0 auto 16px;border-radius:50%;background:var(--grad);
+display:flex;align-items:center;justify-content:center;color:#fff;
+box-shadow:0 10px 34px -8px color-mix(in srgb,var(--accent) 75%,transparent)}
+.vp-claim-ic .ic{width:34px;height:34px}
+.vp-claim h2{font-size:24px;font-weight:900;color:var(--text);margin:0 0 10px}
+.vp-claim p{color:#9a9ab0;font-size:13px;line-height:1.6}
+.vp-claim-row{display:flex;gap:10px;justify-content:center;margin:18px 0 12px;flex-wrap:wrap}
+.vp-claim-row input{width:220px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;font-weight:700;outline:none}
+.vp-claim-row input:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.vp-claim-hint{font-size:11.5px !important;color:#77778c !important}
+/* --- карточки пользователей --- */
+.soc-user{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;
+background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);margin-bottom:8px;transition:.15s}
+.soc-user:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);transform:translateY(-1px)}
+.soc-ava{width:44px;height:44px;border-radius:50%;background:var(--grad);flex-shrink:0;position:relative;
+display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:17px;overflow:hidden}
+.soc-ava img{width:100%;height:100%;object-fit:cover}
+.soc-ava.sm{width:34px;height:34px;font-size:14px}
+.soc-ava.md{width:46px;height:46px;font-size:18px}
+.soc-ava.online::after{content:'';position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;
+background:#3ddc84;border:2.5px solid rgba(10,10,18,.9);box-shadow:0 0 8px #3ddc84}
+.soc-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#55555f;flex-shrink:0}
+.soc-dot.on{background:#3ddc84;box-shadow:0 0 7px #3ddc84}
+.soc-uinfo{flex:1;min-width:0;cursor:pointer}
+.soc-uname{font-size:13.5px;font-weight:900;color:var(--text);display:flex;align-items:center;gap:7px}
+.soc-uh{font-size:11px;font-weight:800;color:var(--acid);margin-top:1px}
+.soc-ubio{font-size:11.5px;color:#9a9ab0;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.soc-uacts{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.soc-pending{font-size:10.5px;color:#9a9ab0;font-weight:700}
+.soc-conv-ts{margin-left:auto;font-size:10px;color:#77778c;font-weight:700;font-variant-numeric:tabular-nums}
+.soc-unread{min-width:22px;height:22px;padding:0 7px;border-radius:99px;background:var(--grad);color:#fff;
+font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.soc-conv{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;
+background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);margin-bottom:8px;cursor:pointer;transition:.15s}
+.soc-conv:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);transform:translateY(-1px)}
+.vp-find{display:flex;gap:10px;margin-bottom:14px}
+.vp-find input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+padding:11px 14px;color:var(--text);font-family:inherit;font-size:13px;outline:none}
+.vp-find input:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+/* --- чат --- */
+.chat-head{display:flex;align-items:center;gap:12px;padding:10px 4px 14px}
+.chat-msgs{display:flex;flex-direction:column;gap:8px;max-height:52vh;min-height:200px;overflow-y:auto;
+padding:16px;border-radius:20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)}
+.msg{max-width:72%;display:flex;flex-direction:column;gap:3px;animation:msgIn .18s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.msg.them{align-self:flex-start;align-items:flex-start}
+.msg-txt{padding:9px 14px;border-radius:16px;font-size:13px;line-height:1.45;word-break:break-word}
+.msg.me .msg-txt{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+border-bottom-right-radius:5px;box-shadow:0 6px 18px -8px color-mix(in srgb,var(--accent) 70%,transparent)}
+.msg.them .msg-txt{background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.09);
+border-bottom-left-radius:5px}
+.msg-ts{font-size:9.5px;color:#77778c;font-weight:700;padding:0 6px;font-variant-numeric:tabular-nums}
+.chat-input{display:flex;gap:10px;margin-top:12px}
+.chat-input input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:99px;
+padding:12px 18px;color:var(--text);font-family:inherit;font-size:13.5px;outline:none}
+.chat-input input:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.chat-input .md-btn{border-radius:99px;padding:11px 16px}

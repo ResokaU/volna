@@ -106,6 +106,9 @@
   <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59c-.02.14-.03.28-.04.42L2 17.5A2.5 2.5 0 0 0 4.5 20c.7 0 1.37-.29 1.85-.82l1.9-2.18h5.5l1.9 2.18c.48.53 1.15.82 1.85.82A2.5 2.5 0 0 0 20 17.5l-.66-8.49c-.01-.14-.02-.28-.04-.42A4 4 0 0 0 15.32 5z"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 7 7 0 0 0-13.55 1.9A4 4 0 0 0 6 19.9h11.5z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 2.9-5.5 6.5-5.5s6.5 2 6.5 5.5"/><circle cx="17" cy="9" r="2.8"/><path d="M17.5 14.6c2.6.4 4 2.2 4 4.9"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2.2-2.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
 </svg>
 
 <div class="cursor-ring"></div>
@@ -139,6 +142,12 @@
       <div class="nav-label">Discover</div>
       <div class="nav-item active" data-view="discover"><svg class="ic" viewBox="0 0 24 24"><use href="#i-head"/></svg>Поиск</div>
       <div class="nav-item" data-view="foryou"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>Для вас</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Волна ID</div>
+      <div class="nav-item" data-view="vprofile"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Мой профиль</div>
+      <div class="nav-item" data-view="people"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Люди<span class="badge" id="social-badge" style="display:none">0</span></div>
     </div>
 
     <div class="nav-group">
@@ -672,6 +681,26 @@
         </div>
       </section>
 
+      <section class="view" id="view-vprofile">
+        <div id="vprofile-wrap"></div>
+      </section>
+
+      <section class="view" id="view-people">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Люди</h2>
+            <div class="section-sub">VOLNA ID — друзья, чаты и подписки</div>
+          </div>
+          <div class="people-tabs" id="people-tabs">
+            <button class="ptab on" data-p="friends" onclick="Social.setTab('friends')">🤝 Друзья</button>
+            <button class="ptab" data-p="chats" onclick="Social.setTab('chats')">💬 Чаты</button>
+            <button class="ptab" data-p="follow" onclick="Social.setTab('follow')">⭐ Подписки</button>
+            <button class="ptab" data-p="find" onclick="Social.setTab('find')">🔍 Найти</button>
+          </div>
+        </div>
+        <div id="people-body"></div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -882,6 +911,7 @@
 <script src="rooms.js"></script>
 <script src="profiles.js"></script>
 <script src="achievements.js"></script>
-<script>init();</script>
+<script src="social.js"></script>
+<script>init(); setTimeout(() => { if (window.Social) Social.init(); }, 2500);</script>
 </body>
 </html>

@@ -136,6 +136,8 @@ function switchView(name) {
   document.body.classList.toggle('np-full', name === 'nowplaying'); // Now Playing во всё окно
   if (window.Ach && (name === 'vibe' || name === 'lyrics' || name === 'nowplaying'))
     Ach.event(name === 'vibe' ? 'vibe' : name === 'lyrics' ? 'karaoke' : 'np');
+  if (name === 'vprofile' && window.Social) Social.renderProfile($('#vprofile-wrap'));
+  if (name === 'people' && window.Social) Social.renderPeople();
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();

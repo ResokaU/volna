@@ -19,6 +19,7 @@ window.Profiles = (function () {
       stats: state.stats, lastTrack: state.lastTrack,
       ach: state.ach || {},
       achx: state.achx || { ev: {}, streak: { last: '', n: 0 }, night: 0 },
+      social: state.social || null,
       listensA: state.listensA || {}, listensT: state.listensT || {}
     };
   }
@@ -31,10 +32,17 @@ window.Profiles = (function () {
     state.lastTrack = d.lastTrack || null;
     state.ach = d.ach || {};
     state.achx = d.achx || { ev: {}, streak: { last: '', n: 0 }, night: 0 };
+    // VOLNA ID: соц-данные профиля; у старых профилей — локальный кэш
+    state.social = d.social || lsGet('ga:social', null) || null;
     state.listensA = d.listensA || {};
     state.listensT = d.listensT || {};
     state.serverLikes = []; state.favSource = 'local';
     state.listenedCounted = false;
+  }
+
+  /* сохранить текущий профиль на диск (данные, ачивки, соц-слой) */
+  async function persist() {
+    try { await ipc.invoke('profiles:stash', stash()); } catch (_) {}
   }
 
   async function switchTo(id) {
@@ -236,7 +244,7 @@ window.Profiles = (function () {
   }
 
   return {
-    init, refresh, switchTo, create, rename, renameActive, remove,
+    init, refresh, switchTo, create, rename, renameActive, remove, persist,
     pickAvatar, pickAvatarActive, avatarChosen, renderView,
     ghConnect, cloudPush, cloudPull, renderCloud,
     get active() { return cache.active; },

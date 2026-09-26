@@ -231,6 +231,52 @@ ipcMain.handle('profiles:restore', (_e, blob) => {
   return t.data;
 });
 
+// ---------- VOLNA ID: generic gist-файлы (директория и инбоксы соцслоя) ----------
+// content === null → удалить файл из gist'а; без gistId → создать новый gist
+ipcMain.handle('gh:filePut', async (_e, { token, gistId, file, content, description }) => {
+  try {
+    const name = String(file || '').replace(/[^\w.\-]/g, '_');
+    if (!name) return { ok: false, error: 'пустое имя файла' };
+    const files = { [name]: { content: content === null ? null : String(content) } };
+    if (gistId) {
+      const r = await net.fetch(GH + '/gists/' + gistId, {
+        method: 'PATCH', headers: ghHeaders(String(token)), body: JSON.stringify({ files }), signal: AbortSignal.timeout(25000)
+      });
+      if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+      return { ok: true, gistId };
+    }
+    const r = await net.fetch(GH + '/gists', {
+      method: 'POST', headers: ghHeaders(String(token)),
+      body: JSON.stringify({ description: description || 'VOLNA ID — не редактируй вручную', files, public: false }),
+      signal: AbortSignal.timeout(25000)
+    });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    return { ok: true, gistId: j.id };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.handle('gh:fileGet', async (_e, { token, gistId, file }) => {
+  try {
+    if (!gistId) return { ok: false, error: 'нет gistId' };
+    const r = await net.fetch(GH + '/gists/' + gistId, { headers: ghHeaders(String(token)), signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    const f = j.files && j.files[String(file)];
+    if (!f) return { ok: false, error: 'файл не найден', files: Object.keys(j.files || {}) };
+    if (f.truncated) return { ok: false, error: 'файл слишком большой' };
+    return { ok: true, content: f.content };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+// список своих gist'ов: найти директорию VOLNA ID по описанию
+ipcMain.handle('gh:list', async (_e, { token }) => {
+  try {
+    const r = await net.fetch(GH + '/gists?per_page=100', { headers: ghHeaders(String(token)), signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    return { ok: true, gists: (Array.isArray(j) ? j : []).map(g => ({ id: g.id, description: g.description || '', files: Object.keys(g.files || {}) })) };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
 
 // ---------- Антиблок: флаги сети (до app ready) ----------
 // DoH — DNS-запросы через Cloudflare, обходит подмену/блокировку DNS.
