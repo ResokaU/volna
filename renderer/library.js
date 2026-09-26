@@ -1174,7 +1174,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '7.1.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '7.2.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

@@ -96,6 +96,82 @@ const store = new Store({
   }
 });
 
+// ---------- 👤 Профили: у каждого свои лайки/история/плейлисты/статистика ----------
+// Активный профиль = данные лежат в топ-уровне стора (favorites/history/...),
+// переключение атомарно застешивает текущие и разворачивает данные целевого профиля.
+if (!store.get('profiles')) {
+  const profiles = [{
+    id: 'p' + Date.now().toString(36), name: 'Основной', avatar: null,
+    data: {
+      favorites: store.get('favorites') || [],
+      history: store.get('history') || [],
+      playlists: store.get('playlists') || [],
+      stats: store.get('stats') || { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() },
+      lastTrack: store.get('lastTrack') || null
+    }
+  }];
+  store.set('profiles', profiles);
+  store.set('activeProfile', profiles[0].id);
+}
+ipcMain.handle('profiles:get', () => ({ profiles: store.get('profiles') || [], active: store.get('activeProfile') }));
+ipcMain.handle('profiles:stash', (_e, data) => {
+  const arr = store.get('profiles') || [];
+  const p = arr.find(x => x.id === store.get('activeProfile'));
+  if (p) p.data = data;
+  store.set('profiles', arr);
+  return true;
+});
+ipcMain.handle('profiles:switch', (_e, id) => {
+  const arr = store.get('profiles') || [];
+  const oldId = store.get('activeProfile');
+  const old = arr.find(x => x.id === oldId);
+  if (old) old.data = {
+    favorites: store.get('favorites') || [],
+    history: store.get('history') || [],
+    playlists: store.get('playlists') || [],
+    stats: store.get('stats') || {},
+    lastTrack: store.get('lastTrack') || null
+  };
+  const target = arr.find(x => x.id === id);
+  if (!target) return null;
+  store.set('activeProfile', id);
+  store.set('favorites', target.data.favorites || []);
+  store.set('history', target.data.history || []);
+  store.set('playlists', target.data.playlists || []);
+  store.set('stats', target.data.stats || {});
+  store.set('lastTrack', target.data.lastTrack || null);
+  return target.data;
+});
+ipcMain.handle('profiles:create', (_e, name) => {
+  const arr = store.get('profiles') || [];
+  const p = { id: 'p' + Date.now().toString(36), name: String(name).slice(0, 24), avatar: null,
+    data: { favorites: [], history: [], playlists: [], stats: { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() }, lastTrack: null } };
+  arr.push(p);
+  store.set('profiles', arr);
+  return p.id;
+});
+ipcMain.handle('profiles:rename', (_e, { id, name }) => {
+  const arr = store.get('profiles') || [];
+  const p = arr.find(x => x.id === id);
+  if (p) p.name = String(name).slice(0, 24);
+  store.set('profiles', arr);
+  return true;
+});
+ipcMain.handle('profiles:delete', (_e, id) => {
+  const arr = store.get('profiles') || [];
+  if (arr.length <= 1) return false;
+  store.set('profiles', arr.filter(x => x.id !== id));
+  return true;
+});
+ipcMain.handle('profiles:avatar', (_e, { id, avatar }) => {
+  const arr = store.get('profiles') || [];
+  const p = arr.find(x => x.id === id);
+  if (p) p.avatar = avatar;
+  store.set('profiles', arr);
+  return true;
+});
+
+
 // ---------- Антиблок: флаги сети (до app ready) ----------
 // DoH — DNS-запросы через Cloudflare, обходит подмену/блокировку DNS.
 // все флаги enable-features — одним значением: повторный appendSwitch затёр бы предыдущий

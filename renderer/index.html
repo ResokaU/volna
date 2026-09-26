@@ -162,6 +162,14 @@
 
     <div class="account-card">
       <div class="ac-label">Аккаунт</div>
+      <div class="account-profile" id="account-profile" onclick="openProfilesModal()" title="Профили VOLNA">
+        <div class="profile-ava" id="ap-avatar">V</div>
+        <div class="ap-info">
+          <div class="ap-name" id="ap-name">Профиль</div>
+          <div class="ap-sub">Профили и данные</div>
+        </div>
+        <svg class="ic" viewBox="0 0 24 24" style="margin-left:auto;color:var(--dim)"><use href="#i-sort"/></svg>
+      </div>
       <div id="sc-auth-status"></div>
     </div>
 
@@ -691,6 +699,20 @@
   <button class="wr-close" onclick="closeWrapped()">✕</button>
 </div>
 
+<div class="modal" id="profiles_modal">
+  <div class="modal-content rooms-modal">
+    <button class="modal-close" onclick="closeModal('profiles_modal')">×</button>
+    <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Профили</h3>
+    <div id="profiles-list"></div>
+    <div class="profile-create">
+      <input type="text" id="profile-new-name" maxlength="24" placeholder="Имя нового профиля">
+      <button class="md-btn" onclick="Profiles.create()">+ Создать</button>
+    </div>
+    <p class="setting-hint">У каждого профиля свои лайки, история, плейлисты и статистика. Данные хранятся локально на этом компьютере. 🖼 меняет аватар — картинка обрезается в круг и сжимается.</p>
+  </div>
+</div>
+<input type="file" id="avatar-file" accept="image/*" hidden>
+
 <div class="modal" id="rooms_modal">
   <div class="modal-content rooms-modal">
     <button class="modal-close" onclick="closeModal('rooms_modal')">×</button>
@@ -821,6 +843,7 @@
 <script src="vibe-md.js"></script>
 <script src="vendor/mqtt.min.js"></script>
 <script src="rooms.js"></script>
+<script src="profiles.js"></script>
 <script>init();</script>
 </body>
 </html>

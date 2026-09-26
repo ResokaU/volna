@@ -719,6 +719,31 @@ background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#f
 .wr-arrow:hover{opacity:1}
 .wr-arrow.left{left:28px}.wr-arrow.right{right:28px}
 
+/* ============ v7.1: 👤 Профили ============ */
+.account-profile{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;
+background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);cursor:none;transition:.15s;margin-bottom:10px}
+.account-profile:hover{background:rgba(255,255,255,.1);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.ap-info{flex:1;min-width:0}
+.ap-name{font-weight:800;color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-sub{font-size:10px;color:#9a9ab0}
+.profile-ava{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+font-weight:900;color:#fff;font-size:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+background-size:cover;background-position:center;overflow:hidden}
+.profile-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;
+background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);margin-bottom:8px;transition:.15s}
+.profile-row:hover{background:rgba(255,255,255,.07)}
+.profile-row.active{border-color:color-mix(in srgb,var(--acid) 45%,transparent)}
+.profile-row .profile-ava{width:34px;height:34px;font-size:13px}
+.profile-name{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-active{font-size:10px;color:var(--acid);font-weight:700;white-space:nowrap}
+.profile-acts{margin-left:auto;display:flex;gap:5px;flex-shrink:0}
+.profile-rename{background:rgba(255,255,255,.08);border:1px solid var(--acid);border-radius:8px;color:#fff;
+padding:3px 8px;font-family:inherit;font-size:12px;outline:none;width:140px}
+.profile-create{display:flex;gap:8px;margin-top:12px}
+.profile-create input{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+border-radius:10px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:12px;outline:none}
+.profile-create input:focus{border-color:var(--acid)}
+
 /* ============ v6.6: подсказки в настройках ============ */
 .setting-hint{font-size:11px;color:#8a8aa0;line-height:1.5;margin:6px 0 0}
 
