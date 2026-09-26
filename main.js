@@ -125,7 +125,7 @@ ipcMain.handle('profiles:switch', (_e, id) => {
   const arr = store.get('profiles') || [];
   const oldId = store.get('activeProfile');
   const old = arr.find(x => x.id === oldId);
-  if (old) old.data = {
+  if (old) old.data = { ...(old.data || {}),
     favorites: store.get('favorites') || [],
     history: store.get('history') || [],
     playlists: store.get('playlists') || [],

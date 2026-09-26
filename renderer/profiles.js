@@ -18,7 +18,7 @@ window.Profiles = (function () {
   function stash() {
     return {
       favorites: state.favorites, history: state.history, playlists: state.playlists,
-      stats: state.stats, lastTrack: state.lastTrack
+      stats: state.stats, lastTrack: state.lastTrack, ach: state.ach || {}, listensA: state.listensA || {}, listensT: state.listensT || {}
     };
   }
 
@@ -28,6 +28,7 @@ window.Profiles = (function () {
     state.playlists = d.playlists || [];
     state.stats = d.stats || { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() };
     state.lastTrack = d.lastTrack || null;
+    state.ach = d.ach || {}; state.listensA = d.listensA || {}; state.listensT = d.listensT || {};
     state.serverLikes = []; state.favSource = 'local';
     state.listenedCounted = false;
   }
@@ -128,7 +129,7 @@ window.Profiles = (function () {
     nameEl.textContent = p ? p.name : 'Профиль';
     if (p && p.avatar) { avEl.style.backgroundImage = 'url(' + p.avatar + ')'; avEl.textContent = ''; }
     else { avEl.style.backgroundImage = ''; avEl.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
-    if (subEl) subEl.textContent = 'Профили и данные';
+    if (subEl) subEl.textContent = 'VoКаунты · ачивки и данные';
   }
 
   function renderList() {

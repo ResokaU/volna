@@ -326,6 +326,7 @@ async function toggleLike(track) {
   if (state.currentTrack?.id === track.id) updateTitle(); // обновить ❤️ в Discord RPC
   if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
   if ($('#view-home')?.classList.contains('active')) renderHome(); // полка лайков на главной
+  if (window.Ach) Ach.check('like');
   mirrorLikeToServer(track, !isFav); // двойной лайк: локально + на SoundCloud
 }
 
@@ -609,6 +610,16 @@ async function addHistory(track) {
   state.history.unshift({ ...track, playedAt: new Date().toISOString() });
   state.history = state.history.slice(0, 100);
   rememberTrack(track);
+  // счётчики для ачивок: артист + конкретный трек
+  state.listensA = state.listensA || {};
+  state.listensT = state.listensT || {};
+  const an = String(track.user && track.user.username || '').toLowerCase();
+  if (an) state.listensA[an] = (state.listensA[an] || 0) + 1;
+  const tt = String(track.title || '').toLowerCase();
+  if (tt) state.listensT[tt] = (state.listensT[tt] || 0) + 1;
+  lsSet('listensA', state.listensA);
+  lsSet('listensT', state.listensT);
+  if (window.Ach) Ach.check('listen');
   await persistHistory();
 }
 
@@ -645,6 +656,7 @@ async function createPlaylist() {
   updateBadges();
   if ($('#view-playlists')?.classList.contains('active')) renderPlaylists();
   toast('📁 Плейлист создан', 'success');
+  if (window.Ach) Ach.check('playlist');
 }
 
 /* мозаика из обложек первых 4 треков плейлиста */
@@ -1225,7 +1237,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '7.6.1', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '7.7.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

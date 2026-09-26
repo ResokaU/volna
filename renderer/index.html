@@ -172,6 +172,7 @@
       </div>
       <div class="account-menu" id="account-menu">
         <div class="account-menu-item" onclick="openProfilesModal(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Профили и облако</div>
+        <div class="account-menu-item" onclick="openVoAch(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoАчивки</div>
         <div class="account-menu-item" onclick="switchView('stats'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chart"/></svg>Статистика</div>
         <div class="account-menu-item" onclick="switchView('settings'); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sliders"/></svg>Настройки</div>
         <div class="account-menu-item" onclick="toggleMiniPlayer(); closeAccountMenu()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Мини-плеер</div>
@@ -460,6 +461,7 @@
             <div class="section-sub">Твоя статистика</div>
           </div>
           <div style="display:flex;gap:8px">
+            <button class="toolbar-btn" onclick="openVoAch()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoАчивки</button>
             <button class="toolbar-btn" onclick="openWrapped()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна года</button>
             <button class="toolbar-btn danger" onclick="resetStats()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Сбросить</button>
           </div>
@@ -715,7 +717,7 @@
 <div class="modal" id="profiles_modal">
   <div class="modal-content rooms-modal">
     <button class="modal-close" onclick="closeModal('profiles_modal')">×</button>
-    <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Профили</h3>
+    <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>VoКаунты</h3>
     <div id="profiles-list"></div>
     <div class="profile-create">
       <input type="text" id="profile-new-name" maxlength="24" placeholder="Имя нового профиля">
@@ -738,6 +740,14 @@
   </div>
 </div>
 <input type="file" id="avatar-file" accept="image/*" hidden>
+
+<div class="modal" id="ach_modal">
+  <div class="modal-content" style="max-width:860px">
+    <button class="modal-close" onclick="closeModal('ach_modal')">×</button>
+    <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-flame"/></svg>VoКаунты · Ачивки</h3>
+    <div id="ach-body" class="ach-body"></div>
+  </div>
+</div>
 
 <div class="modal" id="rooms_modal">
   <div class="modal-content rooms-modal">
@@ -870,6 +880,7 @@
 <script src="vendor/mqtt.min.js"></script>
 <script src="rooms.js"></script>
 <script src="profiles.js"></script>
+<script src="achievements.js"></script>
 <script>init();</script>
 </body>
 </html>

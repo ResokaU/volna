@@ -853,6 +853,30 @@ animation:npAmb 22s ease-in-out infinite alternate}
 @keyframes npAmb{0%,100%{transform:scale(1.05)}50%{transform:scale(1.16)}}
 #view-nowplaying{position:relative;overflow:hidden}
 
+/* ============ v7.7.0: 🏆 VoКаунты — ачивки ============ */
+.ach-body{max-height:62vh;overflow-y:auto;padding-right:6px}
+.ach-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.ach-count{font-size:15px;font-weight:900;color:var(--text)}
+.ach-headbar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.ach-headbar>div{height:100%;background:var(--grad);border-radius:99px;transition:width .4s}
+.ach-sec{font-size:13px;font-weight:800;color:var(--dim);margin:18px 0 10px;
+text-transform:uppercase;letter-spacing:.06em}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ach-card{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);
+border:1px solid rgba(255,255,255,.07);transition:.2s}
+.ach-card.unlocked{border-color:color-mix(in srgb,var(--acid) 40%,transparent);
+background:color-mix(in srgb,var(--acid) 7%,rgba(255,255,255,.03));
+box-shadow:0 0 24px -10px color-mix(in srgb,var(--acid) 45%,transparent)}
+.ach-emoji{font-size:26px;margin-bottom:6px}
+.ach-name{font-weight:800;color:var(--text);font-size:13px}
+.ach-tier{color:var(--acid);font-size:10px;font-weight:900;vertical-align:2px}
+.ach-desc{font-size:11px;color:#9a9ab0;margin-top:3px;line-height:1.4}
+.ach-done{font-size:10.5px;color:var(--acid);font-weight:700;margin-top:8px}
+.ach-progress{display:flex;align-items:center;gap:8px;margin-top:8px}
+.ach-bar{flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}
+.ach-bar>div{height:100%;background:var(--grad);border-radius:99px}
+.ach-progress span{font-size:10px;color:#9a9ab0;font-variant-numeric:tabular-nums}
+
 /* ============ v7.6.1: 🖱 фикс скролла полок + счётчик прослушиваний ============ */
 .np-listened{font-size:11px;color:#9a9ab0;margin-top:6px;display:inline-flex;align-items:center;gap:6px;
 padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
