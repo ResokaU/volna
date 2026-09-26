@@ -261,18 +261,21 @@
           <div class="home-hero-bg" id="home-hero-bg"></div>
           <div class="home-greet grad-anim" id="home-greeting">Привет</div>
           <div class="home-sub" id="home-sub"></div>
+          <div class="hero-stats" id="hero-stats"></div>
           <div class="home-actions">
+            <button class="toolbar-btn primary" onclick="likesRadio()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна по лайкам</button>
             <button class="toolbar-btn" onclick="feelingLucky()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-dice"/></svg>Мне повезёт</button>
-            <button class="toolbar-btn" onclick="enableRadio()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-radio"/></svg>Radio по треку</button>
             <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Играть лайки</button>
             <button class="toolbar-btn" onclick="switchView('discover')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Поиск</button>
           </div>
           <div id="home-resume"></div>
         </div>
+        <div class="section-head"><div><h2 class="section-title">Из твоих лайков</h2><div class="section-sub">Свежее из ❤</div></div><button class="toolbar-btn" onclick="switchView('favorites')">Открыть лайки</button></div>
+        <div class="tracks shelf" id="home-likes"></div>
         <div class="section-head"><div><h2 class="section-title">Продолжить</h2><div class="section-sub">Недавно игравшие</div></div></div>
-        <div class="tracks" id="home-continue"></div>
+        <div class="tracks shelf" id="home-continue"></div>
         <div class="section-head"><div><h2 class="section-title">Популярное сейчас</h2><div class="section-sub">Мировые чарты</div></div></div>
-        <div class="tracks" id="home-popular"></div>
+        <div class="tracks shelf" id="home-popular"></div>
       </section>
 
       <section class="view" id="view-vibe">

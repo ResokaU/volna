@@ -574,6 +574,28 @@ function renderHome() {
   if (cEl) cEl.innerHTML = cont.length
     ? cont.map((t, i) => trackCardHTML(t, i, 'home')).join('')
     : emptyHTML('i-spark', 'Начни с чего-нибудь', 'Включи трек — и он появится здесь');
+  // полка «Из твоих лайков» — свежие ❤
+  const lk = $('#home-likes');
+  if (lk) {
+    const favs = state.favorites.slice(0, 12);
+    lk.innerHTML = favs.length
+      ? favs.map((t, i) => trackCardHTML(t, i, 'likes')).join('')
+      : `<div class="like-cta" onclick="switchView('discover')">
+           <div class="like-cta-ic"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg></div>
+           <h3>Лайков пока нет</h3><p>Слушай и жми ❤ — главная соберётся из них</p>
+         </div>`;
+  }
+  // чипы статистики в hero
+  const hs = $('#hero-stats');
+  if (hs) {
+    const totalH = Math.floor((state.stats.totalTime || 0) / 3600000);
+    const totalM = Math.round(((state.stats.totalTime || 0) % 3600000) / 60000);
+    const timeLabel = totalH ? `${totalH} ч` : `${Math.round((state.stats.totalTime || 0) / 60000)} м`;
+    hs.innerHTML = `
+      <span class="hero-chip" onclick="switchView('favorites')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${state.favorites.length} лайков</span>
+      <span class="hero-chip" onclick="switchView('stats')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${timeLabel} слушал</span>
+      <span class="hero-chip" onclick="switchView('playlists')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>${state.playlists.length} плейлистов</span>`;
+  }
   const lt = state.lastTrack;
   const rEl = $('#home-resume');
   if (rEl) {

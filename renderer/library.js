@@ -325,7 +325,42 @@ async function toggleLike(track) {
   updateLikeButtons();
   if (state.currentTrack?.id === track.id) updateTitle(); // обновить ❤️ в Discord RPC
   if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
+  if ($('#view-home')?.classList.contains('active')) renderHome(); // полка лайков на главной
   mirrorLikeToServer(track, !isFav); // двойной лайк: локально + на SoundCloud
+}
+
+/* 🌊 Волна по лайкам: собираем очередь из треков любимых артистов */
+async function likesRadio() {
+  if (!state.favorites.length) { toast('Сначала лайкни треки — волна соберётся из них', 'error'); return; }
+  toast('🌊 Собираю волну по твоим лайкам…');
+  try {
+    const cid = await ensureClientId();
+    const artists = [...new Set(state.favorites.map(t => t.user?.username).filter(Boolean))].slice(0, 6);
+    const results = await Promise.all(artists.map(a =>
+      scJson('https://api-v2.soundcloud.com/search/tracks?q=' + encodeURIComponent(a) + '&client_id=' + cid + '&limit=12')
+        .catch(() => null)
+    ));
+    const out = new Map();
+    for (const data of results) {
+      (Array.isArray(data && data.collection) ? data.collection : []).forEach(t => {
+        const n = normalizeTrack(t);
+        if (n && n.id && !state.dislikes.includes(n.user?.username)) out.set(n.id, n);
+      });
+    }
+    let tracks = [...out.values()];
+    if (tracks.length < 10) tracks = tracks.concat(state.favorites.filter(f => !tracks.some(t => t.id === f.id)));
+    tracks = tracks.sort(() => Math.random() - 0.5).slice(0, 40);
+    if (!tracks.length) { toast('Не нашлось треков для волны', 'error'); return; }
+    tracks.forEach(rememberTrack);
+    state.queue = tracks;
+    persistQueueSoon();
+    updateBadges();
+    if (typeof renderQueue === 'function') renderQueue();
+    playTrack(tracks[0], 'queue');
+    toast(`📻 Волна по лайкам: ${tracks.length} треков от ${artists.length} артистов`, 'success');
+  } catch (e) {
+    toast('Волна не собралась: ' + (e && e.message || 'сеть'), 'error');
+  }
 }
 
 function toggleLikeById(id) { toggleLike(state.trackIndex.get(id)); }
@@ -1190,7 +1225,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '7.4.3', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '7.5.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>
