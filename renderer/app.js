@@ -664,6 +664,7 @@ function renderNp() {
     <div class="np-info">
       <div class="np-title">${escapeHtml(t.title)}</div>
       <div class="np-artist">${escapeHtml(displayArtist(t))}</div>
+      ${(state.history.filter(h => h.id === t.id).length) ? `<div class="np-listened"><svg class="ic" viewBox="0 0 24 24"><use href="#i-head"/></svg>Ты слушал это ${state.history.filter(h => h.id === t.id).length}×</div>` : ''}
       <div class="np-meta" id="np-meta">${npMetaHTML(t)}</div>
       <div class="np-controls">
         <button class="pbtn ${state.shuffle ? 'active' : ''}" onclick="toggleShuffle();renderNp()" title="Shuffle"><svg class="ic" viewBox="0 0 24 24"><use href="#i-shuffle"/></svg></button>
@@ -791,12 +792,18 @@ function collapseNp() {
   switchView(state.npBack || 'home');
 }
 
-/* 🖱 колесо мыши над полкой — горизонтальный скролл */
+/* 🖱 колесо мыши над полкой — горизонтальный скролл, но страница не «застревает»:
+   когда карусель прокручена до конца, скролл уходит обратно на страницу */
 document.addEventListener('wheel', e => {
   const sh = e.target.closest && e.target.closest('.shelf');
   if (!sh) return;
+  const d = (e.deltaY || 0) + (e.deltaX || 0);
+  if (!d) return;
+  const atStart = sh.scrollLeft <= 0;
+  const atEnd = sh.scrollLeft + sh.clientWidth >= sh.scrollWidth - 1;
+  if ((d < 0 && atStart) || (d > 0 && atEnd)) return; // край полки — отдаём скролл странице
   e.preventDefault();
-  sh.scrollLeft += (e.deltaY || 0) + (e.deltaX || 0);
+  sh.scrollLeft += d;
 }, { passive: false });
 
 /* 🎊 пасхалка: набери на клавиатуре «волна» */

@@ -853,6 +853,11 @@ animation:npAmb 22s ease-in-out infinite alternate}
 @keyframes npAmb{0%,100%{transform:scale(1.05)}50%{transform:scale(1.16)}}
 #view-nowplaying{position:relative;overflow:hidden}
 
+/* ============ v7.6.1: 🖱 фикс скролла полок + счётчик прослушиваний ============ */
+.np-listened{font-size:11px;color:#9a9ab0;margin-top:6px;display:inline-flex;align-items:center;gap:6px;
+padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.np-listened .ic{width:12px;height:12px;color:var(--acid)}
+
 /* ============ v7.6.0: 🔍 редизайн поиска + полка плейлистов ============ */
 .search-field{position:relative}
 .search-input{padding-right:46px}
