@@ -116,6 +116,8 @@ function ensureAudioEl(corsOk) {
   el.addEventListener('play', () => {
     state.isPlaying = true; updatePlayIcon(); setPowerSave(true); updateTitle();
     state.audioCtx?.resume?.().catch(() => {});
+    state._endFading = false;
+    if (state.settings.fade !== false) { state.fadeFactor = 0; fadeTo(1, 700); } // мягкий старт
   });
   el.addEventListener('pause', () => {
     state.isPlaying = false; updatePlayIcon(); setPowerSave(false); updateTitle();
@@ -730,11 +732,43 @@ function handleListenThreshold(posMs, durMs) {
   }
 }
 
+/* 🎚 плавные переходы: затухание на последних 3.5с трека */
+function maybeStartEndFade(posMs, durMs) {
+  if (state.settings.fade === false || state._endFading || !state.isPlaying) return;
+  if (!durMs || posMs <= 0) return;
+  if (durMs - posMs <= 3500 && posMs < durMs) {
+    state._endFading = true;
+    fadeTo(0, Math.max(400, durMs - posMs));
+  }
+}
+
+function fadeTo(target, ms) {
+  clearInterval(state._fadeTimer);
+  state._fadeTimer = null;
+  if (state.settings.fade === false) { state.fadeFactor = 1; applyVolume(); return; }
+  const from = (state.fadeFactor == null) ? 1 : state.fadeFactor;
+  const steps = Math.max(1, Math.round(ms / 40));
+  let i = 0;
+  state.fadeFactor = from;
+  state._fadeTimer = setInterval(() => {
+    i++;
+    state.fadeFactor = from + (target - from) * (i / steps);
+    applyVolume();
+    if (i >= steps) {
+      clearInterval(state._fadeTimer);
+      state._fadeTimer = null;
+      state.fadeFactor = target;
+      applyVolume();
+    }
+  }, 40);
+}
+
 function updateProgressUI() {
   if (!state.currentTrack) return;
   if (state.engine === 'audio' && state.audio) {
     const pos = (state.audio.currentTime || 0) * 1000;
     const dur = (state.audio.duration || 0) * 1000;
+    maybeStartEndFade(pos, dur);
     if (dur && !seekDragging) $('#progress').style.width = (pos / dur * 100) + '%';
     $('#time-cur').textContent = formatTime(pos / 1000);
     state._lastPosMs = pos; state._lastDurMs = dur;
@@ -753,6 +787,7 @@ function updateProgressUI() {
   state.widget.getPosition(pos => {
     state.widget.getDuration(dur => {
       if (!dur) return;
+      maybeStartEndFade(pos, dur);
       if (!seekDragging) $('#progress').style.width = (pos / dur * 100) + '%';
       $('#time-cur').textContent = formatTime(pos / 1000);
       state._lastPosMs = pos; state._lastDurMs = dur;
@@ -877,10 +912,12 @@ function setVolume(v) {
 function nudgeVolume(d) { setVolume(state.volume + d); }
 
 function applyVolume() {
-  const v = (state.muted || state.clipMuted) ? 0 : state.volume; // клип на экране — звук трека глушим
+  const v = (state.muted || state.clipMuted) ? 0 : state.volume;
+  const fade = (state.fadeFactor != null) ? state.fadeFactor : 1;
+  const eff = Math.max(0, Math.min(1, v * fade));
   $('#vol-fill').style.width = v * 100 + '%';
-  if (state.engine === 'audio' && state.audio) state.audio.volume = v;
-  else { try { state.widget?.setVolume(v * 100); } catch (_) {} }
+  if (state.engine === 'audio' && state.audio) state.audio.volume = eff;
+  else { try { state.widget?.setVolume(eff * 100); } catch (_) {} }
   updateVolumeIcon();
 }
 
@@ -908,6 +945,7 @@ function addToQueue(track) {
   if (!track) return;
   if (state.queue.some(t => t.id === track.id)) { toast('Уже в очереди'); return; }
   state.queue.push(track);
+  persistQueueSoon();
   updateBadges(); renderQueue();
   toast('📋 В очереди', 'success');
 }
@@ -938,6 +976,7 @@ function playNextInQueue(track) {
   if (state.queue.some(t => t.id === track.id)) { toast('Уже в очереди'); return; }
   if (state.currentListKey === 'queue' && state.currentIdx >= 0) {
     state.queue.splice(state.currentIdx + 1, 0, track);
+    persistQueueSoon();
   } else {
     state.queue.unshift(track);
   }
@@ -953,6 +992,7 @@ function playFromQueue(idx) {
 function removeFromQueue(idx) {
   const wasCurrent = state.currentListKey === 'queue' && state.currentIdx === idx;
   state.queue.splice(idx, 1);
+  persistQueueSoon();
   if (wasCurrent) { state.currentListKey = null; state.currentIdx = -1; }
   else if (state.currentListKey === 'queue' && state.currentIdx > idx) state.currentIdx--;
   updateBadges(); renderQueue(); highlightPlaying();
@@ -970,6 +1010,7 @@ function shuffleQueue() {
 
 function clearQueue() {
   state.queue = [];
+  persistQueueSoon();
   if (state.currentListKey === 'queue') { state.currentListKey = null; state.currentIdx = -1; }
   updateBadges(); renderQueue(); highlightPlaying();
   toast('Очередь очищена');
@@ -1027,6 +1068,7 @@ function bindQueueDnD() {
     if (to !== dragIdx) {
       const [moved] = state.queue.splice(dragIdx, 1);
       state.queue.splice(to, 0, moved);
+      persistQueueSoon();
       renderQueue(); highlightPlaying();
     }
     dragIdx = -1;
@@ -1060,6 +1102,7 @@ async function enableRadio() {
     if (!similar.length) { toast('Похожие треки не найдены', 'error'); return; }
     similar.forEach(rememberTrack);
     state.queue = similar;
+    persistQueueSoon();
     updateBadges(); renderQueue();
     playTrack(similar[0], 'queue');
     toast(`📻 Radio: ${similar.length} треков${state.dislikes.length ? ' (скрытые артисты вырезаны)' : ''}`, 'success');
@@ -1126,6 +1169,13 @@ function sendMiniFft() {
     ipc.send('mini:fft', bands);
   } catch (_) {}
 }
+
+/* 💾 очередь переживает перезапуск приложения */
+function persistQueueSoon() {
+  clearTimeout(state._pqTimer);
+  state._pqTimer = setTimeout(() => { lsSet('queue', state.queue); }, 400);
+}
+window.addEventListener('beforeunload', () => { lsSet('queue', state.queue); });
 
 /* ---------- sleep timer ---------- */
 function setSleepTimer() {

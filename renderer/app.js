@@ -18,7 +18,7 @@ function lsSet(key, val) { try { localStorage.setItem('ga:' + key, JSON.stringif
 
 /* ---------- глобальный state ---------- */
 const state = {
-  favorites: [], history: [], playlists: [], queue: [],
+  favorites: [], history: [], playlists: [], queue: lsGet('queue', []),
   tracks: [],              // сырые результаты поиска
   visibleTracks: [],       // после фильтров
   trending: [],
@@ -548,6 +548,14 @@ function renderHome() {
   const g = $('#home-greeting'); if (g) g.textContent = greet;
   const sub = $('#home-sub');
   if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
+  // кинематографичный hero: размываем обложку трека в фон
+  const hb = $('#home-hero-bg');
+  if (hb) {
+    const src = state.currentTrack || state.lastTrack || (state.homeContinue && state.homeContinue[0]) || null;
+    const img = src ? artwork(src) : '';
+    hb.style.backgroundImage = img ? `url('${img}')` : '';
+    hb.style.opacity = img ? '' : '0';
+  }
   const cont = state.history.filter(x => x.id !== state.currentTrack?.id).slice(0, 8);
   state.homeContinue = cont; // плеер играет строго по этому списку
   const cEl = $('#home-continue');
@@ -588,6 +596,7 @@ function renderNp() {
   const plainHtml = escapeHtml(L.plain || '').split(String.fromCharCode(10)).join('<br>');
   const art = artwork(t);
   box.innerHTML = `
+    <div class="np-ambient" style="background-image:url('${escapeHtml(art)}')"></div>
     ${state.npClip && state.npClip.trackId === t.id && state.npClip.on
         ? `<div class="np-video"><iframe src="https://www.youtube-nocookie.com/embed/${state.npClip.videoId}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`
         : `<div class="np-cover-wrap"><img src="${escapeHtml(art)}" alt="" onerror="this.style.opacity=.3"></div>`}

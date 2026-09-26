@@ -147,6 +147,8 @@ function applySettings() {
   if (dt) dt.value = state.settings.discordBotToken || '';
   const nightcomp = $('#set-nightcomp');
   if (nightcomp) nightcomp.checked = state.settings.nightCompressor === true;
+  const fadeT = $('#set-fade');
+  if (fadeT) fadeT.checked = state.settings.fade !== false;
   $('#set-waves').checked = state.settings.waves !== false;
   document.body.classList.toggle('waves-off', state.settings.waves === false);
   $('#set-mascot').checked = state.settings.mascot !== false;
@@ -206,6 +208,12 @@ function bindLibraryUI() {
     saveSetting('nightCompressor', e.target.checked);
     if (typeof applyNightCompressor === 'function') applyNightCompressor();
     toast(e.target.checked ? '🔇 Ночной компрессор включён' : 'Ночной компрессор выключен');
+  });
+  const fadeT = $('#set-fade');
+  if (fadeT) fadeT.addEventListener('change', e => {
+    saveSetting('fade', e.target.checked);
+    if (!e.target.checked) { state.fadeFactor = 1; if (typeof applyVolume === 'function') applyVolume(); }
+    toast(e.target.checked ? '🎚 Плавные переходы включены' : 'Плавные переходы выключены');
   });
 
   $('#set-scproxy').addEventListener('change', async e => {
@@ -1166,7 +1174,7 @@ async function checkUpdate(manual) {
 
 /* ---------- о приложении ---------- */
 async function fillAbout() {
-  let v = { version: '7.0.1', electron: '—', chrome: '—', node: '—', platform: 'browser' };
+  let v = { version: '7.1.0', electron: '—', chrome: '—', node: '—', platform: 'browser' };
   if (ipc) { try { v = { ...v, ...(await ipc.invoke('app:version')) }; } catch (_) {} }
   $('#about-info').innerHTML = `
     <strong>VOLNA</strong> v${escapeHtml(String(v.version))}<br>

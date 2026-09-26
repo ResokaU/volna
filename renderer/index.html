@@ -244,13 +244,14 @@
 
       <section class="view" id="view-home">
         <div class="home-hero">
+          <div class="home-hero-bg" id="home-hero-bg"></div>
           <div class="home-greet grad-anim" id="home-greeting">Привет</div>
           <div class="home-sub" id="home-sub"></div>
           <div class="home-actions">
-            <button class="toolbar-btn" onclick="feelingLucky()">🎲 Мне повезёт</button>
-            <button class="toolbar-btn" onclick="enableRadio()">📻 Radio по треку</button>
+            <button class="toolbar-btn" onclick="feelingLucky()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-dice"/></svg>Мне повезёт</button>
+            <button class="toolbar-btn" onclick="enableRadio()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-radio"/></svg>Radio по треку</button>
             <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Играть лайки</button>
-            <button class="toolbar-btn" onclick="switchView('discover')">🔍 Поиск</button>
+            <button class="toolbar-btn" onclick="switchView('discover')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Поиск</button>
           </div>
           <div id="home-resume"></div>
         </div>
@@ -562,6 +563,7 @@
           </div>
           <label class="toggle-row"><input type="checkbox" id="set-discord" checked><span>Discord Rich Presence — статус «слушает…» с обложкой</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-nightcomp"><span>Ночной компрессор — выравнивает громкие и тихие места (комфортно на тихой громкости)</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-fade" checked><span>Плавные переходы — мягкий старт трека и затухание в конце</span></label>
           <div class="setting-row" style="margin-top:10px">
             <button class="toolbar-btn" onclick="resetDislikes()">🚫 Скрытых артистов из Radio: <strong id="dislike-count">0</strong> — сбросить</button>
           </div>
