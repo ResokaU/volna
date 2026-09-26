@@ -130,7 +130,7 @@ transition:background .15s,color .15s}
 .tb-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
 .tb-close:hover{background:#ff3d55;color:#fff}
 body.no-cursor .tb-btn{cursor:pointer}
-.content{padding:24px 40px 200px;max-width:1600px;margin:0 auto}
+.content{padding:52px 40px 200px;max-width:1600px;margin:0 auto}
 .view{display:none;animation:fadeIn .4s ease}
 .view.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -536,7 +536,7 @@ filter:drop-shadow(0 10px 30px color-mix(in srgb,var(--neon) 45%,transparent))}
   .app{grid-template-columns:1fr}
   .sidebar{display:none}
   .drag-region{left:0}
-  .content{padding:16px 20px 200px}
+  .content{padding:24px 20px 200px}
 }
 
 /* ============ Караоке-текст ============ */
@@ -1346,17 +1346,17 @@ linear-gradient(120deg,rgba(255,255,255,.04),transparent 55%)}
 .vp-banner-img{position:absolute;inset:-28px;width:calc(100% + 56px);height:calc(100% + 56px);
 object-fit:cover;filter:blur(26px) saturate(1.25);opacity:.5}
 .vp-banner::before{content:'';position:absolute;inset:0;
-background:linear-gradient(180deg,rgba(10,10,18,.15) 0%,rgba(10,10,18,.45) 55%,rgba(10,10,18,.94) 100%)}
+background:linear-gradient(180deg,rgba(10,10,18,.18) 0%,rgba(10,10,18,.5) 42%,rgba(10,10,18,.9) 72%,rgba(10,10,18,.98) 100%)}
 .vp-banner::after{content:'';position:absolute;inset:0;
 background:repeating-linear-gradient(-8deg,transparent 0 26px,rgba(255,255,255,.025) 26px 27px)}
-.vp-head{display:flex;gap:18px;align-items:flex-end;padding:0 28px;margin-top:-52px;position:relative;z-index:1;flex-wrap:wrap}
+.vp-head{display:flex;gap:18px;align-items:flex-end;padding:0 28px;margin-top:-44px;position:relative;z-index:1;flex-wrap:wrap}
 .vp-ava{width:104px;height:104px;border-radius:50%;background:var(--grad);flex-shrink:0;
 display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;
 border:4px solid rgba(10,10,18,.9);box-shadow:0 10px 34px -10px color-mix(in srgb,var(--accent) 75%,transparent);overflow:hidden}
 .vp-ava img{width:100%;height:100%;object-fit:cover}
 .vp-on{position:absolute;left:76px;top:76px;width:16px;height:16px;border-radius:50%;
 background:#3ddc84;border:3px solid rgba(10,10,18,.9);box-shadow:0 0 10px #3ddc84}
-.vp-id{flex:1;min-width:200px;padding-bottom:4px}
+.vp-id{flex:1;min-width:200px;padding-bottom:4px;text-shadow:0 2px 14px rgba(0,0,0,.55)}
 .vp-name{font-size:26px;font-weight:900;color:var(--text);margin:0;
 background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .vp-handle{font-size:13px;font-weight:800;color:var(--acid);display:flex;align-items:center;gap:7px;margin-top:2px}
@@ -1379,6 +1379,7 @@ padding:9px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:no
 .soc-fname{font-size:11.5px;font-weight:800;color:#b9b9cc;max-width:76px;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap;text-align:center}
 .soc-friend .soc-dot{position:absolute;top:34px;right:8px}
+#people-body{max-width:1080px}
 .vp-empty{padding:14px 16px;border-radius:14px;border:1px dashed rgba(255,255,255,.12);
 color:#8a8aa0;font-size:12.5px;text-align:center}
 /* --- заведение ID --- */

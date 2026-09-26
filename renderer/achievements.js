@@ -236,7 +236,7 @@ window.Ach = (function () {
       const next = ARTIST_TIERS[tier + 1] || ARTIST_TIERS[0];
       out.push({
         id: 'art' + ai, kind: 'artist', emoji: a.emoji, name: a.name,
-        desc: 'Треки артиста тикток-сцены волны: ' + ARTIST_TIERS.map(t => t.label + ' ' + t.need).join(' → '),
+        desc: 'Треки артиста в истории: ' + ARTIST_TIERS.map(t => t.need).join(' → ') + ' прослушиваний',
         tier, value: cnt,
         need: tier >= ARTIST_TIERS.length - 1 ? ARTIST_TIERS[2].need : (tier >= 0 ? ARTIST_TIERS[tier + 1].need : ARTIST_TIERS[0].need),
         rarity: ARTIST_TIERS[Math.max(0, tier)].rarity, unlocked: tier >= 0
@@ -377,8 +377,8 @@ window.Ach = (function () {
     const filters = `
       <div class="ach-filters">
         <button class="ach-fbtn${_filter === 'all' ? ' on' : ''}" onclick="Ach.setFilter('all')">Все · ${cat.length}</button>
-        <button class="ach-fbtn${_filter === 'done' ? ' on' : ''}" onclick="Ach.setFilter('done')">✓ Получено · ${unlocked.length}</button>
-        <button class="ach-fbtn${_filter === 'wip' ? ' on' : ''}" onclick="Ach.setFilter('wip')">⏳ В процессе · ${cat.length - unlocked.length}</button>
+        <button class="ach-fbtn${_filter === 'done' ? ' on' : ''}" onclick="Ach.setFilter('done')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Получено · ${unlocked.length}</button>
+        <button class="ach-fbtn${_filter === 'wip' ? ' on' : ''}" onclick="Ach.setFilter('wip')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>В процессе · ${cat.length - unlocked.length}</button>
       </div>`;
     const applyF = arr => _filter === 'all' ? arr : _filter === 'done' ? arr.filter(a => a.unlocked) : arr.filter(a => !a.unlocked);
     const card = a => {

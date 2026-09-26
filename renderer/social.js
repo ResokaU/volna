@@ -650,7 +650,7 @@ window.Social = (function () {
         `<button class="md-btn accent" onclick="Social.acceptFriend('${esc(h)}')">✓ Принять</button>
          <button class="md-btn" onclick="Social.rejectFriend('${esc(h)}')">✕</button>`)).join('');
       const reqOut = s.requestsOut.map(h => userCard(h,
-        `<span class="soc-pending">⏳ ждём</span><button class="md-btn" onclick="Social.rejectFriend('${esc(h)}')">✕</button>`)).join('');
+        `<span class="soc-pending"><svg class="ic" viewBox="0 0 24 24"><use href="#i-clock"/></svg>ждём</span><button class="md-btn" onclick="Social.rejectFriend('${esc(h)}')">✕</button>`)).join('');
       const fr = s.friends.map(h => userCard(h,
         `<button class="md-btn accent" onclick="Social.openChat('${esc(h)}')">💬<svg class="ic" viewBox="0 0 24 24"><use href="#i-chat"/></svg></button>
          <button class="md-btn" onclick="Social.unfriend('${esc(h)}')" title="Удалить из друзей">✕</button>`)).join('');
