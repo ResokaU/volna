@@ -6,6 +6,7 @@ window.Profiles = (function () {
 
   async function init() {
     await refresh();
+    renderCloud();
   }
 
   async function refresh() {
@@ -127,7 +128,7 @@ window.Profiles = (function () {
     nameEl.textContent = p ? p.name : 'Профиль';
     if (p && p.avatar) { avEl.style.backgroundImage = 'url(' + p.avatar + ')'; avEl.textContent = ''; }
     else { avEl.style.backgroundImage = ''; avEl.textContent = p && p.name ? p.name[0].toUpperCase() : 'V'; }
-    if (subEl) subEl.textContent = p && p.id === cache.active ? 'Профили и данные' : 'Профили';
+    if (subEl) subEl.textContent = 'Профили и данные';
   }
 
   function renderList() {
@@ -149,9 +150,64 @@ window.Profiles = (function () {
       </div>`).join('');
   }
 
+  /* ---------- ☁️ облако (GitHub Gist) ---------- */
+  function ghToken() { return (state.settings.ghToken || '').trim(); }
+
+  async function ghConnect() {
+    const el = $('#gh-token');
+    const tok = (el ? el.value : '').trim();
+    if (!tok) { toast('Вставь GitHub токен с правом gist', 'error'); return; }
+    const v = await ipc.invoke('gh:validate', tok);
+    if (!v.ok) { toast('☁️ GitHub: ' + v.error, 'error'); return; }
+    state.settings.ghToken = tok;
+    await saveSetting('ghToken', tok);
+    renderCloud(v.login);
+    toast('☁️ Облако подключено: ' + v.login, 'success');
+  }
+
+  async function cloudPush() {
+    const tok = ghToken();
+    if (!tok) { toast('Сначала подключи GitHub', 'error'); return; }
+    await ipc.invoke('profiles:stash', stash());
+    const all = await ipc.invoke('profiles:get');
+    const payload = JSON.stringify({ exportedAt: Date.now(), app: 'VOLNA', activeProfile: all.active, profiles: all.profiles });
+    const r = await ipc.invoke('gh:push', { token: tok, gistId: state.settings.ghGistId || '', content: payload });
+    if (!r.ok) { toast('☁️ Ошибка выгрузки: ' + r.error, 'error'); return; }
+    if (r.gistId) { state.settings.ghGistId = r.gistId; await saveSetting('ghGistId', r.gistId); }
+    renderCloud();
+    toast('☁️ Профили выгружены в облако', 'success');
+  }
+
+  async function cloudPull() {
+    const tok = ghToken(), gid = state.settings.ghGistId;
+    if (!tok || !gid) { toast('Сначала выгрузи профили в облако', 'error'); return; }
+    const r = await ipc.invoke('gh:pull', { token: tok, gistId: gid });
+    if (!r.ok) { toast('☁️ ' + r.error, 'error'); return; }
+    let blob;
+    try { blob = JSON.parse(r.content); } catch (_) { toast('☁️ Повреждённый файл в облаке', 'error'); return; }
+    const data = await ipc.invoke('profiles:restore', blob);
+    if (!data) { toast('☁️ Пустой файл профиля', 'error'); return; }
+    applyData(data);
+    await refresh();
+    updateBadges();
+    if (typeof renderQueue === 'function') renderQueue();
+    if (typeof renderHome === 'function') renderHome();
+    if ($('#view-favorites')?.classList.contains('active')) renderFavorites();
+    toast('☁️ Профили загружены из облака', 'success');
+  }
+
+  function renderCloud(login) {
+    const st = $('#gh-status');
+    if (!st) return;
+    const tok = ghToken();
+    st.textContent = tok ? (login ? 'Подключено: ' + login : 'Токен сохранён') : 'Не подключено';
+    const el = $('#gh-token');
+    if (el && tok && !el.value) el.value = tok;
+  }
+
   return {
     init, refresh, switchTo, create, rename, remove, pickAvatar, avatarChosen,
-    renderAccount, renderList,
+    renderAccount, renderList, ghConnect, cloudPush, cloudPull, renderCloud,
     get active() { return cache.active; },
     get profiles() { return cache.profiles; }
   };

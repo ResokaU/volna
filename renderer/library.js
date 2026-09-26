@@ -811,7 +811,15 @@ async function importPlaylistUrl() {
   try {
     const cid = await ensureClientId();
     const data = await scJson('https://api-v2.soundcloud.com/resolve?url=' + encodeURIComponent(url) + '&client_id=' + cid);
-    const tracks = (data && Array.isArray(data.tracks) ? data.tracks : []).map(normalizeTrack).filter(Boolean);
+    let tracks = (data && Array.isArray(data.tracks) ? data.tracks : []).map(normalizeTrack).filter(Boolean);
+    // SoundCloud отдаёт в resolve первые ~5 треков — полный список добираем по tracks_uri
+    if (data && data.tracks_uri && (data.track_count || tracks.length) > tracks.length) {
+      const sep = data.tracks_uri.includes('?') ? '&' : '?';
+      const full = await scJson(data.tracks_uri + sep + 'client_id=' + cid);
+      const arr = Array.isArray(full) ? full : (Array.isArray(full && full.collection) ? full.collection : null);
+      if (arr) tracks = arr.map(normalizeTrack).filter(Boolean);
+    }
+    if (data && data.kind === 'track' && data.id) tracks = [normalizeTrack(data)].filter(Boolean);
     if (!tracks.length) { toast('По ссылке не нашлось треков', 'error'); return; }
     tracks.forEach(t => rememberTrack(t));
     state.playlists.push({ id: Date.now(), name: data.title || 'Импорт', desc: '', tracks, createdAt: new Date().toISOString() });

@@ -171,6 +171,66 @@ ipcMain.handle('profiles:avatar', (_e, { id, avatar }) => {
   return true;
 });
 
+// ---------- ☁️ Облако профилей через GitHub Gist (приватный) ----------
+const GH = 'https://api.github.com';
+const ghHeaders = (tok) => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'User-Agent': 'VOLNA' });
+const GIST_FILE = 'volna-profiles.json';
+
+ipcMain.handle('gh:validate', async (_e, tok) => {
+  try {
+    const r = await net.fetch(GH + '/user', { headers: ghHeaders(String(tok).trim()), signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    return { ok: true, login: j.login };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.handle('gh:push', async (_e, { token, gistId, content }) => {
+  try {
+    const files = { [GIST_FILE]: { content } };
+    if (gistId) {
+      const r = await net.fetch(GH + '/gists/' + gistId, {
+        method: 'PATCH', headers: ghHeaders(String(token)), body: JSON.stringify({ files }), signal: AbortSignal.timeout(25000)
+      });
+      if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+      return { ok: true };
+    }
+    const r = await net.fetch(GH + '/gists', {
+      method: 'POST', headers: ghHeaders(String(token)),
+      body: JSON.stringify({ description: 'VOLNA profiles — не редактируй вручную', files, public: false }),
+      signal: AbortSignal.timeout(25000)
+    });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    return { ok: true, gistId: j.id };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.handle('gh:pull', async (_e, { token, gistId }) => {
+  try {
+    if (!gistId) return { ok: false, error: 'облако ещё не создано' };
+    const r = await net.fetch(GH + '/gists/' + gistId, { headers: ghHeaders(String(token)), signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    const f = j.files && (j.files[GIST_FILE] || Object.values(j.files)[0]);
+    if (!f) return { ok: false, error: 'файл профиля не найден' };
+    if (f.truncated) return { ok: false, error: 'профиль слишком большой' };
+    return { ok: true, content: f.content, login: j.owner && j.owner.login };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+// восстановить профили из облака: перезаписать стор и развернуть активный профиль
+ipcMain.handle('profiles:restore', (_e, blob) => {
+  if (!blob || !Array.isArray(blob.profiles) || !blob.profiles.length) return null;
+  store.set('profiles', blob.profiles);
+  const id = blob.activeProfile || blob.profiles[0].id;
+  store.set('activeProfile', id);
+  const t = blob.profiles.find(x => x.id === id) || blob.profiles[0];
+  store.set('favorites', t.data.favorites || []);
+  store.set('history', t.data.history || []);
+  store.set('playlists', t.data.playlists || []);
+  store.set('stats', t.data.stats || {});
+  store.set('lastTrack', t.data.lastTrack || null);
+  return t.data;
+});
+
 
 // ---------- Антиблок: флаги сети (до app ready) ----------
 // DoH — DNS-запросы через Cloudflare, обходит подмену/блокировку DNS.

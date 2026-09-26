@@ -744,6 +744,13 @@ padding:3px 8px;font-family:inherit;font-size:12px;outline:none;width:140px}
 border-radius:10px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:12px;outline:none}
 .profile-create input:focus{border-color:var(--acid)}
 
+/* ============ v7.3: ☁️ облако профилей ============ */
+.cloud-block{margin-top:16px;padding:14px;border-radius:16px;
+background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)}
+.cloud-title{font-weight:800;color:#fff;font-size:13px;margin-bottom:10px}
+.cloud-status{font-size:11px;color:#9a9ab0;margin:8px 0}
+.cloud-btns{display:flex;gap:8px;flex-wrap:wrap}
+
 /* ============ v6.6: подсказки в настройках ============ */
 .setting-hint{font-size:11px;color:#8a8aa0;line-height:1.5;margin:6px 0 0}
 

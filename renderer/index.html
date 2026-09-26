@@ -709,6 +709,19 @@
       <button class="md-btn" onclick="Profiles.create()">+ Создать</button>
     </div>
     <p class="setting-hint">У каждого профиля свои лайки, история, плейлисты и статистика. Данные хранятся локально на этом компьютере. 🖼 меняет аватар — картинка обрезается в круг и сжимается.</p>
+    <div class="cloud-block">
+      <div class="cloud-title">☁️ Облако (приватный GitHub Gist)</div>
+      <div class="profile-create">
+        <input type="text" id="gh-token" placeholder="GitHub Personal Access Token (право gist)">
+        <button class="md-btn" onclick="Profiles.ghConnect()">Подключить</button>
+      </div>
+      <div class="cloud-status" id="gh-status">Не подключено</div>
+      <div class="cloud-btns">
+        <button class="md-btn" onclick="Profiles.cloudPush()">⬆ Выгрузить профили в облако</button>
+        <button class="md-btn" onclick="Profiles.cloudPull()">⬇ Загрузить профили из облака</button>
+      </div>
+      <p class="setting-hint">Токен: github.com/settings/tokens → Generate new token (classic) → отметь только <b>gist</b>. В облаке приватный gist «volna-profiles» — привяжи его на втором ПК, и профили переедут. Токен хранится локально.</p>
+    </div>
   </div>
 </div>
 <input type="file" id="avatar-file" accept="image/*" hidden>
