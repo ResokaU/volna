@@ -50,7 +50,10 @@ window.MilkdropGL = (function () {
   function applySize() {
     if (!vis) return;
     const dpr = Math.min(1.5, window.devicePixelRatio || 1);
-    vis.setRendererSize(Math.max(2, canvas.clientWidth * dpr), Math.max(2, canvas.clientHeight * dpr));
+    const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
+    const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
+    canvas.width = w; canvas.height = h; // буфер канваса = размер рендера
+    vis.setRendererSize(w, h);
   }
 
   function frame() {
@@ -73,14 +76,17 @@ window.MilkdropGL = (function () {
     return ensureLibs().then(() => {
       if (!vis) {
         const dpr = Math.min(1.5, window.devicePixelRatio || 1);
-        vis = window._BC_LIB.createVisualizer(window.state.audioCtx || new AudioContext(), canvas, {
-          width: Math.max(2, canvas.clientWidth * dpr),
-          height: Math.max(2, canvas.clientHeight * dpr),
+        const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
+        const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
+        canvas.width = w; canvas.height = h;
+        vis = window._BC_LIB.createVisualizer(state.audioCtx || new AudioContext(), canvas, {
+          width: w,
+          height: h,
           pixelRatio: dpr
         });
       }
-      if (window.state.analyser) {
-        try { vis.connectAudio(window.state.analyser); } catch (_) {}
+      if (state.analyser) {
+        try { vis.connectAudio(state.analyser); } catch (_) {}
       } else {
         toast('🎧 Милкдропу нужен нативный движок (без виджета) — звук может не влиять', 'error');
       }

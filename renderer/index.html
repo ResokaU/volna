@@ -681,25 +681,31 @@
 </div>
 
 <div class="modal" id="rooms_modal">
-  <div class="modal-content">
+  <div class="modal-content rooms-modal">
     <button class="modal-close" onclick="closeModal('rooms_modal')">×</button>
     <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-globe"/></svg>Комната-волна</h3>
     <div id="rooms-idle">
-      <p class="rooms-hint">Слушай трек синхронно с друзьями: один включает музыку, остальные заходят по коду.
-      Трафик идёт через публичный MQTT-брокер, сервер не нужен. Гости грузят трек с SoundCloud сами.</p>
-      <button class="modal-btn" onclick="Rooms.create()">🌊 Создать комнату</button>
+      <div class="rooms-hero">
+        <div class="rooms-wave">🌊</div>
+        <div class="rooms-title">Слушай вместе</div>
+        <p class="rooms-hint">Один включает музыку — остальные ловят волну в реальном времени.
+        Синхрон идёт через публичный MQTT-брокер: без серверов, без регистрации.</p>
+      </div>
+      <button class="rooms-create" onclick="Rooms.create()">🌊 Создать комнату</button>
+      <div class="rooms-or"><span>или войди по коду</span></div>
       <div class="rooms-join">
         <input type="text" id="rooms-code" maxlength="6" placeholder="КОД" autocomplete="off">
-        <button class="modal-btn" onclick="Rooms.joinFromInput()">Войти</button>
+        <button class="rooms-go" onclick="Rooms.joinFromInput()">Войти →</button>
       </div>
     </div>
     <div id="rooms-active" style="display:none">
-      <div class="rooms-code" id="rooms-code-label">—</div>
-      <div class="rooms-status" id="rooms-status"></div>
-      <button class="modal-btn" id="rooms-vote" onclick="Rooms.vote()" style="display:none">⏭ Голосовать за следующий</button>
+      <div class="rooms-live"><span class="rooms-dot"></span><span id="rooms-status">…</span></div>
+      <div class="rooms-code-row" id="rooms-code-row" title="Нажми, чтобы скопировать код"></div>
+      <button class="rooms-copy" onclick="Rooms.copyCode()">📋 Скопировать код</button>
+      <button class="rooms-vote" id="rooms-vote" onclick="Rooms.vote()" style="display:none">⏭ Голосовать за следующий</button>
       <p class="rooms-hint" id="rooms-guest-hint" style="display:none">Пауза и переключение — у хоста. Когда большинство гостей голосует, трек переключается.</p>
-      <p class="rooms-hint" id="rooms-host-hint">Не закрывай VOLNA — от тебя идёт синхрон. Голоса гостей перескакивают трек при большинстве.</p>
-      <button class="modal-btn rooms-leave" onclick="Rooms.leave()">Выйти из комнаты</button>
+      <p class="rooms-hint" id="rooms-host-hint">Не закрывай VOLNA — от тебя идёт волна. Код одноразовый.</p>
+      <button class="rooms-leave" onclick="Rooms.leave()">Покинуть волну</button>
     </div>
   </div>
 </div>

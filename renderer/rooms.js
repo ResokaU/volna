@@ -239,8 +239,13 @@ window.Rooms = (function () {
     idle.style.display = code ? 'none' : '';
     act.style.display = code ? '' : 'none';
     if (!code) return;
-    const cl = $('#rooms-code-label');
-    if (cl) cl.textContent = code;
+    // код плитками: первая цифра (брокер) подсвечена
+    const row = $('#rooms-code-row');
+    if (row) {
+      row.innerHTML = code.split('').map(ch =>
+        '<span class="rc-tile' + (/\d/.test(ch) ? ' rc-digit' : '') + '">' + ch + '</span>').join('');
+      row.onclick = () => copyCode();
+    }
     const st = $('#rooms-status');
     if (st) st.textContent = role === 'host'
       ? 'Ты хост · гостей: ' + (seenGuests ? seenGuests.size : 0)
@@ -250,13 +255,29 @@ window.Rooms = (function () {
     if (gh) gh.style.display = role === 'guest' ? '' : 'none';
   }
 
+  async function copyCode() {
+    if (!code) return;
+    let ok = false;
+    try { await navigator.clipboard.writeText(code); ok = true; } catch (_) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand('copy');
+        ta.remove();
+      } catch (_) {}
+    }
+    toast(ok ? '📋 Код ' + code + ' скопирован' : 'Не вышло скопировать — код: ' + code, ok ? 'success' : 'error');
+  }
+
   function joinFromInput() {
     const el = $('#rooms-code');
     join(el ? el.value : '').then(() => { if (el) el.value = ''; });
   }
 
   return {
-    create, join, joinFromInput, leave, vote, notify, renderRooms,
+    create, join, joinFromInput, leave, vote, notify, renderRooms, copyCode,
     isHost: () => role === 'host',
     inRoom: () => !!code,
     code: () => code

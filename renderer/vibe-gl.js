@@ -116,7 +116,7 @@ void main() {
   }
 
   function readAudio() {
-    const st = window.state;
+    const st = state; // lexical-глобал из app.js (window.state не существует!)
     const a = st && st.analyser;
     if (a && st.isPlaying) {
       if (!VibeGL._d || VibeGL._d.length !== a.frequencyBinCount) VibeGL._d = new Uint8Array(a.frequencyBinCount);
