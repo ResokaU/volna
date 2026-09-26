@@ -767,6 +767,11 @@ animation:gradShift 7s ease-in-out infinite}
 @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @media (prefers-reduced-motion: reduce){.grad-anim{animation:none}}
 
+/* ============ v7.4.3: заглушка обложки в NP ============ */
+.np-cover-wrap.np-noart{display:flex;align-items:center;justify-content:center;
+background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.np-cover-wrap.np-noart .ic{width:64px;height:64px;color:var(--dim)}
+
 /* ============ v7.3.2: 🫥 автоскрытие курсора при бездействии ============ */
 .cursor-ring,.cursor-dot{transition:opacity .45s ease}
 body.cursor-idle .cursor-ring,body.cursor-idle .cursor-dot{opacity:0 !important}

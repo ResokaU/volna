@@ -57,7 +57,9 @@ window.mini.sync(d => {
   if (d.art) document.getElementById('cov').src = d.art;
   document.getElementById('pl').textContent = d.isPlaying ? '⏸' : '▶';
   if (d.dur) document.getElementById('pf').style.width = Math.min(100, d.pos / d.dur * 100) + '%';
+  if (d.accent) document.getElementById('pf').style.background = d.accent;
   document.getElementById('like').textContent = d.liked ? '❤️' : '🤍';
+  if (d.accent) window.__accent = d.accent;
   document.body.style.setProperty('--amb', d.art ? 'url(' + d.art + ')' : 'none');
 });
 const fftC = document.getElementById('fft'), fftX = fftC.getContext('2d');
@@ -67,9 +69,9 @@ window.mini.onFft(b => { bands = b; });
   requestAnimationFrame(drawFft);
   fftX.clearRect(0, 0, fftC.width, fftC.height);
   const bw = fftC.width / 8;
+  fftX.fillStyle = (window.__accent || '#b14aff') + 'dd';
   for (let i = 0; i < 8; i++) {
     const h = Math.max(2, (bands[i] || 0) / 100 * fftC.height);
-    fftX.fillStyle = 'rgba(177,74,255,.85)';
     fftX.fillRect(i * bw + 2, fftC.height - h, bw - 4, h);
   }
 })();

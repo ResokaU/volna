@@ -509,6 +509,7 @@ async function playTrack(track, listKey = null) {
   state.currentTrack = track;
   state.npClip = null; state.clipMuted = false; // клип не переезжает между треками
   state.listenedCounted = false; // честная статистика: счёт после 30с прослушивания
+  state._endFading = false; state.fadeFactor = 1; // новый трек — без хвостов фейдов
 
   $('#player-title').textContent = track.title;
   $('#player-artist').textContent = displayArtist(track);
@@ -1179,7 +1180,7 @@ function sendMiniSync(force) {
     pos = (state.audio.currentTime || 0) * 1000;
     dur = (state.audio.duration || 0) * 1000 || dur;
   }
-  try { ipc.send('mini:sync', { title: t.title, artist: displayArtist(t), art: artwork(t), isPlaying: state.isPlaying, pos, dur, liked: state.favorites.some(f => f.id === t.id) }); } catch (_) {}
+  try { ipc.send('mini:sync', { title: t.title, artist: displayArtist(t), art: artwork(t), isPlaying: state.isPlaying, pos, dur, liked: state.favorites.some(f => f.id === t.id), accent: (getComputedStyle(document.body).getPropertyValue('--accent') || '').trim() }); } catch (_) {}
 }
 
 /* быстрая перемотка на ±секунд (колесо мыши) */
@@ -1260,6 +1261,7 @@ function setSleepTimer() {
 /* мягкое затухание громкости перед паузой */
 function fadeOutStop() {
   toast('😴 Мягко гасим волну…');
+  state.fadeFactor = 1; // не смешивать с фейдом конца трека
   const steps = 40;
   let i = 0;
   const startVol = state.muted ? 0 : state.volume;
