@@ -174,6 +174,7 @@ function showTrackMenu(e, trackId) {
     <div class="context-item" data-act="queue"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>В очередь</div>
     <div class="context-item" data-act="like"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${isFav ? 'Убрать из лайков' : 'В лайки'}</div>
     <div class="context-item" data-act="playlist"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>В плейлист…</div>
+    <div class="context-item" data-act="friend"><svg class="ic" viewBox="0 0 24 24"><use href="#i-send"/></svg>Отправить другу…</div>
     <div class="context-sep"></div>
     <div class="context-item" data-act="copy"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Копировать ссылку</div>
     <div class="context-item" data-act="share">📸 Карточка трека</div>
@@ -187,6 +188,77 @@ function showTrackMenu(e, trackId) {
 }
 function hideContextMenu() { $('#context-menu')?.classList.remove('show'); }
 
+function showFriendPicker(trackId) {
+  const s = window.Social ? Social.summary() : null;
+  if (!s || !s.handle) { toast('Сначала заведи Волна ID — вкладка «Мой профиль»', 'error'); return; }
+  const fr = (state.social && state.social.friends) || [];
+  if (!fr.length) { toast('Сначала добавь друзей во вкладке «Люди»', 'error'); return; }
+  const menu = $('#context-menu');
+  menu.innerHTML = '<div class="context-title">Отправить другу</div>' +
+    fr.map(h => '<div class="context-item" data-fr="' + escapeHtml(h) + '">@' + escapeHtml(h) + '</div>').join('');
+  menu.classList.add('show');
+  menu.style.left = Math.min((e && e.clientX) || 320, innerWidth - menu.offsetWidth - 12) + 'px';
+  menu.style.top = Math.min((e && e.clientY) || 320, innerHeight - menu.offsetHeight - 12) + 'px';
+  menu.querySelectorAll('.context-item').forEach(item => item.addEventListener('click', () => {
+    hideContextMenu();
+    const track = state.trackIndex.get(Number(trackId));
+    if (track && window.Social) Social.sendTrackTo(item.dataset.fr, track);
+  }));
+  setTimeout(() => document.addEventListener('click', hideContextMenu, { once: true }), 10);
+}
+
+/* 🎨 акцент из обложки: доминирующий цвет арта перекрашивает интерфейс */
+function scheduleAutoAccent() {
+  clearTimeout(window._aaT);
+  window._aaT = setTimeout(applyAutoAccent, 700);
+}
+function clearAutoAccent(silent) {
+  ['--accent', '--accent2', '--accent3'].forEach(p => document.body.style.removeProperty(p));
+  if (!silent) toast('🎨 Акцент из обложки выключен');
+}
+function dominantColor(url) {
+  return new Promise(res => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const fail = () => res(null);
+    img.onload = () => {
+      try {
+        const cv = document.createElement('canvas'); cv.width = 24; cv.height = 24;
+        const x = cv.getContext('2d', { willReadFrequently: true });
+        x.drawImage(img, 0, 0, 24, 24);
+        const d = x.getImageData(0, 0, 24, 24).data;
+        let bestScore = -1, r = 0, g = 0, b = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const R = d[i], G = d[i + 1], B = d[i + 2];
+          const mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+          const sat = mx ? (mx - mn) / mx : 0, br = mx / 255;
+          const score = sat * 1.2 + (br > 0.18 && br < 0.94 ? 0.4 : 0) - Math.abs(br - 0.55);
+          if (score > bestScore) { bestScore = score; r = R; g = G; b = B; }
+        }
+        const hx = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+        res('#' + hx(r) + hx(g) + hx(b));
+      } catch (_) { res(null); } // CORS — молча оставляем акцент
+    };
+    img.onerror = fail;
+    img.src = url;
+  });
+}
+async function applyAutoAccent() {
+  if (!state.settings || !state.settings.autoAccent) return;
+  const t = state.currentTrack || (state.lastTrack && state.lastTrack.track);
+  const art = t ? artwork(t) : '';
+  if (!art) return;
+  const col = await dominantColor(art);
+  if (!col) return;
+  const hx = col.slice(1);
+  const R = parseInt(hx.slice(0, 2), 16), G = parseInt(hx.slice(2, 4), 16), B = parseInt(hx.slice(4, 6), 16);
+  const lt = v => Math.round(v + (255 - v) * 0.55).toString(16).padStart(2, '0');
+  document.body.style.setProperty('--accent', col);
+  document.body.style.setProperty('--accent2', '#' + lt(R) + lt(G) + lt(B));
+  document.body.style.setProperty('--accent3', '#' + Math.round(G * 0.85 + 45).toString(16).padStart(2, '0') + Math.round(B * 0.85 + 45).toString(16).padStart(2, '0') + Math.round(R * 0.5 + 35).toString(16).padStart(2, '0'));
+}
+window.scheduleAutoAccent = scheduleAutoAccent;
+window.clearAutoAccent = clearAutoAccent;
 function showPlaylistPicker(trackId) {
   const menu = $('#context-menu');
   if (!state.playlists.length) { toast('Сначала создай плейлист', 'error'); return; }
@@ -214,6 +286,7 @@ function bindContextMenu() {
       case 'queue': addToQueue(track); break;
       case 'like': toggleLike(track); break;
       case 'playlist': showPlaylistPicker(track.id); break;
+      case 'friend': showFriendPicker(track.id); break;
       case 'copy':
         navigator.clipboard?.writeText(track.permalink_url || '')
           .then(() => toast('Ссылка скопирована', 'success'))

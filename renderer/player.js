@@ -495,6 +495,7 @@ function updateNpUI(posMs, durMs) {
 async function playTrack(track, listKey = null) {
   if (!track || !track.permalink_url) { toast('Трек недоступен', 'error'); return; }
   if (window.Social) Social.nowPlaying(track); // 🌊 волны друзей: вещаем, что слушаем
+  if (state.settings && state.settings.autoAccent && window.scheduleAutoAccent) scheduleAutoAccent(); // 🎨 акцент из обложки
   // генерация воспроизведения: только самая свежая команда «играть» управляет звуком и текстом
   state.playGen = (state.playGen || 0) + 1;
   const gen = state.playGen;

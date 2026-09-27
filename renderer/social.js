@@ -256,14 +256,27 @@ window.Social = (function () {
       if (topic.startsWith('volna-id/pres/')) {
         if (m.h && m.ts) lastSeen[m.h] = m.ts;
         const prev = nowNp[m.h] && nowNp[m.h].t;
-        if (m.np && m.np.t) { nowNp[m.h] = m.np; if (m.np.t !== prev) renderIfOpen(); }
+        if (m.np && m.np.t) {
+          nowNp[m.h] = m.np;
+          if (m.np.t !== prev) {
+            const sg = S();
+            if (sg.following === m.h && m.np.track && (!state.currentTrack || state.currentTrack.id !== m.np.track.id)) {
+              toast('🎙 Волна @' + m.h + ': ' + m.np.t, 'success');
+              playTrack(m.np.track, 'friend-follow');
+            }
+            renderIfOpen();
+          } }
         else if (nowNp[m.h]) { delete nowNp[m.h]; renderIfOpen(); }
         return;
       }
       onEvent(m);
     });
     mq.on('close', () => { meOnline = false; renderIfOpen(); });
-    beatTimer = setInterval(() => { if (mq && mq.connected) adapter && adapter.presenceBeat(); }, PRESENCE_MS);
+    beatTimer = setInterval(() => {
+      if (mq && mq.connected) adapter && adapter.presenceBeat();
+      const f = S().following;
+      if (f && !isOnline(f)) { unfollow(true); toast('👋 @' + f + ' не в сети — следование остановлено'); }
+    }, PRESENCE_MS);
   }
   function ensureSubs() {
     try { if (mq && mq.connected) mq.subscribe(contactTopics()); } catch (_) {}
@@ -286,6 +299,16 @@ window.Social = (function () {
       lastSeen[ev.from] = Date.now();
       save(); updateBadge();
       toast('💬 ' + (findUser(ev.from).name || ('@' + ev.from)) + ': ' + text.slice(0, 60), 'success');
+      renderIfOpen();
+    } else if (ev.type === 'track') { // друг скинул трек
+      const slim = ev.track;
+      if (!slim || !slim.id) return;
+      s.chats[ev.from] = s.chats[ev.from] || [];
+      s.chats[ev.from].push({ from: ev.from, kind: 'track', track: slim, ts: ev.ts || Date.now() });
+      if (s.chats[ev.from].length > 300) s.chats[ev.from] = s.chats[ev.from].slice(-300);
+      if (!(_openChat === ev.from && $('#view-people')?.classList.contains('active'))) s.unread[ev.from] = (s.unread[ev.from] || 0) + 1;
+      save(); updateBadge();
+      toast('🎵 ' + (findUser(ev.from).name || ('@' + ev.from)) + ' скинул трек: ' + String(slim.title || '').slice(0, 50), 'success');
       renderIfOpen();
     } else if (ev.type === 'freq') { // заявка в друзья
       if (!s.requestsIn.includes(ev.from) && !s.friends.includes(ev.from)) {
@@ -751,7 +774,7 @@ window.Social = (function () {
       </div>
       <div class="chat-msgs" id="chat-msgs">
         ${msgs.length ? msgs.map(m => `
-          <div class="msg ${m.from === s.handle ? 'me' : 'them'}"><div class="msg-txt">${esc(m.text)}</div><div class="msg-ts">${fmtChatTs(m.ts)}</div></div>`).join('')
+          <div class="msg ${m.from === s.handle ? 'me' : 'them'}">${m.kind === 'track' && m.track ? ('<div class="msg-trk" onclick="playChatTrack(' + m.ts + ')" title="Слушать">' + (() => { chatTrackReg[m.ts] = m.track; return m.track.artwork_url ? '<img src="' + esc(m.track.artwork_url) + '" alt="">' : ''; })() + '<div class="msg-trk-info"><div class="msg-trk-t">' + esc(m.track.title || '') + '</div><div class="msg-trk-a">' + esc((m.track.user && m.track.user.username) || '') + '</div></div>' + '<svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div>') : ('<div class="msg-txt">' + esc(m.text) + '</div>')}<div class="msg-ts">${fmtChatTs(m.ts)}</div></div>`).join('')
         : '<div class="vp-empty">Начни разговор 🌊</div>'}
       </div>
       <div class="chat-input">
@@ -819,12 +842,59 @@ window.Social = (function () {
       refreshDirectory();
     }
     updateBadge();
+    if (S().following) showFollowChip();
   }
 
   function use(a) { adapter = a; } // подключение своего хранилища одной строкой
 
+  /* 🎵 отправить трек другу (контекстное меню) */
+  const chatTrackReg = {}; // ts → track
+  window.playChatTrack = ts => { const t = chatTrackReg[ts]; if (t && window.playTrack) playTrack(t, 'chat'); };
+  function sendTrackTo(h, track) {
+    const s = S();
+    if (!validHandle(h) || h === s.handle || !track) return;
+    if (!s.friends.includes(h)) { toast('Только друзьям — добавь @' + h + ' во вкладке «Люди»', 'error'); return; }
+    const slim = { id: track.id, title: track.title, duration: track.duration,
+      artwork_url: track.artwork_url, permalink_url: track.permalink_url,
+      user: { username: track.user && track.user.username } };
+    s.chats[h] = s.chats[h] || [];
+    s.chats[h].push({ from: s.handle, kind: 'track', track: slim, ts: Date.now() });
+    if (s.chats[h].length > 300) s.chats[h] = s.chats[h].slice(-300);
+    save(); ensureSubs();
+    adapter && adapter.deliver(h, { type: 'track', from: s.handle, ts: Date.now(), track: slim });
+    toast('🎵 Отправлено @' + h, 'success');
+    renderIfOpen();
+  }
+  /* 🎙 следовать за волной друга */
+  function followFriend(h) {
+    const s = S();
+    if (s.following === h) return unfollow();
+    if (!validHandle(h)) return;
+    s.following = h;
+    save();
+    showFollowChip();
+    toast('🎙 Слежу за волной @' + h + ' — треки переключаются сами', 'success');
+  }
+  function unfollow(silent) {
+    const s = S();
+    if (!s.following) return;
+    const who = s.following;
+    s.following = '';
+    save();
+    const chip = document.getElementById('follow-chip');
+    if (chip) chip.remove();
+    if (!silent) toast('Перестал следить за @' + who);
+  }
+  function showFollowChip() {
+    let chip = document.getElementById('follow-chip');
+    if (!chip) { chip = document.createElement('div'); chip.id = 'follow-chip'; document.body.appendChild(chip); }
+    chip.innerHTML = '<span class="fc-dot"></span>🎙 Слежу за @' + escapeHtml(S().following) +
+      ' <button class="fc-x" onclick="Social.unfollow()" title="Перестать">✕</button>';
+  }
+
   return {
-    init, use, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
+    init, use,
+    sendTrackTo, followFriend, unfollow, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
     pickBanner, bannerChosen, removeBanner,

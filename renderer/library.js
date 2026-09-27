@@ -171,8 +171,9 @@ function applySettings() {
 }
 
 function bindLibraryUI() {
-  $$('.accent-chip').forEach(chip => chip.addEventListener('click', async () => {
-    await saveSetting('accent', chip.dataset.accent);
+  $('.accent-chip').forEach(chip => chip.addEventListener('click', async () => {
+    if (state.settings.autoAccent) { await saveSetting('autoAccent', false); const cb = $('#set-autoaccent'); if (cb) cb.checked = false; }
+    if (window.clearAutoAccent) clearAutoAccent(true);
     applySettings();
     toast('🎨 Акцент: ' + chip.dataset.accent, 'success');
   }));
@@ -181,6 +182,15 @@ function bindLibraryUI() {
   dv.addEventListener('input', () => { $('#default-volume-val').textContent = Math.round(dv.value * 100) + '%'; });
   dv.addEventListener('change', () => saveSetting('volume', parseFloat(dv.value)));
 
+  const aa = $('#set-autoaccent');
+  if (aa) {
+    aa.checked = !!state.settings.autoAccent;
+    aa.addEventListener('change', async e => {
+      await saveSetting('autoAccent', e.target.checked);
+      if (e.target.checked) { if (window.scheduleAutoAccent) scheduleAutoAccent(); toast('🎨 Акцент теперь красится из обложки', 'success'); }
+      else if (window.clearAutoAccent) clearAutoAccent(true);
+    });
+  }
   $('#set-notify').addEventListener('change', e => saveSetting('notifyOnLike', e.target.checked));
   $('#set-savewin').addEventListener('change', e => saveSetting('saveWindowState', e.target.checked));
   $('#set-minimize').addEventListener('change', e => saveSetting('startMinimized', e.target.checked));
