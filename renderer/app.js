@@ -398,7 +398,9 @@ function initCursor() {
     const hover = !overText && !!e.target.closest(
       'button,.nav-item,.chip,.filter-btn,.toolbar-btn,.track-card,.queue-item,' +
       '.accent-chip,.progress-wrap,.volume-slider,.modal-close,.artist-row,.queue-btn,' +
-      '.eq-chip,.lyr-cand,.trend-tab,.palette-item,.context-item,.pbtn'
+      '.eq-chip,.lyr-cand,.trend-tab,.palette-item,.context-item,.pbtn,.mood-chip,' +
+      '.seg-btn,.set-navbtn,.ptab,.ach-fbtn,.bit-chip,.md-btn,.vibe-ic,.vibe-thumb,' +
+      '.lyr,.soc-conv,.soc-user,.soc-friend,.hero-chip,.resume-btn,.like-cta,.sc-btn'
     );
     ring.classList.toggle('text', overText);
     dot.classList.toggle('text', overText);

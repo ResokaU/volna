@@ -106,14 +106,21 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px)}
 /* ============ Курсор (сонар) ============ */
 .cursor-ring{position:fixed;width:34px;height:34px;border:1.5px solid rgba(255,255,255,.85);
 border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;
-transform:translate(-50%,-50%);transition:width .2s ease,height .2s ease,opacity .2s,border-color .2s}
+transform:translate(-50%,-50%);transition:width .2s ease,height .2s ease,opacity .2s,border-color .2s;
+/* вращение живёт на элементе ПОСТОЯННО и ставится на паузу вне ховера:
+   hover on/off не рестартует угол — пунктир не дёргается на границах */
+animation:cursorSpin 6s linear infinite;animation-play-state:paused}
 .cursor-dot{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;
 pointer-events:none;z-index:9999;mix-blend-mode:difference;transform:translate(-50%,-50%);
 transition:transform .2s ease,opacity .2s}
 .cursor-ring.hover{width:48px;height:48px;border-style:dashed;border-color:#fff;
-animation:sonarSpin 5s linear infinite}
+animation-play-state:running}
 .cursor-dot.hover{transform:translate(-50%,-50%) scale(2)}
-@keyframes sonarSpin{to{rotate:360deg}}
+/* transform-кейфреймы (не свойство rotate): крутится вокруг своего центра,
+   центрение −50%/−50% включено в оба кадра */
+@keyframes cursorSpin{from{transform:translate(-50%,-50%) rotate(0deg)}
+to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes sonarSpin{to{transform:rotate(360deg)}}
 /* над текстовыми полями — родной каретка-курсор, кастом спит */
 .cursor-ring.text,.cursor-dot.text{opacity:0}
 body.no-cursor .cursor-ring,body.no-cursor .cursor-dot{display:none!important}
