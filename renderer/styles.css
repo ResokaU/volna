@@ -151,7 +151,7 @@ background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 70%
 .tb-icon{width:18px;height:18px;pointer-events:none;
 filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 55%,transparent))}
 .tb-title{flex:1;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--dim);
-letter-spacing:.14em;text-transform:uppercase;
+letter-spacing:.08em;
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .tb-controls{display:flex;height:100%;-webkit-app-region:no-drag}
 .tb-btn{width:46px;height:100%;border:none;background:transparent;color:var(--dim);
@@ -162,9 +162,12 @@ transition:background .15s,color .15s}
 body.no-cursor .tb-btn{cursor:pointer}
 
 /* ============ Main ============ */
+/* ВАЖНО: никаких backdrop-filter/transform/filter на main —
+   иначе position:fixed внутри (вайб, маскот) позиционируется от него,
+   а не от окна, и ломается на колонку */
 main.main{height:100%;overflow-y:auto;overflow-x:hidden;position:relative;
 border-radius:28px;border:1px solid var(--border);border-top-color:rgba(255,255,255,.14);
-background:var(--glass);backdrop-filter:blur(30px) saturate(1.5)}
+background:linear-gradient(170deg,rgba(8,19,36,.93),rgba(3,9,20,.95))}
 .content{padding:44px 40px 210px;max-width:min(1420px,100%);margin:0 auto}
 .view{display:none}
 .view.active{display:block;animation:viewIn .4s cubic-bezier(.2,.8,.2,1)}
@@ -1096,6 +1099,8 @@ body.vibe-on .titlebar{display:none}
 body.vibe-on .sidebar{display:none}
 body.vibe-on .grain{display:none}
 body.vibe-on{overflow:hidden}
+body.vibe-on .app{grid-template-columns:1fr;padding:0} /* сайдбар скрыт — не оставлять пустую колонку */
+body.vibe-on main.main{background:transparent;border:none;border-radius:0} /* вайб — edge-to-edge */
 body.vibe-on #player{display:none}
 .vibe-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;
 animation:visKen 30s ease-in-out infinite alternate;
