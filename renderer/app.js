@@ -574,6 +574,12 @@ function plural(n, one, few, many) {
   return many;
 }
 
+/* обложка в герое главной: клик — играть */
+function heroPlay() {
+  const t = state.currentTrack || (state.lastTrack && state.lastTrack.track) || (state.homeContinue && state.homeContinue[0]);
+  if (t) playTrack(t, 'home');
+}
+
 /* ---------- Главная: приветствие, продолжить, популярное ---------- */
 function renderHome() {
   const h = new Date().getHours();
@@ -595,6 +601,16 @@ function renderHome() {
     const img = src ? artwork(src) : '';
     hb.style.backgroundImage = img ? `url('${img}')` : '';
     hb.style.opacity = img ? '' : '0';
+  }
+  // большая обложка справа в герое — заполняет пустую половину экрана
+  const ha = $('#hero-art');
+  if (ha) {
+    const src = state.currentTrack || (state.lastTrack && state.lastTrack.track) || (state.homeContinue && state.homeContinue[0]) || null;
+    const img = src ? artwork(src) : '';
+    ha.innerHTML = img
+      ? `<img src="${escapeHtml(img)}" alt=""><div class="hero-art-play"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div>`
+      : '';
+    ha.classList.toggle('on', !!img);
   }
   const cont = state.history.filter(x => x.id !== state.currentTrack?.id).slice(0, 8);
   state.homeContinue = cont; // плеер играет строго по этому списку

@@ -272,16 +272,19 @@
       <section class="view" id="view-home">
         <div class="home-hero">
           <div class="home-hero-bg" id="home-hero-bg"></div>
-          <div class="home-greet grad-anim" id="home-greeting">Привет</div>
-          <div class="home-sub" id="home-sub"></div>
-          <div class="hero-stats" id="hero-stats"></div>
-          <div class="home-actions">
-            <button class="toolbar-btn primary" onclick="likesRadio()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна по лайкам</button>
-            <button class="toolbar-btn" onclick="feelingLucky()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-dice"/></svg>Мне повезёт</button>
-            <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Играть лайки</button>
-            <button class="toolbar-btn" onclick="switchView('discover')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Поиск</button>
+          <div class="hero-left">
+            <div class="home-greet grad-anim" id="home-greeting">Привет</div>
+            <div class="home-sub" id="home-sub"></div>
+            <div class="hero-stats" id="hero-stats"></div>
+            <div class="home-actions">
+              <button class="toolbar-btn primary" onclick="likesRadio()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-wave"/></svg>Волна по лайкам</button>
+              <button class="toolbar-btn" onclick="feelingLucky()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-dice"/></svg>Мне повезёт</button>
+              <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Играть лайки</button>
+              <button class="toolbar-btn" onclick="switchView('discover')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Поиск</button>
+            </div>
+            <div id="home-resume"></div>
           </div>
-          <div id="home-resume"></div>
+          <div class="hero-art" id="hero-art" onclick="heroPlay()" title="Играть"></div>
         </div>
         <div class="section-head"><div><h2 class="section-title">Из твоих лайков</h2><div class="section-sub">Свежее из ❤</div></div><button class="toolbar-btn" onclick="switchView('favorites')">Открыть лайки</button></div>
         <div class="tracks shelf" id="home-likes"></div>

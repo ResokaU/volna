@@ -273,6 +273,7 @@ window.Ach = (function () {
       <div class="ach-pop-txt"><div class="ach-pop-cap">Ачивка открыта · ${R.label}</div>
       <div class="ach-pop-name">${escapeHtml(a.name)}</div>
       <div class="ach-pop-xp">+${R.xp} XP</div></div>`;
+    while (box.children.length >= 4) box.firstChild.remove();
     box.appendChild(el);
     setTimeout(() => el.classList.add('out'), 4200);
     setTimeout(() => el.remove(), 4900);
