@@ -92,6 +92,7 @@ async function playMood(id) {
   $('#search-input').value = m.q;
   await doSearch(m.q);
   if (state.visibleTracks.length) playTrack(state.visibleTracks[0], 'search');
+  else toast('Волна не собралась — попробуй ещё раз', 'error');
 }
 
 /* ---------- утилиты ---------- */
@@ -591,8 +592,12 @@ function bindChrome() {
 /* 🪄 брось ссылку SoundCloud в любое место окна — трек/плейлист/артист откроется */
 function bindGlobalDrop() {
   // без preventDefault на dragover браузер откроет брошенный файл вместо нас
-  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('dragover', e => {
+    if (e.target.closest?.('input,textarea')) return; // в полях ввода — обычный перетаскиваемый текст
+    e.preventDefault();
+  });
   window.addEventListener('drop', e => {
+    if (e.target.closest?.('input,textarea')) return;
     e.preventDefault();
     if (typeof SC_URL_RE === 'undefined') return;
     const dt = e.dataTransfer;
