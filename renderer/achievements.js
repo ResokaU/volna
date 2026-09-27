@@ -183,9 +183,10 @@ window.Ach = (function () {
   function artistSVG(name) {
     const grad = 'ag' + (hashStr(name) % 12);
     const letter = escapeHtml((name.trim()[0] || '?').toUpperCase());
+    const d = MOTIFS[Object.keys(MOTIFS)[hashStr(name + '#m') % Object.keys(MOTIFS).length]];
     return `<svg class="ach-gen" viewBox="0 0 48 48" aria-hidden="true">
       <rect x="2" y="2" width="44" height="44" rx="13" fill="url(#${grad})"/>
-      ${motifSVG(name, 26, 2)}
+      <path d="${d}" transform="translate(24 24) scale(1.1) translate(-24 -24)" fill="rgba(255,255,255,.2)" stroke="none"/>
       <text x="24" y="32" text-anchor="middle" font-family="inherit" font-size="23" font-weight="900" fill="#fff">${letter}</text>
     </svg>`;
   }
