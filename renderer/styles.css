@@ -74,19 +74,32 @@ input,textarea{-webkit-user-select:text;user-select:text}
   -webkit-user-select:text;user-select:text;cursor:none}
 button:focus-visible,.nav-item:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
 
-/* скроллбары — тонкие «пузырьки» глубины */
-::-webkit-scrollbar{width:9px;height:9px}
+/* ============ Скроллбары v2: сонар-капсулы ============ */
+/* тонкая пилюля с прозрачной рамкой (padding-box) — толще на ховере и при drag,
+   без сдвига контента; акцент темы */
+::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(148,197,255,.18);border-radius:99px;
-  border:2.5px solid transparent;background-clip:padding-box}
-::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--accent) 55%,rgba(148,197,255,.2));
-  border:2.5px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb{border-radius:99px;border:3.5px solid transparent;
+  background-clip:padding-box;background-color:rgba(148,197,255,.22)}
+::-webkit-scrollbar-thumb:hover{border-width:2.5px;
+  background-color:color-mix(in srgb,var(--accent) 60%,rgba(148,197,255,.3))}
+::-webkit-scrollbar-thumb:active{border-width:2px;background-color:var(--acid)}
 ::-webkit-scrollbar-corner{background:transparent}
 ::-webkit-scrollbar-button{display:none;height:0;width:0}
-.main::-webkit-scrollbar{width:8px}
-.main::-webkit-scrollbar-track{background:transparent}
-.main::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 38%,rgba(148,197,255,.08));border-radius:99px}
-.main::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--accent) 60%,rgba(148,197,255,.1))}
+/* главный скролл: спит, пока курсор не над панелью, потом подсвечивается акцентом */
+main.main::-webkit-scrollbar{width:10px}
+main.main::-webkit-scrollbar-track{background:transparent}
+main.main::-webkit-scrollbar-thumb{background-color:rgba(148,197,255,.10);
+  border:3.5px solid transparent;background-clip:padding-box;border-radius:99px}
+main.main:hover::-webkit-scrollbar-thumb{background-color:color-mix(in srgb,var(--accent) 42%,rgba(148,197,255,.18))}
+main.main:hover::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--accent) 70%,transparent)}
+main.main:hover::-webkit-scrollbar-thumb:active{background-color:var(--acid)}
+main.main:hover::-webkit-scrollbar-track{background:rgba(2,8,18,.35);border-radius:99px;
+  border:2.5px solid transparent;background-clip:padding-box}
+/* модалки/палитра/чат/ачивки: та же подсветка при наведении на панель */
+.modal-content:hover::-webkit-scrollbar-thumb,.palette-list:hover::-webkit-scrollbar-thumb,
+.chat-msgs:hover::-webkit-scrollbar-thumb,.ach-body:hover::-webkit-scrollbar-thumb{
+  background-color:color-mix(in srgb,var(--accent) 45%,rgba(148,197,255,.2))}
 
 /* ============ Фон: глубина, световые шахты, зерно ============ */
 .aurora{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
@@ -189,8 +202,11 @@ border:1px solid var(--border);border-top-color:rgba(255,255,255,.16);
 padding:22px 14px 18px;display:flex;flex-direction:column}
 .sidebar::before{content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
 background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none}
-.sidebar::-webkit-scrollbar{width:6px}
-.sidebar::-webkit-scrollbar-thumb{background:var(--hover);border-radius:3px}
+.sidebar::-webkit-scrollbar{width:8px}
+.sidebar::-webkit-scrollbar-thumb{border-radius:99px;border:3px solid transparent;
+  background-clip:padding-box;background-color:transparent}
+.sidebar:hover::-webkit-scrollbar-thumb{background-color:rgba(148,197,255,.20)}
+.sidebar:hover::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 .logo-block{position:relative;padding:0 12px 20px;margin-bottom:14px;
 display:flex;align-items:center;gap:13px}
 /* волнистая линия под лого — фирменный разделитель */
@@ -363,8 +379,12 @@ filter:drop-shadow(0 0 14px color-mix(in srgb,var(--acid) 45%,transparent))}
 .tracks.shelf{display:flex;overflow-x:auto;padding:4px 4px 16px;scroll-snap-type:none;
 scrollbar-width:thin}
 .tracks.shelf .track-card{width:212px;flex-shrink:0;scroll-snap-align:start}
-.tracks.shelf::-webkit-scrollbar{height:8px}
-.tracks.shelf::-webkit-scrollbar-thumb{background:var(--hover);border-radius:99px}
+.tracks.shelf::-webkit-scrollbar{height:10px}
+.tracks.shelf::-webkit-scrollbar-track{background:transparent}
+.tracks.shelf::-webkit-scrollbar-thumb{border-radius:99px;border:3.5px solid transparent;
+  background-clip:padding-box;background-color:rgba(148,197,255,.12)}
+.tracks.shelf:hover::-webkit-scrollbar-thumb{background-color:color-mix(in srgb,var(--accent) 45%,rgba(148,197,255,.2))}
+.tracks.shelf:hover::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--accent) 70%,transparent)}
 .track-card{position:relative;padding:12px;border-radius:24px;overflow:hidden;cursor:none;
 background:linear-gradient(180deg,rgba(148,197,255,.065),rgba(148,197,255,.02));
 border:1px solid rgba(148,197,255,.10);
@@ -644,8 +664,7 @@ animation:modalIn .3s cubic-bezier(.2,.8,.2,1)}
 .modal-content::before{content:'';position:absolute;top:0;left:8%;right:8%;height:1px;
 background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);pointer-events:none}
 @keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
-.modal-content::-webkit-scrollbar{width:8px}
-.modal-content::-webkit-scrollbar-thumb{background:var(--hover);border-radius:99px}
+.modal-content::-webkit-scrollbar{width:10px}
 .modal h2{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;
 background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .modal-close{position:absolute;top:20px;right:20px;width:34px;height:34px;
