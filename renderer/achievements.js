@@ -416,9 +416,5 @@ window.Ach = (function () {
       + '</div>';
   }
 
-  function openVoAch() {
-    switchView('vprofile'); // ачивки живут в профиле Волна ID
-  }
-
-  return { check, event, openVoAch, renderInto, catalog, summary, setFilter, levelInfo, toggleExpand };
+  return { check, event, renderInto, catalog, summary, setFilter, levelInfo, toggleExpand };
 })();

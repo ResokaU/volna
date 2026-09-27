@@ -103,14 +103,6 @@ window.Profiles = (function () {
     });
   }
 
-  async function renameActive() {
-    inlineRename('#acc-name', activeName(), async name => {
-      const id = cache.active;
-      await ipc.invoke('profiles:rename', { id, name });
-      await refresh();
-    });
-  }
-
   function currentName(id) {
     const p = cache.profiles.find(x => x.id === id);
     return p ? p.name : 'Профиль';
@@ -244,7 +236,7 @@ window.Profiles = (function () {
   }
 
   return {
-    init, refresh, switchTo, create, rename, renameActive, remove, persist, scheduleCloudPush,
+    init, refresh, switchTo, create, rename, remove, persist, scheduleCloudPush,
     pickAvatar, pickAvatarActive, avatarChosen, renderView,
     ghConnect, cloudPush, cloudPull, renderCloud,
     get active() { return cache.active; },

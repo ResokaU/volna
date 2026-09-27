@@ -319,10 +319,10 @@ background:linear-gradient(180deg,#fff 0%,#8a8694 130%);
 .stat-label{font-size:11px;color:var(--dim);margin-top:6px;text-transform:uppercase;letter-spacing:.14em}
 
 /* ============ Heatmap ============ */
-.heatmap{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);gap:3px;
+.heatmap{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;grid-template-rows:repeat(7,14px);gap:4px;
 padding:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
-border-radius:20px;width:fit-content;max-width:100%;overflow-x:auto}
-.hm-cell{width:13px;height:13px;border-radius:3px;background:rgba(255,255,255,.05)}
+border-radius:20px;width:100%;max-width:100%}
+.hm-cell{width:100%;height:14px;border-radius:4px;background:rgba(255,255,255,.05)}
 .hm-cell.lvl1{background:color-mix(in srgb,var(--acid) 25%,transparent)}
 .hm-cell.lvl2{background:color-mix(in srgb,var(--acid) 50%,transparent)}
 .hm-cell.lvl3{background:color-mix(in srgb,var(--acid) 75%,transparent)}
@@ -583,10 +583,6 @@ background:rgba(255,255,255,.03);border:1px solid var(--border)}
 .auth-user strong{font-size:14px}
 
 /* ============ Плашка аккаунта в сайдбаре ============ */
-.account-card{margin:0 12px 16px;padding:14px;border-radius:16px;
-background:rgba(255,255,255,.04);border:1px solid var(--border)}
-.ac-label{font-size:10px;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;
-font-weight:700;margin-bottom:10px}
 .ac-user{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .ac-user img{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--hover)}
 .ac-ava-ph{width:40px;height:40px;border-radius:50%;background:var(--grad);flex-shrink:0;
@@ -720,12 +716,6 @@ background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#f
 .wr-arrow.left{left:28px}.wr-arrow.right{right:28px}
 
 /* ============ v7.1: 👤 Профили ============ */
-.account-profile{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;
-background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);cursor:none;transition:.15s;margin-bottom:10px}
-.account-profile:hover{background:rgba(255,255,255,.1);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
-.ap-info{flex:1;min-width:0}
-.ap-name{font-weight:800;color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ap-sub{font-size:10px;color:#9a9ab0}
 .profile-ava{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
 font-weight:900;color:#fff;font-size:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));
 background-size:cover;background-position:center;overflow:hidden}
@@ -804,7 +794,6 @@ background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
 body.cursor-idle .cursor-ring,body.cursor-idle .cursor-dot{opacity:0 !important}
 
 /* ============ v7.3.2: 👤 меню аккаунта как топбар SC ============ */
-.account-card{position:relative}
 .account-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;z-index:80;
 background:linear-gradient(180deg,rgba(26,26,38,.97),rgba(14,14,22,.97));
 backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:16px;padding:6px;
@@ -835,7 +824,6 @@ body.amb-on .b3{background:color-mix(in srgb,var(--amb) 45%,var(--accent3))}
 body.amb-on .sidebar{border-right-color:color-mix(in srgb,var(--amb) 16%,transparent)}
 body.amb-on .nav-item.active{background:color-mix(in srgb,var(--amb) 14%,rgba(255,255,255,.05));
 border-color:color-mix(in srgb,var(--amb) 22%,transparent)}
-body.amb-on .account-profile{border-color:color-mix(in srgb,var(--amb) 26%,transparent)}
 body.amb-on .pbtn.main{box-shadow:0 8px 26px -8px var(--amb-soft)}
 body.amb-on .toast.success{border-color:color-mix(in srgb,var(--amb) 45%,transparent)}
 
