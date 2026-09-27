@@ -480,6 +480,7 @@ function bindPalette() {
 }
 
 async function renderPalette(q) {
+  const gen = (renderPalette._gen = (renderPalette._gen || 0) + 1); // гонка: печатает быстрее, чем отвечает сеть
   const cmds = PALETTE_CMDS
     .filter(c => !q || c.t.toLowerCase().includes(q.toLowerCase()))
     .map(c => ({ icon: 'i-zap', t: c.t, sub: c.k, run: c.run }));
@@ -504,11 +505,13 @@ async function renderPalette(q) {
     try {
       const cid = await ensureClientId();
       const data = await scJson(`${SC_API2}/search/tracks?q=${encodeURIComponent(q)}&client_id=${cid}&limit=8`);
+      if (gen !== renderPalette._gen) return; // уже печатает дальше — не перетирать свежий список
       tracks = (Array.isArray(data?.collection) ? data.collection : [])
         .map(normalizeTrack).filter(Boolean)
         .map(t => { rememberTrack(t); return { icon: 'i-note', t: t.title, sub: t.user?.username, run: () => playTrack(t) }; });
     } catch (_) {}
   }
+  if (gen !== renderPalette._gen) return;
   paletteItems = [...cmds, ...local, ...tracks];
   paletteIdx = 0;
   paintPalette();

@@ -613,7 +613,9 @@ async function ensureVisual(t) {
   if (q0 && q0.length > 3) queries.push(q0);
   queries.push(theme);
   for (const q of queries) {
-    const imgs = await ipc.invoke('img:query', { source, q, seed: String(h) }).catch(() => null);
+    const imgs = ipc
+      ? await ipc.invoke('img:query', { source, q, seed: String(h) }).catch(() => null)
+      : null; // без ipc (dev в браузере) — просто остаёмся на градиенте
     if (imgs && imgs.length) {
       state.visual = { trackId: t.id, img: imgs[h % imgs.length].full };
       const bg = $('#vibe-bg');

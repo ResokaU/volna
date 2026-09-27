@@ -139,7 +139,7 @@ to{transform:translate(-50%,-50%) rotate(360deg)}}
 body.no-cursor .cursor-ring,body.no-cursor .cursor-dot{display:none!important}
 body.no-cursor,body.no-cursor *{cursor:auto!important}
 input,textarea{cursor:text!important}
-select{cursor:pointer!important}
+select{cursor:none!important}
 /* бездействие мыши — курсор тает */
 .cursor-ring,.cursor-dot{transition:opacity .45s ease}
 body.cursor-idle .cursor-ring,body.cursor-idle .cursor-dot{opacity:0 !important}
@@ -179,7 +179,7 @@ font-size:13px;font-family:inherit;cursor:none;display:flex;align-items:center;j
 transition:background .15s,color .15s}
 .tb-btn:hover{background:rgba(148,197,255,.12);color:var(--ink)}
 .tb-close:hover{background:var(--danger);color:#fff}
-body.no-cursor .tb-btn{cursor:pointer}
+body.no-cursor .tb-btn{cursor:none}
 
 /* ============ Main ============ */
 /* ВАЖНО: никаких backdrop-filter/transform/filter на main —
@@ -222,7 +222,7 @@ text-transform:uppercase;margin-top:4px}
 .nav-group{padding:0 4px;margin-bottom:16px}
 .nav-label{display:flex;align-items:center;gap:9px;
 font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.24em;text-transform:uppercase;
-padding:8px 12px;font-weight:600;cursor:pointer;-webkit-user-select:none;user-select:none}
+padding:8px 12px;font-weight:600;cursor:none;-webkit-user-select:none;user-select:none}
 .nav-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
 .nav-item{position:relative;display:flex;align-items:center;gap:12px;padding:10.5px 12px;border-radius:14px;
 color:var(--dim);cursor:none;transition:.2s;font-size:14px;font-weight:500;
@@ -764,7 +764,7 @@ outline:none;cursor:text;max-width:520px;transition:border-color .2s}
 #view-settings>.section-head{grid-column:1/-1}
 .set-nav{grid-column:1;display:flex;flex-direction:column;gap:6px;position:sticky;top:12px}
 .set-navbtn{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:14px;border:1px solid transparent;
-background:transparent;color:#9db1d0;font-size:13px;font-weight:800;cursor:pointer;transition:.15s;font-family:inherit;text-align:left}
+background:transparent;color:#9db1d0;font-size:13px;font-weight:800;cursor:none;transition:.15s;font-family:inherit;text-align:left}
 .set-navbtn .ic{width:15px;height:15px}
 .set-navbtn:hover{background:rgba(148,197,255,.07);color:var(--ink)}
 .set-navbtn.on{background:color-mix(in srgb,var(--accent) 18%,transparent);
@@ -843,7 +843,7 @@ background:linear-gradient(90deg,var(--card),var(--hover),var(--card));
 background-size:200% 100%;animation:shimmer 1.4s infinite}
 .lyr-warn{font-size:12px;color:var(--dim);text-align:center;margin-bottom:8px}
 .lyr-warn button{background:none;border:none;color:var(--acid);font-family:inherit;
-font-size:12px;cursor:pointer;text-decoration:underline;padding:0}
+font-size:12px;cursor:none;text-decoration:underline;padding:0}
 .lyr-manual{display:flex;gap:8px;margin-top:14px;justify-content:center}
 .lyr-manual input{background:rgba(148,197,255,.08);border:1px solid var(--border2);
 border-radius:12px;padding:9px 14px;color:var(--text);font-family:inherit;font-size:13px;
@@ -974,7 +974,7 @@ background:repeat-x center/120px 26px bottom url("data:image/svg+xml,%3Csvg xmln
 pointer-events:none}
 .hero-left{position:relative;z-index:1;min-width:0}
 .hero-art{position:relative;z-index:1;width:230px;height:230px;border-radius:26px;overflow:hidden;
-display:none;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1);
+display:none;cursor:none;transition:transform .3s cubic-bezier(.2,.8,.2,1);
 box-shadow:0 26px 60px -18px color-mix(in srgb,var(--accent) 60%,transparent),0 0 0 1px rgba(255,255,255,.10)}
 .hero-art.on{display:block;animation:cardIn .5s ease}
 .hero-art:hover{transform:scale(1.035) rotate(-1deg)}
@@ -1278,7 +1278,7 @@ background:color-mix(in srgb,var(--accent) 10%,rgba(148,197,255,.05));border:1px
 .msg-room-code{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);letter-spacing:.12em;font-variant-numeric:tabular-nums}
 .msg-room-go{font-size:11px;font-weight:800;color:var(--acid);flex-shrink:0}
 .fw-room{margin-left:8px;padding:3px 9px;border-radius:99px;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
-background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--text);font-size:10px;font-weight:800;cursor:pointer;font-family:inherit}
+background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--text);font-size:10px;font-weight:800;cursor:none;font-family:inherit}
 .fw-room:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}
 /* чип следования за волной друга */
 #follow-chip{position:fixed;left:18px;bottom:110px;z-index:940;display:flex;align-items:center;gap:9px;
@@ -1286,7 +1286,7 @@ padding:9px 12px 9px 14px;border-radius:99px;background:rgba(3,10,22,.94);backdr
 border:1px solid color-mix(in srgb,var(--acid) 45%,transparent);color:var(--text);font-size:12px;font-weight:800;
 box-shadow:0 8px 30px -8px color-mix(in srgb,var(--acid) 50%,transparent);animation:ach-pop-in .4s ease}
 .fc-dot{width:8px;height:8px;border-radius:50%;background:var(--acid);box-shadow:0 0 8px var(--acid);animation:vpPulse 1.4s ease-in-out infinite}
-.fc-x{border:none;background:rgba(255,255,255,.08);color:#ddd;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:10px;font-family:inherit}
+.fc-x{border:none;background:rgba(255,255,255,.08);color:#ddd;width:20px;height:20px;border-radius:50%;cursor:none;font-size:10px;font-family:inherit}
 .fc-x:hover{background:rgba(255,255,255,.18)}
 
 /* ============ Комнаты-волны ============ */
@@ -1399,7 +1399,7 @@ background:rgba(148,197,255,.05);border:1px solid rgba(148,197,255,.11)}
 .people-tabs{display:flex;gap:8px;flex-wrap:wrap}
 .ptab{display:inline-flex;align-items:center;gap:7px;
 padding:8px 16px;border-radius:99px;border:1px solid rgba(148,197,255,.12);background:rgba(148,197,255,.04);
-color:#9db1d0;font-size:12.5px;font-weight:800;cursor:pointer;transition:.15s;font-family:inherit}
+color:#9db1d0;font-size:12.5px;font-weight:800;cursor:none;transition:.15s;font-family:inherit}
 .ptab .ic{width:14px;height:14px;flex-shrink:0}
 .ptab:hover{border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:var(--ink)}
 .ptab.on{background:color-mix(in srgb,var(--accent) 18%,transparent);
@@ -1586,7 +1586,7 @@ box-shadow:0 6px 22px -8px color-mix(in srgb,var(--accent) 70%,transparent)}
 .ach-filters{display:flex;gap:8px;margin:2px 0 6px;flex-wrap:wrap}
 .ach-fbtn{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:99px;
 border:1px solid rgba(148,197,255,.12);background:rgba(148,197,255,.04);color:#9db1d0;
-font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;line-height:1}
+font-size:11.5px;font-weight:700;cursor:none;transition:.15s;font-family:inherit;line-height:1}
 .ach-fbtn .ic{width:13px;height:13px;flex-shrink:0}
 .ach-fbtn:hover{border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:var(--text)}
 .ach-fbtn.on{background:color-mix(in srgb,var(--accent) 18%,transparent);
