@@ -1018,7 +1018,7 @@ accent-color:var(--acid);cursor:none}
 
 
 /* ============ v3.2: Главная ============ */
-.home-hero{padding:18px 0 8px}
+.home-hero{padding:26px 34px 22px}
 .home-greet{font-family:'Unbounded','Golos Text',sans-serif;font-size:clamp(30px,4.4vw,52px);
 font-weight:900;letter-spacing:-.02em;line-height:1.05;
 background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -1350,8 +1350,8 @@ color:#b9b9cc;font-size:12.5px;font-weight:800;cursor:pointer;transition:.15s;fo
 border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--text)}
 /* --- карточка профиля --- */
 .vp-card{position:relative;overflow:hidden;border-radius:26px;background:rgba(255,255,255,.025);max-width:1180px;margin:0 auto;box-shadow:0 30px 80px -30px rgba(0,0,0,.6);
-border:1px solid rgba(255,255,255,.07);padding-bottom:22px}
-.vp-banner{position:relative;overflow:hidden;height:170px;background:
+border:1px solid rgba(255,255,255,.07);padding:0 28px 24px}
+.vp-banner{position:relative;overflow:hidden;height:170px;margin:0 -28px;border-radius:25px 25px 0 0;background:
 radial-gradient(120% 180% at 15% 0%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 60%),
 radial-gradient(120% 180% at 85% 10%,color-mix(in srgb,var(--accent2) 45%,transparent),transparent 55%),
 linear-gradient(120deg,rgba(255,255,255,.04),transparent 55%)}
@@ -1361,7 +1361,7 @@ object-fit:cover;filter:blur(26px) saturate(1.25);opacity:.5}
 background:linear-gradient(180deg,rgba(10,10,18,.18) 0%,rgba(10,10,18,.5) 42%,rgba(10,10,18,.9) 72%,rgba(10,10,18,.98) 100%)}
 .vp-banner::after{content:'';position:absolute;inset:0;
 background:repeating-linear-gradient(-8deg,transparent 0 26px,rgba(255,255,255,.025) 26px 27px)}
-.vp-head{display:grid;grid-template-columns:auto 1fr auto;gap:0 18px;align-items:start;padding:0 28px;margin-top:-46px;position:relative;z-index:1}
+.vp-head{display:grid;grid-template-columns:auto 1fr auto;gap:0 18px;align-items:start;margin-top:-46px;position:relative;z-index:1}
 .vp-ava{grid-row:1;width:104px;height:104px;border-radius:50%;background:var(--grad);flex-shrink:0;
 display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;
 border:4px solid rgba(10,10,18,.9);box-shadow:0 10px 34px -10px color-mix(in srgb,var(--accent) 75%,transparent);overflow:hidden}
@@ -1378,16 +1378,16 @@ background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit
 padding:5px 12px;border-radius:99px;background:color-mix(in srgb,var(--accent) 14%,transparent);
 border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
 .vp-actions{grid-column:3;margin-top:64px;display:flex;gap:8px;align-items:flex-start}
-.vp-edit{display:flex;flex-direction:column;gap:8px;margin:14px 28px 0;padding:14px;border-radius:16px;
+.vp-edit{display:flex;flex-direction:column;gap:8px;margin:14px 0 0;padding:14px;border-radius:16px;
 background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
 .vp-edit input,.vp-edit textarea{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;
 padding:9px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;resize:vertical}
 .vp-edit input:focus,.vp-edit textarea:focus{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 .vp-edit .md-btn{align-self:flex-start}
-.vp-stats{display:flex;gap:10px;flex-wrap:wrap;padding:18px 28px 0}
+.vp-stats{display:flex;gap:10px;flex-wrap:wrap;padding:18px 0 0}
 .vp-stats .hero-chip{font-size:13px;padding:9px 16px}
 .vp-stats .hero-chip .ic{width:15px;height:15px}
-.vp-friends{display:flex;gap:14px;flex-wrap:wrap;padding:4px 28px 0}
+.vp-friends{display:flex;gap:14px;flex-wrap:wrap;padding:4px 0 0}
 .vp-friends .vp-empty{width:100%;box-sizing:border-box}
 .soc-friend{display:flex;flex-direction:column;align-items:center;gap:6px;width:76px;cursor:pointer;position:relative}
 .soc-friend:hover .soc-fname{color:var(--text)}
@@ -1474,7 +1474,7 @@ padding:12px 18px;color:var(--text);font-family:inherit;font-size:13.5px;outline
 .vp-recent .track-card{width:148px;padding:10px;border-radius:18px}
 .vp-recent .track-card .track-art{border-radius:12px}
 /* ачивки в профиле: недавние + раскрытие */
-#vp-ach{padding:6px 28px 0}
+#vp-ach{padding:6px 0 0}
 .ach-minirow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .ach-mini{--rc:var(--acid);display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 7px;border-radius:99px;
 background:color-mix(in srgb,var(--rc) 8%,rgba(255,255,255,.03));
