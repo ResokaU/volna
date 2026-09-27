@@ -352,6 +352,28 @@ box-shadow:0 8px 30px -8px color-mix(in srgb,var(--acid) 50%,transparent);animat
 .fc-x{border:none;background:rgba(255,255,255,.08);color:#ddd;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:10px;font-family:inherit}
 .fc-x:hover{background:rgba(255,255,255,.18)}
 
+/* v1.3: быстрые статусы + закреп + соц-ссылки */
+.vp-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.vp-qchip{padding:5px 12px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);
+color:#b9b9cc;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit}
+.vp-qchip:hover{border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:var(--text)}
+.vp-qchip.on{background:color-mix(in srgb,var(--accent) 20%,transparent);border-color:color-mix(in srgb,var(--accent) 60%,transparent);color:var(--text)}
+.vp-pinned{display:flex;align-items:center;gap:14px;margin:16px 0 4px;padding:12px 14px;border-radius:18px;cursor:pointer;transition:.2s;
+background:color-mix(in srgb,var(--accent) 8%,rgba(255,255,255,.03));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.vp-pinned:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 60%,transparent)}
+.vp-pinned-art{width:56px;height:56px;border-radius:14px;overflow:hidden;flex-shrink:0;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff}
+.vp-pinned-art img{width:100%;height:100%;object-fit:cover}
+.vp-pinned-art .ic{width:24px;height:24px}
+.vp-pinned-info{flex:1;min-width:0}
+.vp-pinned-cap{font-size:9.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--acid);display:flex;align-items:center;gap:5px}
+.vp-pinned-cap .ic{width:11px;height:11px}
+.vp-pinned-t{font-size:14px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vp-pinned-a{font-size:11px;color:#9a9ab0}
+.vp-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.vp-slink{padding:7px 14px;border-radius:99px;border:1px solid color-mix(in srgb,var(--acid) 35%,transparent);
+background:color-mix(in srgb,var(--acid) 8%,transparent);color:var(--acid);font-size:11.5px;font-weight:800;cursor:pointer;transition:.15s;font-family:inherit}
+.vp-slink:hover{background:color-mix(in srgb,var(--acid) 16%,transparent);border-color:color-mix(in srgb,var(--acid) 60%,transparent)}
+
 /* ============ Heatmap ============ */
 .heatmap{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;grid-template-rows:repeat(7,14px);gap:4px;
 padding:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);

@@ -176,6 +176,7 @@ function showTrackMenu(e, trackId) {
     <div class="context-item" data-act="like"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${isFav ? 'Убрать из лайков' : 'В лайки'}</div>
     <div class="context-item" data-act="playlist"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>В плейлист…</div>
     <div class="context-item" data-act="friend"><svg class="ic" viewBox="0 0 24 24"><use href="#i-send"/></svg>Отправить другу…</div>
+    <div class="context-item" data-act="pin"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>📌 Закрепить на профиле</div>
     <div class="context-sep"></div>
     <div class="context-item" data-act="copy"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Копировать ссылку</div>
     <div class="context-item" data-act="share">📸 Карточка трека</div>
@@ -189,6 +190,7 @@ function showTrackMenu(e, trackId) {
 }
 function hideContextMenu() { $('#context-menu')?.classList.remove('show'); }
 
+window.__pinById = id => { const t = state.trackIndex.get(Number(id)); if (t && window.Social) Social.pinTrack(t); };
 function showFriendPicker(trackId, e) {
   const s = window.Social ? Social.summary() : null;
   if (!s || !s.handle) { toast('Сначала заведи Волна ID — вкладка «Мой профиль»', 'error'); return; }
@@ -288,6 +290,7 @@ function bindContextMenu() {
       case 'like': toggleLike(track); break;
       case 'playlist': showPlaylistPicker(track.id); break;
       case 'friend': showFriendPicker(track.id, e); break;
+      case 'pin': window.__pinById(track.id); break;
       case 'copy':
         navigator.clipboard?.writeText(track.permalink_url || '')
           .then(() => toast('Ссылка скопирована', 'success'))

@@ -351,6 +351,7 @@ window.Social = (function () {
   /* слушать то, что играет у друга — в один клик */
   function playFriend(h) {
     const np = nowNp[h];
+    if (c.pinned && c.pinned.track) chatTrackReg['up' + h] = c.pinned.track;
     if (!np || !np.track) { toast('У ' + h + ' сейчас не играет'); return; }
     playTrack(np.track, 'friend');
     toast('🌊 Слушаем вместе с @' + h + ': ' + np.t, 'success');
@@ -606,6 +607,7 @@ window.Social = (function () {
             ${t ? `<div class="vp-listening"><svg class="ic" viewBox="0 0 24 24"><use href="#i-headphones"/></svg>Слушает: ${esc(t.title)}</div>` : ''}
             ${s.bio ? `<div class="vp-bio">${esc(s.bio)}</div>` : ''}
             ${s.status ? `<div class="vp-status"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>${esc(s.status)}</div>` : ''}
+            <div class="vp-quick">${QUICK_STATUS.map(q => `<button class="vp-qchip${s.status === q ? ' on' : ''}" onclick="Social.quickStatus('${esc(q)}')">${esc(q)}</button>`).join('')}</div>
           </div>
           <div class="vp-actions">
             <button class="md-btn" onclick="Social.editToggle()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-edit"/></svg>Редактировать</button>
@@ -616,9 +618,16 @@ window.Social = (function () {
           <input type="text" id="vp-name" maxlength="32" placeholder="Имя" value="${esc(s.name || myName())}">
           <input type="text" id="vp-status" maxlength="40" placeholder="Статус — что сейчас?" value="${esc(s.status)}">
           <textarea id="vp-bio" maxlength="160" rows="2" placeholder="О себе (до 160 символов)">${esc(s.bio)}</textarea>
+          <input type="text" id="vp-link0" maxlength="120" placeholder="Ссылка 1 — например Telegram" value="${esc((s.links || [])[0] ? s.links[0].url : '')}">
+          <input type="text" id="vp-link1" maxlength="120" placeholder="Ссылка 2 — например YouTube" value="${esc((s.links || [])[1] ? s.links[1].url : '')}">
           <input type="password" id="vp-pass" maxlength="64" placeholder="Новый пароль (необязательно, от 4 символов)">
           <button class="md-btn accent" onclick="Social.saveEdit()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg>Сохранить</button>
         </div>
+        ${s.pinned ? `<div class="vp-pinned" onclick="playChatTrack('pin')" title="Слушать закреп">
+            <div class="vp-pinned-art">${s.pinned.art ? `<img src="${esc(s.pinned.art)}" alt="">` : '<svg class="ic fill" viewBox="0 0 24 24"><use href="#i-note"/></svg>'}</div>
+            <div class="vp-pinned-info"><div class="vp-pinned-cap"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Закреплённый трек</div><div class="vp-pinned-t">${esc(s.pinned.t)}</div><div class="vp-pinned-a">${esc(s.pinned.a)}</div></div>
+            <button class="md-btn fc-x" onclick="event.stopPropagation();Social.unpinTrack()" title="Открепить">✕</button>
+          </div>` : ''}
         <div class="vp-stats">
           <span class="hero-chip" onclick="Social.setTab('friends');switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>${s.friends.length} ${plural(s.friends.length, 'друг', 'друга', 'друзей')}</span>
           <span class="hero-chip" onclick="Social.setTab('follow');switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
@@ -631,6 +640,7 @@ window.Social = (function () {
         <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-headphones"/></svg>Недавно слушал</h4>
         <div class="tracks shelf vp-recent">${hist.length ? hist.map((t2, i) => trackCardHTML(t2, i, 'home')).join('') : '<div class="vp-empty">Включи первый трек</div>'}</div>
       </div>`;
+    if (s.pinned && s.pinned.track) chatTrackReg.pin = s.pinned.track; // клик по закрепу играет
     if (window.Ach) Ach.renderInto($('#vp-ach'), null, { compact: true });
     highlightPlaying();
   }
@@ -640,6 +650,12 @@ window.Social = (function () {
   }
   function saveEdit() {
     saveProfileCard({ name: $('#vp-name')?.value, status: $('#vp-status')?.value, bio: $('#vp-bio')?.value });
+    const l0 = $('#vp-link0')?.value || '', l1 = $('#vp-link1')?.value || '';
+    if (l0.trim() || l1.trim()) {
+      const mk = u => ({ label: u.includes('t.me') ? 'Telegram' : u.includes('youtube') ? 'YouTube' : u.includes('tiktok') ? 'TikTok' : 'Ссылка', url: u.trim() });
+      saveLinks([{ url: l0 }, { url: l1 }].filter(l => l.url.trim()).map(l => mk(l.url)));
+      toast('🔗 Ссылки сохранены', 'success');
+    }
     const np = $('#vp-pass')?.value || '';
     if (np) {
       if (np.length < 4) { toast('Пароль: минимум 4 символа', 'error'); return; }
@@ -850,11 +866,54 @@ window.Social = (function () {
 
   function use(a) { adapter = a; } // подключение своего хранилища одной строкой
 
+  /* 💬 быстрые статусы в 1 клик */
+  const QUICK_STATUS = ['🎧 слушаю музыку', '💬 открыт для чата', '🎮 занят', '💤 сплю', '🌊 ловлю волну'];
+  function quickStatus(st) {
+    const s = S();
+    s.status = s.status === st ? '' : st; // повторный клик снимает
+    save();
+    adapter && adapter.publishProfile();
+    renderIfOpen();
+  }
+
+  /* 🔗 соц-ссылки профиля */
+  function saveLinks(links) {
+    const clean = (links || []).filter(l => l && String(l.url).trim()).slice(0, 3).map(l => ({
+      label: String(l.label || '').slice(0, 20),
+      url: String(l.url).trim().slice(0, 120)
+    }));
+    S().links = clean;
+    save();
+    adapter && adapter.publishProfile();
+  }
+
+  /* 📌 закреплённый трек на профиле */
+  function pinTrack(track) {
+    if (!track || !track.title) return;
+    const s = S();
+    s.pinned = { t: String(track.title || '').slice(0, 90), a: String(track.user && track.user.username || '').slice(0, 40),
+      art: artwork(track) || '', track: { id: track.id, title: track.title, duration: track.duration,
+      artwork_url: track.artwork_url, permalink_url: track.permalink_url, user: { username: track.user && track.user.username } } };
+    save();
+    adapter && adapter.publishProfile();
+    toast('📌 Трек закреплён на профиле', 'success');
+    renderIfOpen();
+  }
+  function unpinTrack() {
+    S().pinned = null;
+    save();
+    adapter && adapter.publishProfile();
+    toast('📌 Трек откреплён');
+    renderIfOpen();
+  }
+  window.pinCurrentTrack = () => { if (state.currentTrack) pinTrack(state.currentTrack); };
+
   /* 🎵 отправить трек другу (контекстное меню) */
   const chatTrackReg = {}; // ts → track
   /* 👤 чужой профиль: страница по @хэндлу из реестра */
   let _upHandle = null;
-  function openProfile(h) {
+  async function openProfile(h) {
+    if (!_booted) await init(); // клик до инициализации — всё равно отработает
     if (!validHandle(h)) return;
     if (h === S().handle) { switchView('vprofile'); return; } // свой профиль — своя вкладка
     _upHandle = h;
@@ -896,6 +955,11 @@ window.Social = (function () {
           <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
           <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>${(c.follows || []).length} ${plural((c.follows || []).length, 'подписка', 'подписки', 'подписок')}</span>
         </div>
+        ${c.pinned ? `<div class="vp-pinned" onclick="playChatTrack('up${esc(h)}')" title="Слушать закреп">
+            <div class="vp-pinned-art">${c.pinned.art ? `<img src="${esc(c.pinned.art)}" alt="">` : `<svg class="ic fill" viewBox="0 0 24 24"><use href="#i-note"/></svg>`}</div>
+            <div class="vp-pinned-info"><div class="vp-pinned-cap"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trophy"/></svg>Закреплённый трек</div><div class="vp-pinned-t">${esc(c.pinned.t)}</div><div class="vp-pinned-a">${esc(c.pinned.a)}</div></div>
+          </div>` : ''}
+        ${(c.links || []).length ? `<div class="vp-links">${c.links.map(l => `<button class="vp-slink" onclick="openExternal('${esc(l.url)}')">${esc(l.label || '🔗')}</button>`).join('')}</div>` : ''}
         <div class="vp-edit" style="display:flex;flex-direction:row;flex-wrap:wrap;align-items:center">
           ${!isFriend ? `<button class="md-btn" onclick="Social.toggleFollow('${esc(h)}')">${isFollow ? '✕ Отписаться' : '⭐ Подписаться'}</button>` : ''}
           ${isFriend ? `<button class="md-btn" onclick="Social.unfriend('${esc(h)}')">Удалить из друзей</button>` : ''}
@@ -917,7 +981,8 @@ window.Social = (function () {
       .map(h => ({ h, name: findUser(h).name || h, art: nowNp[h].art || '', np: nowNp[h] }));
   }
 
-  window.playChatTrack = ts => { const t = chatTrackReg[ts]; if (t && window.playTrack) playTrack(t, 'chat'); };
+  window.playChatTrack = ts => { const t = chatTrackReg[ts]; if (t && window.playTrack) playTrack(t, ts === 'pin' ? 'pinned' : 'up' === String(ts).slice(0, 2) ? 'friend' : 'chat'); };
+  window.openExternal = url => { if (window.ipc) ipc.invoke('shell:openExternal', url); };
   function sendTrackTo(h, track) {
     const s = S();
     if (!validHandle(h) || h === s.handle || !track) return;
@@ -945,12 +1010,12 @@ window.Social = (function () {
   }
   function unfollow(silent) {
     const s = S();
-    if (!s.following) return;
     const who = s.following;
+    const chip = document.getElementById('follow-chip');
+    if (chip) chip.remove(); // чип сносим всегда — даже если following уже слетел (гонка с applyData)
+    if (!who) return;
     s.following = '';
     save();
-    const chip = document.getElementById('follow-chip');
-    if (chip) chip.remove();
     if (!silent) toast('Перестал следить за @' + who);
   }
   function showFollowChip() {
@@ -962,7 +1027,7 @@ window.Social = (function () {
 
   return {
     init, use,
-    sendTrackTo, followFriend, unfollow, openProfile, renderUProfile, friendsWaves, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
+    sendTrackTo, followFriend, unfollow, quickStatus, saveLinks, pinTrack, unpinTrack, openProfile, renderUProfile, friendsWaves, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
     pickBanner, bannerChosen, removeBanner,
