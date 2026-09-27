@@ -25,6 +25,7 @@ window.Social = (function () {
   let beatTimer = 0;
   let meOnline = false;
   const lastSeen = {};  // handle → ts последнего heartbeat
+  const nowNp = {};     // handle → {t,a,art,track} — что друг слушает сейчас
   let directory = {};   // handle → карточка из реестра
   let _tab = 'friends', _openChat = null, _booted = false, _saving = 0, _regSyncT = 0;
 
@@ -193,7 +194,7 @@ window.Social = (function () {
     },
 
     sendRealtime(topic, obj) { try { if (mq && mq.connected) mq.publish(topic, JSON.stringify(obj)); } catch (_) {} },
-    presenceBeat() { this.sendRealtime('volna-id/pres/' + S().handle, { h: S().handle, ts: Date.now() }); }
+    presenceBeat() { this.sendRealtime('volna-id/pres/' + S().handle, { h: S().handle, ts: Date.now(), np: state.social && state.social.np || null }); }
   };
 
   /* ---- RemoteAdapter — заготовка под свой хост (контракт в docs/volna-id.md) ----
@@ -252,7 +253,13 @@ window.Social = (function () {
     });
     mq.on('message', (topic, payload) => {
       let m; try { m = JSON.parse(payload.toString()); } catch (_) { return; }
-      if (topic.startsWith('volna-id/pres/')) { if (m.h && m.ts) lastSeen[m.h] = m.ts; return; }
+      if (topic.startsWith('volna-id/pres/')) {
+        if (m.h && m.ts) lastSeen[m.h] = m.ts;
+        const prev = nowNp[m.h] && nowNp[m.h].t;
+        if (m.np && m.np.t) { nowNp[m.h] = m.np; if (m.np.t !== prev) renderIfOpen(); }
+        else if (nowNp[m.h]) { delete nowNp[m.h]; renderIfOpen(); }
+        return;
+      }
       onEvent(m);
     });
     mq.on('close', () => { meOnline = false; renderIfOpen(); });
@@ -300,6 +307,30 @@ window.Social = (function () {
       toast('😔 @' + ev.from + ' удалил вас из друзей');
       renderIfOpen();
     }
+  }
+
+  /* 🌊 волны друзей: вещаем свой трек (hook из playTrack) */
+  function nowPlaying(track) {
+    if (!track || !track.title) return;
+    const np = {
+      t: String(track.title || '').slice(0, 90),
+      a: String(track.user && track.user.username || '').slice(0, 40),
+      art: artwork(track) || '',
+      track: { id: track.id, title: track.title, duration: track.duration,
+        artwork_url: track.artwork_url, permalink_url: track.permalink_url,
+        user: { username: track.user && track.user.username } }
+    };
+    S().np = { t: np.t, a: np.a, art: np.art }; // свой трек — для карточки профиля
+    save();
+    adapter && adapter.presenceBeat(); // мгновенный пульс с треком
+  }
+
+  /* слушать то, что играет у друга — в один клик */
+  function playFriend(h) {
+    const np = nowNp[h];
+    if (!np || !np.track) { toast('У ' + h + ' сейчас не играет'); return; }
+    playTrack(np.track, 'friend');
+    toast('🌊 Слушаем вместе с @' + h + ': ' + np.t, 'success');
   }
 
   /* ---------- справочник ---------- */
@@ -467,6 +498,7 @@ window.Social = (function () {
       <div class="soc-uinfo" onclick="Social.openChat('${esc(h)}')">
         <div class="soc-uname">${esc(name)} <span class="soc-dot${isOnline(h) ? ' on' : ''}"></span></div>
         <div class="soc-uh">@${esc(h)}</div>
+        ${(() => { const np = nowNp[h]; return np ? '<div class="soc-np" onclick="event.stopPropagation();Social.playFriend(' + esc(h) + ')" title="Слушать то же">' + '<svg class=\'ic\' viewBox=\'0 0 24 24\'><use href=\'#i-headphones\'/></svg>' + esc(np.t) + (np.a ? ' — ' + esc(np.a) : '') + '</div>' : ''; })()}
         ${bio ? `<div class="soc-ubio">${esc(bio)}</div>` : ''}
       </div>
       <div class="soc-uacts">${actions || ''}</div>
@@ -796,7 +828,7 @@ window.Social = (function () {
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
     pickBanner, bannerChosen, removeBanner,
-    register, login, regTab,
+    register, login, regTab, nowPlaying, playFriend,
     summary: () => ({ handle: S().handle, friends: S().friends.length, online: meOnline })
   };
 })();

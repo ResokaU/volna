@@ -839,19 +839,35 @@ function collapseNp() {
 
 /* 🖱 колесо мыши над полкой — горизонтальный скролл, но страница не «застревает»:
    когда карусель прокручена до конца, скролл уходит обратно на страницу */
+/* полки на колесе: с инерцией (rAF-лерп), края честно отдаются странице */
+const _shelfAnim = new WeakMap();
+function shelfGlide(sh, delta) {
+  const max = sh.scrollWidth - sh.clientWidth;
+  const st = _shelfAnim.get(sh) || { target: sh.scrollLeft, raf: 0 };
+  st.target = Math.max(0, Math.min(max, st.target + delta));
+  cancelAnimationFrame(st.raf);
+  (function step() {
+    const dist = st.target - sh.scrollLeft;
+    if (Math.abs(dist) < 1) { _shelfAnim.delete(sh); return; }
+    sh.scrollLeft += dist * 0.22;
+    st.raf = requestAnimationFrame(step);
+  })();
+  _shelfAnim.set(sh, st);
+}
 document.addEventListener('wheel', e => {
   const sh = e.target.closest && e.target.closest('.shelf');
   if (!sh) return;
-  // доминирующая ось: у обычного колеса это Y, у тачпада может быть X
   const dy = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
   if (!dy) return;
   const max = sh.scrollWidth - sh.clientWidth;
-  if (max <= 2) return; // полке некуда скроллить — колесо работает как обычно
-  const atStart = sh.scrollLeft <= 2, atEnd = sh.scrollLeft >= max - 2;
-  if ((dy < 0 && atStart) || (dy > 0 && atEnd)) return; // край полки — отдаём скролл странице
+  if (max <= 2) return; // полке некуда ехать — колесо работает как обычно
+  const st = _shelfAnim.get(sh);
+  const cur = st ? st.target : sh.scrollLeft;
+  const atStart = cur <= 2, atEnd = cur >= max - 2;
+  if ((dy < 0 && atStart) || (dy > 0 && atEnd)) return; // край полки — скролл странице
   e.preventDefault();
   const px = e.deltaMode === 1 ? dy * 16 : dy; // строки → пиксели
-  sh.scrollLeft += Math.max(-140, Math.min(140, px * 1.15));
+  shelfGlide(sh, Math.max(-170, Math.min(170, px * 1.15)));
 }, { passive: false });
 
 /* 🎊 пасхалка: набери на клавиатуре «волна» */
