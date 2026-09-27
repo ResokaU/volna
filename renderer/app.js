@@ -59,6 +59,41 @@ function openDonation() {
   else window.open(DONATE_URL, '_blank');
 }
 
+/* ---------- 🌊 волна настроения: один клик — и играет под настроение ---------- */
+const MOODS = [
+  { id: 'calm',   emoji: '🌙', label: 'Спокойное',  q: 'lofi hip hop chill beats' },
+  { id: 'focus',  emoji: '🎯', label: 'Фокус',      q: 'deep focus electronic ambient techno' },
+  { id: 'banger', emoji: '⚡', label: 'Кач',        q: 'phonk hard bass' },
+  { id: 'sadmood',emoji: '🌧', label: 'Меланхолия', q: 'sad indie autumn acoustic' },
+  { id: 'party',  emoji: '🎉', label: 'Движ',       q: 'house party dance mix' },
+  { id: 'sunset', emoji: '🌅', label: 'Закат',      q: 'synthwave sunset drive' }
+];
+function renderMoods() {
+  const row = $('#mood-row');
+  if (!row) return;
+  row.innerHTML = `<span class="mood-cap">Волна настроения</span>` + MOODS.map(m =>
+    `<button class="mood-chip" data-mood="${m.id}" title="Включить: ${escapeHtml(m.q)}">${m.emoji} ${escapeHtml(m.label)}</button>`
+  ).join('');
+  if (!renderMoods._bound) {
+    renderMoods._bound = true;
+    row.addEventListener('click', e => {
+      const chip = e.target.closest('.mood-chip');
+      if (chip) playMood(chip.dataset.mood);
+    });
+  }
+}
+async function playMood(id) {
+  const m = MOODS.find(x => x.id === id);
+  if (!m) return;
+  $$('.mood-chip').forEach(c => c.classList.toggle('active', c.dataset.mood === id));
+  toast('🌊 Волна настроения: ' + m.emoji + ' ' + m.label);
+  switchView('discover');
+  setMode('tracks');
+  $('#search-input').value = m.q;
+  await doSearch(m.q);
+  if (state.visibleTracks.length) playTrack(state.visibleTracks[0], 'search');
+}
+
 /* ---------- утилиты ---------- */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -388,6 +423,7 @@ const PALETTE_CMDS = [
   { t: 'Предыдущий трек', k: '←', run: () => playPrev() },
   { t: 'Лайкнуть текущий', k: 'L', run: () => likeCurrent() },
   { t: 'Мне повезёт', k: '', run: () => feelingLucky() },
+  { t: 'Radio по треку', k: 'R', run: () => enableRadio() },
   { t: 'Shuffle', k: '', run: () => toggleShuffle() },
   { t: 'Repeat', k: '', run: () => toggleRepeat() },
   { t: 'Mini player', k: 'M', run: () => toggleMiniPlayer() },
@@ -444,6 +480,22 @@ async function renderPalette(q) {
   const cmds = PALETTE_CMDS
     .filter(c => !q || c.t.toLowerCase().includes(q.toLowerCase()))
     .map(c => ({ icon: 'i-zap', t: c.t, sub: c.k, run: c.run }));
+  // 🔮 локальные результаты: свои лайки, история и плейлисты — мгновенно, без сети
+  let local = [];
+  const ql = (q || '').toLowerCase();
+  if (ql.length >= 2) {
+    local = state.favorites.filter(t =>
+        (t.title || '').toLowerCase().includes(ql) || (t.user?.username || '').toLowerCase().includes(ql))
+      .slice(0, 4).map(t => ({ icon: 'i-heart', t: t.title, sub: 'Лайки', run: () => playTrack(t, 'fav') }));
+    if (local.length < 4) {
+      local = local.concat(state.history.filter(t =>
+          (t.title || '').toLowerCase().includes(ql) || (t.user?.username || '').toLowerCase().includes(ql))
+        .slice(0, 3 - Math.max(0, local.length - 1)).map(t => ({ icon: 'i-history', t: t.title, sub: 'История', run: () => playTrack(t, 'hist') })));
+    }
+    local = local.concat(state.playlists.filter(pl =>
+        (pl.name || '').toLowerCase().includes(ql))
+      .slice(0, 2).map(pl => ({ icon: 'i-folder', t: pl.name, sub: 'Плейлист · ' + (pl.tracks || []).length, run: () => openPlaylist(pl.id) })));
+  }
   let tracks = [];
   if (q.length >= 2) {
     try {
@@ -454,7 +506,7 @@ async function renderPalette(q) {
         .map(t => { rememberTrack(t); return { icon: 'i-note', t: t.title, sub: t.user?.username, run: () => playTrack(t) }; });
     } catch (_) {}
   }
-  paletteItems = [...cmds, ...tracks];
+  paletteItems = [...cmds, ...local, ...tracks];
   paletteIdx = 0;
   paintPalette();
 }
@@ -512,6 +564,7 @@ function onKeydown(e) {
   if (k === 'l') { likeCurrent(); return; }
   if (k === 'n') { playNext(); return; }
   if (k === 'm') { toggleMiniPlayer(); return; }
+  if (k === 'r') { enableRadio(); return; } // 📻 волна по похожим трекам
 
   const views = { '1': 'home', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings', '9': 'vibe' };
   if (views[e.key]) switchView(views[e.key]);
@@ -525,12 +578,28 @@ function bindChrome() {
   bindContextMenu();
   bindPalette();
   bindCopyGuard();
+  bindGlobalDrop();
+  renderMoods(); // волна настроения на главной
   const logo = document.querySelector('.nav-label');
   logo?.addEventListener('click', logoEgg); // 7 кликов…
   const tb = $('#titlebar');
   if (tb && ipc) {
     tb.addEventListener('dblclick', e => { if (!e.target.closest('.tb-btn')) winMax(); });
   }
+}
+
+/* 🪄 брось ссылку SoundCloud в любое место окна — трек/плейлист/артист откроется */
+function bindGlobalDrop() {
+  // без preventDefault на dragover браузер откроет брошенный файл вместо нас
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => {
+    e.preventDefault();
+    if (typeof SC_URL_RE === 'undefined') return;
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    const text = (dt.getData('text/uri-list') || dt.getData('text/plain') || '').trim();
+    if (text && SC_URL_RE.test(text)) resolveUrl(text);
+  });
 }
 
 /* копировать можно только названия треков, артистов и подписи */

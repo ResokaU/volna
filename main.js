@@ -524,13 +524,12 @@ function createWindow() {
     }
   });
 
-  // Minimize to tray instead of quit (configurable)
+  // Minimize to tray instead of quit (configurable: settings.closeAction = 'tray' | 'quit')
   win.on('close', (e) => {
     if (app.isQuitting) return;
-    if (tray && !app.isQuitting) {
-      e.preventDefault();
-      win.hide();
-    }
+    if (!tray || store.get('settings.closeAction') === 'quit') return; // настоящий выход
+    e.preventDefault();
+    win.hide();
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -832,7 +831,21 @@ ipcMain.handle('playlists:get', () => store.get('playlists'));
 ipcMain.handle('playlists:save', (_e, pls) => { store.set('playlists', pls); return pls; });
 
 ipcMain.handle('settings:get', () => store.get('settings'));
-ipcMain.handle('settings:set', (_e, key, val) => {
+/* 🔮 нативное уведомление о новом треке (настройка «trackNotify» в рендерере) */
+ipcMain.handle('notify:track', (_e, info) => {
+  try {
+    if (!Notification.isSupported()) return false;
+    const n = new Notification({
+      title: String(info?.title || 'VOLNA').slice(0, 120),
+      body: String(info?.body || '').slice(0, 200),
+      icon: path.join(__dirname, 'renderer', 'logo.png'),
+      silent: true
+    });
+    n.on('click', () => { if (win) { win.show(); win.focus(); } });
+    n.show();
+    return true;
+  } catch (_) { return false; }
+});ipcMain.handle('settings:set', (_e, key, val) => {
   store.set(`settings.${key}`, val);
   return store.get('settings');
 });

@@ -283,6 +283,7 @@
               <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Играть лайки</button>
               <button class="toolbar-btn" onclick="switchView('discover')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg>Поиск</button>
             </div>
+            <div class="mood-row" id="mood-row"></div>
             <div id="home-resume"></div>
           </div>
           <div class="hero-art" id="hero-art" onclick="heroPlay()" title="Играть"></div>
@@ -615,6 +616,12 @@
         <div class="settings-group set-pane" data-pane="app">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Поведение</h3>
           <label class="toggle-row"><input type="checkbox" id="set-notify"><span>Уведомления при лайке</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-tracknotify"><span>Нативное уведомление о новом треке (название + артист)</span></label>
+          <div class="setting-row" style="margin:4px 0 6px;flex-wrap:wrap">
+            <span style="font-size:13px;color:var(--dim)">Крестик окна:</span>
+            <button class="bit-chip" data-closeact="tray" title="Окно прячется в трей, музыка играет">🗃 Прятать в трей</button>
+            <button class="bit-chip" data-closeact="quit" title="Крестик закрывает приложение совсем">✕ Выходить</button>
+          </div>
           <label class="toggle-row"><input type="checkbox" id="set-savewin"><span>Запоминать позицию/размер окна</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-minimize"><span>Запускать свёрнутым</span></label>
           <label class="toggle-row"><input type="checkbox" id="set-autoload" checked><span>Автоматически открывать текст песни (если найден)</span></label>
@@ -831,6 +838,7 @@
       <li><span>Перемотка ±5с</span><span class="kbd">Shift + ← →</span></li>
       <li><span>Фокус на поиск</span><span class="kbd">F</span></li>
       <li><span>Лайк текущего</span><span class="kbd">L</span></li>
+      <li><span>Radio по треку</span><span class="kbd">R</span></li>
       <li><span>Мини-плеер</span><span class="kbd">M</span></li>
       <li><span>Разделы</span><span class="kbd">1–8</span></li>
       <li><span>Босс-режим (спрятать окно)</span><span class="kbd">Ctrl + Shift + H</span></li>

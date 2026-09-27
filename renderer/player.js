@@ -550,6 +550,10 @@ function updateTitle(freshTrack) {
   document.title = t ? (state.isPlaying ? '▶ ' : '⏸ ') + t.title + ' — VOLNA' : 'VOLNA';
   const tbTitle = document.getElementById('tb-title');
   if (tbTitle) tbTitle.textContent = t ? t.title : 'VOLNA';
+  // 🔮 нативное уведомление ОС о новом треке (только при смене трека, не при паузе)
+  if (freshTrack && t && state.settings.trackNotify && ipc) {
+    ipc.invoke('notify:track', { title: t.title, body: displayArtist(t) + ' · слушай в VOLNA' }).catch(() => {});
+  }
   if (ipc && t) {
     ipc.invoke('tray:nowplaying', { title: t.title, artist: displayArtist(t), isPlaying: state.isPlaying }).catch(() => {});
     // Discord Rich Presence: позиция трека для таймстампов (у нового трека — 0)

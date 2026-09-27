@@ -135,6 +135,10 @@ function applySettings() {
   const dv = $('#default-volume');
   if (dv) { dv.value = vol; $('#default-volume-val').textContent = Math.round(vol * 100) + '%'; }
   $('#set-notify').checked = !!state.settings.notifyOnLike;
+  const tn = $('#set-tracknotify');
+  if (tn) tn.checked = !!state.settings.trackNotify;
+  $$('.bit-chip[data-closeact]').forEach(c =>
+    c.classList.toggle('active', (state.settings.closeAction || 'tray') === c.dataset.closeact));
   $('#set-savewin').checked = state.settings.saveWindowState !== false;
   $('#set-minimize').checked = !!state.settings.startMinimized;
   const ab = state.settings.antiblock || {};
@@ -192,6 +196,14 @@ function bindLibraryUI() {
     });
   }
   $('#set-notify').addEventListener('change', e => saveSetting('notifyOnLike', e.target.checked));
+  const trackNot = $('#set-tracknotify');
+  if (trackNot) trackNot.addEventListener('change', e => saveSetting('trackNotify', e.target.checked));
+  // крестик окна: прятать в трей или выходить (main.js читает settings.closeAction из стора)
+  $$('.bit-chip[data-closeact]').forEach(c => c.addEventListener('click', async () => {
+    await saveSetting('closeAction', c.dataset.closeact);
+    $$('.bit-chip[data-closeact]').forEach(x => x.classList.toggle('active', x === c));
+    toast(c.dataset.closeact === 'quit' ? '✕ Крестик теперь закрывает приложение' : '🗃 Крестик прячет в трей', 'success');
+  }));
   $('#set-savewin').addEventListener('change', e => saveSetting('saveWindowState', e.target.checked));
   $('#set-minimize').addEventListener('change', e => saveSetting('startMinimized', e.target.checked));
 
