@@ -189,7 +189,7 @@ function showTrackMenu(e, trackId) {
 }
 function hideContextMenu() { $('#context-menu')?.classList.remove('show'); }
 
-function showFriendPicker(trackId) {
+function showFriendPicker(trackId, e) {
   const s = window.Social ? Social.summary() : null;
   if (!s || !s.handle) { toast('Сначала заведи Волна ID — вкладка «Мой профиль»', 'error'); return; }
   const fr = (state.social && state.social.friends) || [];
@@ -287,7 +287,7 @@ function bindContextMenu() {
       case 'queue': addToQueue(track); break;
       case 'like': toggleLike(track); break;
       case 'playlist': showPlaylistPicker(track.id); break;
-      case 'friend': showFriendPicker(track.id); break;
+      case 'friend': showFriendPicker(track.id, e); break;
       case 'copy':
         navigator.clipboard?.writeText(track.permalink_url || '')
           .then(() => toast('Ссылка скопирована', 'success'))
@@ -488,6 +488,7 @@ function onKeydown(e) {
   const k = e.key.toLowerCase();
   if (k === 'f') { switchView('discover'); const i = $('#search-input'); i.focus(); i.select(); return; }
   if (k === 'l') { likeCurrent(); return; }
+  if (k === 'n') { playNext(); return; }
   if (k === 'm') { toggleMiniPlayer(); return; }
 
   const views = { '1': 'home', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings', '9': 'vibe' };

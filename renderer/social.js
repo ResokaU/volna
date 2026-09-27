@@ -169,7 +169,7 @@ window.Social = (function () {
           const f = 'inbox-' + handle + '.json';
           const r = await ipc.invoke('gh:fileGet', { token: this.ghToken(), gistId: gid, file: f });
           let box = [];
-          if (r.ok) { try { box = JSON.parse(r.content) || []; } catch (_) { box = []; } }
+          if (r.ok) { try { box = JSON.parse(r.content); if (!Array.isArray(box)) box = []; } catch (_) { box = []; } }
           box.push(ev);
           await ipc.invoke('gh:filePut', { token: this.ghToken(), gistId: gid, file: f, content: JSON.stringify(box.slice(-200)) });
         } catch (_) {}
@@ -185,7 +185,7 @@ window.Social = (function () {
         const f = 'inbox-' + h + '.json';
         const r = await ipc.invoke('gh:fileGet', { token: this.ghToken(), gistId: gid, file: f });
         if (!r.ok) return;
-        let box = []; try { box = JSON.parse(r.content) || []; } catch (_) {}
+        let box = []; try { box = JSON.parse(r.content); if (!Array.isArray(box)) box = []; } catch (_) { box = []; }
         if (box.length) {
           box.forEach(onEvent);
           await ipc.invoke('gh:filePut', { token: this.ghToken(), gistId: gid, file: f, content: null }); // удалить файл
@@ -896,7 +896,7 @@ window.Social = (function () {
           <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
           <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>${(c.follows || []).length} ${plural((c.follows || []).length, 'подписка', 'подписки', 'подписок')}</span>
         </div>
-        <div class="vp-edit" style="display:flex">
+        <div class="vp-edit" style="display:flex;flex-direction:row;flex-wrap:wrap;align-items:center">
           ${!isFriend ? `<button class="md-btn" onclick="Social.toggleFollow('${esc(h)}')">${isFollow ? '✕ Отписаться' : '⭐ Подписаться'}</button>` : ''}
           ${isFriend ? `<button class="md-btn" onclick="Social.unfriend('${esc(h)}')">Удалить из друзей</button>` : ''}
           ${np ? `<button class="md-btn accent" onclick="Social.playFriend('${esc(h)}')">▶ Слушать вместе</button>` : ''}
