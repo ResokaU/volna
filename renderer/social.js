@@ -583,7 +583,7 @@ window.Social = (function () {
     const friendsHTML = s.friends.length
       ? s.friends.map(h => {
           const c = findUser(h);
-          return `<div class="soc-friend" onclick="Social.openChat('${esc(h)}')">
+          return `<div class="soc-friend" onclick="Social.openProfile('${esc(h)}')">
             ${avaHTML(h, 'sm', c)}
             <div class="soc-fname">${esc(c.name || h)}</div>
             <span class="soc-dot${isOnline(h) ? ' on' : ''}"></span>
@@ -825,6 +825,7 @@ window.Social = (function () {
     const typingEdit = ae && ae.closest && ae.closest('#vp-edit');
     if ($('#view-people')?.classList.contains('active') && !typingFind) renderPeople();
     if ($('#view-vprofile')?.classList.contains('active') && !typingEdit) renderProfile($('#vprofile-wrap'));
+    if ($('#view-uprofile')?.classList.contains('active')) renderUProfile($('#uprofile-wrap'));
     updateBadge();
   }
 
@@ -834,11 +835,13 @@ window.Social = (function () {
     _booted = true;
     if (typeof window.mqtt !== 'undefined') mqttLib = window.mqtt;
     const s = S();
-    if (validHandle(s.handle) && MeshAdapter.available()) {
-      adapter = MeshAdapter;
-      connectRealtime();
-      try { await MeshAdapter.ensureGist(); await MeshAdapter.flushMyInbox(); } catch (_) {}
-      adapter.publishProfile();
+    if (MeshAdapter.available()) {
+      adapter = MeshAdapter; // справочник и поиск доступны даже без своего хэндла
+      if (validHandle(s.handle)) {
+        connectRealtime();
+        try { await MeshAdapter.ensureGist(); await MeshAdapter.flushMyInbox(); } catch (_) {}
+        adapter.publishProfile();
+      }
       refreshDirectory();
     }
     updateBadge();
@@ -849,6 +852,71 @@ window.Social = (function () {
 
   /* 🎵 отправить трек другу (контекстное меню) */
   const chatTrackReg = {}; // ts → track
+  /* 👤 чужой профиль: страница по @хэндлу из реестра */
+  let _upHandle = null;
+  function openProfile(h) {
+    if (!validHandle(h)) return;
+    if (h === S().handle) { switchView('vprofile'); return; } // свой профиль — своя вкладка
+    _upHandle = h;
+    if (!directory[h]) refreshDirectory().then(() => renderIfOpen());
+    switchView('uprofile');
+  }
+  function renderUProfile(box) {
+    if (!box) return;
+    const h = _upHandle;
+    if (!validHandle(h)) { box.innerHTML = '<div class="vp-empty">Профиль не выбран</div>'; return; }
+    const c = directory[h];
+    if (!c) { box.innerHTML = '<div class="vp-empty">Загружаю профиль из облака…</div>'; refreshDirectory(); return; }
+    const s = S();
+    const isFriend = s.friends.includes(h);
+    const isFollow = s.follows.includes(h);
+    const np = nowNp[h];
+    const ava = c.avatar || '';
+    const fw = followersOf(h);
+    const theirFriends = (c.friends || []).map(fh => ({ h: fh, c: directory[fh] || null }));
+    box.innerHTML = `
+      <div class="vp-card">
+        <div class="vp-banner">${ava ? `<img class="vp-banner-img" src="${esc(ava)}" alt="">` : ''}</div>
+        <div class="vp-head">
+          <div class="vp-ava">${ava ? `<img src="${esc(ava)}" alt="">` : esc((c.name || h)[0].toUpperCase())}<span class="vp-on" style="background:${isOnline(h) ? '#3ddc84' : '#55555f'};box-shadow:${isOnline(h) ? '0 0 10px #3ddc84' : 'none'}"></span></div>
+          <div class="vp-id">
+            <h2 class="vp-name">${esc(c.name || h)}</h2>
+            <div class="vp-handle">@${esc(h)} <span class="soc-dot${isOnline(h) ? ' on' : ''}"></span> <span class="vp-online-lbl">${isOnline(h) ? 'в сети' : 'офлайн'}</span></div>
+            ${np ? `<div class="vp-listening" onclick="Social.playFriend('${esc(h)}')" title="Слушать то же"><svg class="ic" viewBox="0 0 24 24"><use href="#i-headphones"/></svg>Слушает: ${esc(np.t)}${np.a ? ' — ' + esc(np.a) : ''} · нажми, чтобы слушать вместе</div>` : ''}
+            ${c.bio ? `<div class="vp-bio">${esc(c.bio)}</div>` : ''}
+            ${c.status ? `<div class="vp-status"><svg class="ic" viewBox="0 0 24 24"><use href="#i-spark"/></svg>${esc(c.status)}</div>` : ''}
+          </div>
+          <div class="vp-actions">
+            <button class="md-btn" onclick="switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-back"/></svg>Назад</button>
+            ${isFriend ? `<button class="md-btn accent" onclick="Social.openChat('${esc(h)}')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chat"/></svg>Написать</button>` : `<button class="md-btn accent" onclick="Social.addFriend('${esc(h)}')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>＋ В друзья</button>`}
+          </div>
+        </div>
+        <div class="vp-stats">
+          <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>${(c.friends || []).length} ${plural((c.friends || []).length, 'друг', 'друга', 'друзей')}</span>
+          <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>${fw.length} ${plural(fw.length, 'подписчик', 'подписчика', 'подписчиков')}</span>
+          <span class="hero-chip"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>${(c.follows || []).length} ${plural((c.follows || []).length, 'подписка', 'подписки', 'подписок')}</span>
+        </div>
+        <div class="vp-edit" style="display:flex">
+          ${!isFriend ? `<button class="md-btn" onclick="Social.toggleFollow('${esc(h)}')">${isFollow ? '✕ Отписаться' : '⭐ Подписаться'}</button>` : ''}
+          ${isFriend ? `<button class="md-btn" onclick="Social.unfriend('${esc(h)}')">Удалить из друзей</button>` : ''}
+          ${np ? `<button class="md-btn accent" onclick="Social.playFriend('${esc(h)}')">▶ Слушать вместе</button>` : ''}
+        </div>
+        <h4 class="ach-sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>Друзья ${esc(c.name || h)}</h4>
+        <div class="vp-friends">${theirFriends.length ? theirFriends.map(f => `
+          <div class="soc-friend" onclick="Social.openProfile('${esc(f.h)}')" title="@${esc(f.h)}">
+            <div class="soc-ava sm${isOnline(f.h) ? ' online' : ''}">${f.c && f.c.avatar ? `<img src="${esc(f.c.avatar)}" alt="">` : esc((f.c && f.c.name || f.h)[0].toUpperCase())}</div>
+            <div class="soc-fname">${esc(f.c && f.c.name || f.h)}</div>
+          </div>`).join('') : '<div class="vp-empty">Список друзей скрыт или пуст</div>'}</div>
+      </div>`;
+  }
+
+  /* 🌊 волны друзей для главной */
+  function friendsWaves() {
+    return s.friends
+      .filter(h => nowNp[h] && isOnline(h))
+      .map(h => ({ h, name: findUser(h).name || h, art: nowNp[h].art || '', np: nowNp[h] }));
+  }
+
   window.playChatTrack = ts => { const t = chatTrackReg[ts]; if (t && window.playTrack) playTrack(t, 'chat'); };
   function sendTrackTo(h, track) {
     const s = S();
@@ -894,7 +962,7 @@ window.Social = (function () {
 
   return {
     init, use,
-    sendTrackTo, followFriend, unfollow, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
+    sendTrackTo, followFriend, unfollow, openProfile, renderUProfile, friendsWaves, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
     pickBanner, bannerChosen, removeBanner,

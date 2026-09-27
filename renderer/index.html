@@ -289,6 +289,8 @@
         </div>
         <div class="section-head"><div><h2 class="section-title">Из твоих лайков</h2><div class="section-sub">Свежее из ❤</div></div><button class="toolbar-btn" onclick="switchView('favorites')">Открыть лайки</button></div>
         <div class="tracks shelf" id="home-likes"></div>
+        <div class="section-head" id="home-fwaves-head" style="display:none"><div><h2 class="section-title">Волны друзей</h2><div class="section-sub">Что слушают прямо сейчас — клик, и слушаешь вместе</div></div></div>
+        <div class="tracks shelf" id="home-fwaves"></div>
         <div class="section-head"><div><h2 class="section-title">Продолжить</h2><div class="section-sub">Недавно игравшие</div></div></div>
         <div class="tracks shelf" id="home-continue"></div>
         <div class="section-head"><div><h2 class="section-title">Твои плейлисты</h2><div class="section-sub">Быстрый доступ</div></div><button class="toolbar-btn" onclick="openNewPlaylistModal()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>Новый</button></div>
@@ -687,6 +689,10 @@
 
       <section class="view" id="view-vprofile">
         <div id="vprofile-wrap"></div>
+      </section>
+
+      <section class="view" id="view-uprofile">
+        <div id="uprofile-wrap"></div>
       </section>
 
       <section class="view" id="view-people">

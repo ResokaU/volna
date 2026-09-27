@@ -138,6 +138,7 @@ function switchView(name) {
     Ach.event(name === 'vibe' ? 'vibe' : name === 'lyrics' ? 'karaoke' : 'np');
   if (name === 'vprofile' && window.Social) Social.renderProfile($('#vprofile-wrap'));
   if (name === 'people' && window.Social) Social.renderPeople();
+  if (name === 'uprofile' && window.Social) Social.renderUProfile($('#uprofile-wrap'));
   if (name === 'home') renderHome();
   if (name === 'vibe') renderVibe();
   if (name === 'lyrics' && typeof renderLyrics === 'function') renderLyrics();
@@ -746,6 +747,22 @@ function renderHome() {
         + escapeHtml(lt.track.title || '') + '</span></span>'
         + '<span class="resume-at">' + (pos >= 3 ? 'с ' + formatTime(pos) : 'сначала') + '</span></button>';
     } else rEl.innerHTML = '';
+  }
+  // 🌊 волны друзей: кто из друзей сейчас слушает
+  const fw = $('#home-fwaves'), fwh = $('#home-fwaves-head');
+  if (fw && fwh && window.Social) {
+    const waves = Social.friendsWaves();
+    if (waves.length) {
+      fwh.style.display = '';
+      fw.innerHTML = waves.map(w => `
+        <div class="track-card fw-card" onclick="Social.playFriend('${w.h}')">
+          <div class="track-art">${w.art ? `<img src="${w.art}" alt="" loading="lazy">` : ''}<div class="play-ov"><div class="play-disk"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div></div></div>
+          <div class="track-info">
+            <div class="track-title">${escapeHtml(w.name)}</div>
+            <div class="track-artist">🎧 ${escapeHtml(w.np.t)}</div>
+          </div>
+        </div>`).join('');
+    } else fwh.style.display = 'none';
   }
   const pEl = $('#home-popular');
   if (pEl) {
