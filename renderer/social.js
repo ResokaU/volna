@@ -219,6 +219,7 @@ window.Social = (function () {
       name: myName(), bio: s.bio || '', status: s.status || '',
       avatar: (myAvatar() || '').slice(0, 40000),
       friends: s.friends.slice(0, 100), follows: s.follows.slice(0, 100),
+      pinned: s.pinned || null, links: s.links || [], // видны другим: закреп и соц-ссылки
       pass: extra && extra.pass !== undefined ? extra.pass : (prev.pass || ''),
       updated: Date.now()
     };
@@ -300,6 +301,15 @@ window.Social = (function () {
       save(); updateBadge();
       toast('💬 ' + (findUser(ev.from).name || ('@' + ev.from)) + ': ' + text.slice(0, 60), 'success');
       renderIfOpen();
+    } else if (ev.type === 'room') { // пригласили в комнату
+      if (!ev.code) return;
+      s.chats[ev.from] = s.chats[ev.from] || [];
+      s.chats[ev.from].push({ from: ev.from, kind: 'room', code: ev.code, ts: ev.ts || Date.now() });
+      if (s.chats[ev.from].length > 300) s.chats[ev.from] = s.chats[ev.from].slice(-300);
+      if (!(_openChat === ev.from && $('#view-people')?.classList.contains('active'))) s.unread[ev.from] = (s.unread[ev.from] || 0) + 1;
+      save(); updateBadge();
+      toast('🚪 ' + (findUser(ev.from).name || ('@' + ev.from)) + ' позвал в комнату ' + ev.code, 'success');
+      renderIfOpen();
     } else if (ev.type === 'track') { // друг скинул трек
       const slim = ev.track;
       if (!slim || !slim.id) return;
@@ -338,6 +348,7 @@ window.Social = (function () {
     const np = {
       t: String(track.title || '').slice(0, 90),
       a: String(track.user && track.user.username || '').slice(0, 40),
+      room: (window.Rooms && Rooms.inRoom()) ? Rooms.code() : null,
       art: artwork(track) || '',
       track: { id: track.id, title: track.title, duration: track.duration,
         artwork_url: track.artwork_url, permalink_url: track.permalink_url,
@@ -612,6 +623,7 @@ window.Social = (function () {
           <div class="vp-actions">
             <button class="md-btn" onclick="Social.editToggle()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-edit"/></svg>Редактировать</button>
             <button class="md-btn" onclick="Social.shareProfile()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-copy"/></svg>Поделиться</button>
+            <button class="md-btn" onclick="Social.shareProfileCard()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Карточка</button>
           </div>
         </div>
         <div class="vp-edit" id="vp-edit" style="display:none">
@@ -790,7 +802,7 @@ window.Social = (function () {
       </div>
       <div class="chat-msgs" id="chat-msgs">
         ${msgs.length ? msgs.map(m => `
-          <div class="msg ${m.from === s.handle ? 'me' : 'them'}">${m.kind === 'track' && m.track ? ('<div class="msg-trk" onclick="playChatTrack(' + m.ts + ')" title="Слушать">' + (() => { chatTrackReg[m.ts] = m.track; return m.track.artwork_url ? '<img src="' + esc(m.track.artwork_url) + '" alt="">' : ''; })() + '<div class="msg-trk-info"><div class="msg-trk-t">' + esc(m.track.title || '') + '</div><div class="msg-trk-a">' + esc((m.track.user && m.track.user.username) || '') + '</div></div>' + '<svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div>') : ('<div class="msg-txt">' + esc(m.text) + '</div>')}<div class="msg-ts">${fmtChatTs(m.ts)}</div></div>`).join('')
+          <div class="msg ${m.from === s.handle ? 'me' : 'them'}">${m.kind === 'room' ? ('<div class="msg-room" onclick="Rooms.join(\'' + esc(m.code) + '\')" title="Зайти в комнату">' + '<div class="msg-room-globe"><svg class="ic" viewBox="0 0 24 24"><use href="#i-globe"/></svg></div>' + '<div class="msg-room-info"><div class="msg-room-cap">Волна-комната</div><div class="msg-room-code">' + esc(m.code) + '</div></div>' + '<span class="msg-room-go">Зайти →</span></div>') : m.kind === 'track' && m.track ? ('<div class="msg-trk" onclick="playChatTrack(' + m.ts + ')" title="Слушать">' + (() => { chatTrackReg[m.ts] = m.track; return m.track.artwork_url ? '<img src="' + esc(m.track.artwork_url) + '" alt="">' : ''; })() + '<div class="msg-trk-info"><div class="msg-trk-t">' + esc(m.track.title || '') + '</div><div class="msg-trk-a">' + esc((m.track.user && m.track.user.username) || '') + '</div></div>' + '<svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div>') : ('<div class="msg-txt">' + esc(m.text) + '</div>')}<div class="msg-ts">${fmtChatTs(m.ts)}</div></div>`).join('')
         : '<div class="vp-empty">Начни разговор 🌊</div>'}
       </div>
       <div class="chat-input">
@@ -910,6 +922,87 @@ window.Social = (function () {
 
   /* 🎵 отправить трек другу (контекстное меню) */
   const chatTrackReg = {}; // ts → track
+  /* 💓 мгновенный пульс (комнаты зовут при join/leave) */
+  function pulseNow() { adapter && adapter.presenceBeat(); }
+
+  /* 🚪 пригласить друга в комнату */
+  function inviteRoom(h, code) {
+    const s = S();
+    if (!validHandle(h) || h === s.handle || !code) return;
+    s.chats[h] = s.chats[h] || [];
+    s.chats[h].push({ from: s.handle, kind: 'room', code, ts: Date.now() });
+    if (s.chats[h].length > 300) s.chats[h] = s.chats[h].slice(-300);
+    save(); ensureSubs();
+    adapter && adapter.deliver(h, { type: 'room', from: s.handle, code, ts: Date.now() });
+    toast('🚪 Приглашение отправлено @' + h, 'success');
+    renderIfOpen();
+  }
+
+  /* 🖼 карточка профиля PNG */
+  async function shareProfileCard(h) {
+    const me = h === S().handle;
+    const c = me ? { name: myName(), bio: S().bio || '', status: S().status || '', avatar: myAvatar(), friends: S().friends, follows: S().follows, pinned: S().pinned || null } : (directory[h] || (await MeshAdapter.fetchDirectory())[h]);
+    if (!c) { toast('Профиль не найден в справочнике', 'error'); return; }
+    const W = 1200, H = 630;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const x = cv.getContext('2d');
+    x.fillStyle = '#0b0b13'; x.fillRect(0, 0, W, H);
+    const cs = getComputedStyle(document.body);
+    const acc = (cs.getPropertyValue('--accent') || '#b14aff').trim();
+    const acc2 = (cs.getPropertyValue('--accent2') || '#ff3d7f').trim();
+    x.fillStyle = acc; x.globalAlpha = 0.35; x.beginPath(); x.arc(160, 90, 320, 0, 7); x.fill();
+    x.fillStyle = acc2; x.globalAlpha = 0.28; x.beginPath(); x.arc(W - 120, H - 60, 380, 0, 7); x.fill();
+    x.globalAlpha = 0.8; x.strokeStyle = acc; x.lineWidth = 6; x.beginPath(); x.moveTo(0, H - 70);
+    for (let i = 0; i <= W; i += 20) x.lineTo(i, H - 70 + Math.sin(i / 90) * 22);
+    x.stroke(); x.globalAlpha = 1;
+    let finished = false;
+    function finish() {
+      if (finished) return; finished = true;
+      x.textAlign = 'left';
+      x.fillStyle = '#fff'; x.font = '900 64px Unbounded, Golos Text, sans-serif';
+      x.fillText(String(c.name || h).slice(0, 22), 360, 300);
+      x.fillStyle = acc; x.font = '800 30px Golos Text, sans-serif';
+      x.fillText('@' + h, 360, 350);
+      if (c.status) { x.fillStyle = '#c9c9da'; x.font = '700 26px Golos Text, sans-serif'; x.fillText('🌊 ' + String(c.status).slice(0, 40), 360, 400); }
+      x.fillStyle = '#9a9ab0'; x.font = '800 24px Golos Text, sans-serif';
+      const fr = (c.friends || []).length, fl = (c.follows || []).length;
+      x.fillText(fr + ' друзей · ' + fl + ' подписчиков', 360, 452);
+      if (c.pinned) { x.fillStyle = acc2; x.font = '900 26px Golos Text, sans-serif'; x.fillText('📌 ' + String(c.pinned.t).slice(0, 40), 360, 505); }
+      x.fillStyle = '#6a6a80'; x.font = '800 22px Unbounded, Golos Text, sans-serif';
+      x.fillText('VOLNA · волна ID', 360, 560);
+      showCardModal(cv.toDataURL('image/png'));
+    }
+    function drawLetter() { x.fillStyle = acc; x.fillRect(90, 190, 220, 220); x.fillStyle = '#fff'; x.font = '900 110px Golos Text, sans-serif'; x.textAlign = 'center'; x.fillText(String(c.name || h || '?')[0].toUpperCase(), 200, 330); finish(); }
+    const ava = c.avatar || '';
+    if (ava) {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = () => { x.save(); x.beginPath(); x.arc(200, 300, 110, 0, 7); x.clip(); x.drawImage(im, 90, 190, 220, 220); x.restore(); finish(); };
+      im.onerror = drawLetter;
+      im.src = ava;
+    } else drawLetter();
+    function showCardModal(dataUrl) {
+      let m = document.getElementById('sharecard_modal');
+      if (m) m.remove();
+      m = document.createElement('div');
+      m.id = 'sharecard_modal'; m.className = 'modal show';
+      m.innerHTML = '<div class="modal-content" style="max-width:840px"><button class="modal-close" onclick="this.closest(\'.modal\').classList.remove(\'show\')">×</button>' +
+        '<h2>🖼 Карточка профиля</h2>' +
+        '<img src="' + dataUrl + '" style="width:100%;border-radius:16px;margin:10px 0">' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="md-btn accent" id="sc-copy">📋 В буфер</button>' +
+        '<a class="md-btn" id="sc-dl" download="volna-' + h + '.png" href="' + dataUrl + '">⬇ Скачать PNG</a>' +
+        '</div></div>';
+      document.body.appendChild(m);
+      m.querySelector('#sc-copy').onclick = async () => {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          toast('🖼 Карточка в буфере', 'success');
+        } catch (_) { toast('Буфер недоступен — скачай файл', 'error'); }
+      };
+      m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+    }
+  }
   /* 👤 чужой профиль: страница по @хэндлу из реестра */
   let _upHandle = null;
   async function openProfile(h) {
@@ -947,6 +1040,7 @@ window.Social = (function () {
           </div>
           <div class="vp-actions">
             <button class="md-btn" onclick="switchView('people')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-back"/></svg>Назад</button>
+            <button class="md-btn" onclick="Social.shareProfileCard('${esc(h)}')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Карточка</button>
             ${isFriend ? `<button class="md-btn accent" onclick="Social.openChat('${esc(h)}')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-chat"/></svg>Написать</button>` : `<button class="md-btn accent" onclick="Social.addFriend('${esc(h)}')"><svg class="ic" viewBox="0 0 24 24"><use href="#i-users"/></svg>＋ В друзья</button>`}
           </div>
         </div>
@@ -976,9 +1070,9 @@ window.Social = (function () {
 
   /* 🌊 волны друзей для главной */
   function friendsWaves() {
-    return s.friends
+    return S().friends
       .filter(h => nowNp[h] && isOnline(h))
-      .map(h => ({ h, name: findUser(h).name || h, art: nowNp[h].art || '', np: nowNp[h] }));
+      .map(h => ({ h, name: findUser(h).name || h, art: nowNp[h].art || '', np: nowNp[h], room: nowNp[h].room || null }));
   }
 
   window.playChatTrack = ts => { const t = chatTrackReg[ts]; if (t && window.playTrack) playTrack(t, ts === 'pin' ? 'pinned' : 'up' === String(ts).slice(0, 2) ? 'friend' : 'chat'); };
@@ -1027,7 +1121,7 @@ window.Social = (function () {
 
   return {
     init, use,
-    sendTrackTo, followFriend, unfollow, quickStatus, saveLinks, pinTrack, unpinTrack, openProfile, renderUProfile, friendsWaves, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
+    sendTrackTo, followFriend, unfollow, quickStatus, saveLinks, pinTrack, unpinTrack, pulseNow, inviteRoom, shareProfileCard, openProfile, renderUProfile, friendsWaves, saveProfileCard, addFriend, acceptFriend, rejectFriend, unfriend,
     toggleFollow, sendMsg, openChat, sendFromInput, backToChats, setTab, find,
     renderProfile, renderPeople, updateBadge, editToggle, saveEdit, shareProfile,
     pickBanner, bannerChosen, removeBanner,

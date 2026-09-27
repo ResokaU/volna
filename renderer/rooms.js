@@ -201,6 +201,8 @@ window.Rooms = (function () {
     publishState();
     renderRooms();
     if (window.Ach) Ach.event('room');
+    try { localStorage.setItem('ga:lastRoom', code); } catch (_) {}
+    if (window.Social) Social.pulseNow(); // друзья видят, что ты в комнате
     toast('🌊 Комната создана: ' + code, 'success');
   }
 
@@ -218,6 +220,8 @@ window.Rooms = (function () {
     guestLoop();
     renderRooms();
     if (window.Ach) Ach.event('room');
+    try { localStorage.setItem('ga:lastRoom', code); } catch (_) {}
+    if (window.Social) Social.pulseNow();
     toast('🌊 В комнате ' + code + ' — синкаюсь с хостом', 'success');
   }
 
@@ -237,6 +241,7 @@ window.Rooms = (function () {
       send(role === 'host' ? { type: 'end', from: clientId } : { type: 'bye', from: clientId });
     }
     try { client && client.end(true); } catch (_) {}
+    if (window.Social) Social.pulseNow(); // комната закрыта — пульс без комнаты
     clearInterval(hbTimer); clearInterval(guestPingTimer); clearInterval(joinTimer);
     hbTimer = guestPingTimer = joinTimer = 0;
     client = null; code = ''; role = ''; guests = 0; isUp = false; warnedDown = false;

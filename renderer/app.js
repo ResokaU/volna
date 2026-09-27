@@ -191,6 +191,25 @@ function showTrackMenu(e, trackId) {
 function hideContextMenu() { $('#context-menu')?.classList.remove('show'); }
 
 window.__pinById = id => { const t = state.trackIndex.get(Number(id)); if (t && window.Social) Social.pinTrack(t); };
+function openRoomFriendPicker(e) {
+  if (!window.Rooms || !Rooms.inRoom()) { toast('Сначала создай или войди в комнату', 'error'); return; }
+  const code = Rooms.code();
+  const s = window.Social ? Social.summary() : null;
+  if (!s || !s.handle) { toast('Нужен Волна ID (Мой профиль)', 'error'); return; }
+  const fr = (state.social && state.social.friends) || [];
+  if (!fr.length) { toast('Добавь друзей во вкладке «Люди»', 'error'); return; }
+  const menu = $('#context-menu');
+  menu.innerHTML = '<div class="context-title">🚪 Позвать в комнату ' + code + '</div>' +
+    fr.map(h => '<div class="context-item" data-fr="' + escapeHtml(h) + '">@' + escapeHtml(h) + '</div>').join('');
+  menu.classList.add('show');
+  menu.style.left = Math.min(e.clientX, innerWidth - menu.offsetWidth - 12) + 'px';
+  menu.style.top = Math.min(e.clientY, innerHeight - menu.offsetHeight - 12) + 'px';
+  menu.querySelectorAll('.context-item').forEach(item => item.addEventListener('click', () => {
+    hideContextMenu();
+    if (window.Social) Social.inviteRoom(item.dataset.fr, code);
+  }));
+  setTimeout(() => document.addEventListener('click', hideContextMenu, { once: true }), 10);
+}
 function showFriendPicker(trackId, e) {
   const s = window.Social ? Social.summary() : null;
   if (!s || !s.handle) { toast('Сначала заведи Волна ID — вкладка «Мой профиль»', 'error'); return; }
@@ -762,7 +781,7 @@ function renderHome() {
         <div class="track-card fw-card" onclick="Social.playFriend('${w.h}')">
           <div class="track-art">${w.art ? `<img src="${w.art}" alt="" loading="lazy">` : ''}<div class="play-ov"><div class="play-disk"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div></div></div>
           <div class="track-info">
-            <div class="track-title">${escapeHtml(w.name)}</div>
+            <div class="track-title">${escapeHtml(w.name)}${w.room ? ` <button class="fw-room" onclick="event.stopPropagation();Rooms.join('${w.room}')" title="Зайти в комнату">🚪 ${w.room}</button>` : ''}</div>
             <div class="track-artist">🎧 ${escapeHtml(w.np.t)}</div>
           </div>
         </div>`).join('');
