@@ -6,7 +6,7 @@
 <title>VOLNA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet">
 <script src="https://w.soundcloud.com/player/api.js"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -533,11 +533,41 @@
             <button class="accent-chip" data-accent="midnight" style="--ac:#221c4d" title="Полночь"></button>
             <button class="accent-chip" data-accent="slate" style="--ac:#27303f" title="Сланец"></button>
           </div>
-          <label class="set-check" style="display:flex;align-items:center;gap:9px;margin-top:14px;font-size:12.5px;font-weight:700;color:#b9b9cc;cursor:pointer">
+          <label class="set-check" style="display:flex;align-items:center;gap:9px;margin-top:14px;font-size:12.5px;font-weight:700;color:#9db1d0;cursor:pointer">
             <input type="checkbox" id="set-autoaccent" style="accent-color:var(--accent)">
             🎨 Акцент из обложки — волна красится под играющий трек
           </label>
         </div>
+        <div class="settings-group set-pane" data-pane="look">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Масштаб интерфейса</h3>
+          <div class="setting-row ui-scale-row">
+            <button class="sc-btn" onclick="nudgeZoom(-.1)" title="Меньше (Ctrl+-)">−</button>
+            <span class="ui-scale-val" id="ui-scale-val">100%</span>
+            <button class="sc-btn" onclick="nudgeZoom(.1)" title="Больше (Ctrl+=)">+</button>
+            <button class="sc-btn" onclick="setZoom(1)" title="Сброс (Ctrl+0)" style="width:auto;padding:0 12px;font-size:12px">Сброс</button>
+          </div>
+        </div>
+        <div class="settings-group set-pane" data-pane="look">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Стиль фонов (Вайб)</h3>
+          <div class="eq-presets" id="vcat-chips" title="Перетаскивай, чтобы менять порядок"></div>
+          <div style="margin-top:10px">
+            <label class="toggle-row"><input type="checkbox" id="set-vsession"><span>Держать один фон на всю сессию (не менять с треком)</span></label>
+          </div>
+        </div>
+        <div class="settings-group set-pane" data-pane="look">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Фон и волны</h3>
+          <label class="toggle-row"><input type="checkbox" id="set-waves" checked><span>Динамичные волны внизу экрана</span></label>
+          <label class="toggle-row"><input type="checkbox" id="set-mascot" checked><span>Танцующий маскот в караоке (клик по нему — сменить)</span></label>
+          <div class="setting-row" style="margin:8px 0 10px;flex-wrap:wrap">
+            <button class="toolbar-btn" onclick="document.getElementById('wallpaper-input').click()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Свои обои…</button>
+            <button class="toolbar-btn" onclick="clearWallpaper()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg>Убрать обои</button>
+            <input type="file" id="wallpaper-input" accept="image/*" hidden>
+          </div>
+          <div class="setting-row">
+            <span style="font-size:13px;color:var(--dim);flex-shrink:0">Затемнение обоев</span>
+            <input type="range" id="wallpaper-dim" min="0" max="100" value="55" style="flex:1">
+          </div>
+          <p style="color:var(--muted);font-size:12px;margin-top:10px">Обои хранятся локально в приложении и никуда не отправляются.</p>
         </div>
         <div class="settings-group set-pane" data-pane="sound">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Эквалайзер <span style="opacity:.5;font-weight:400">(нативный звук)</span></h3>
@@ -561,37 +591,12 @@
             <div class="eq-col"><input type="range" id="eq-9" min="-12" max="12" step="1" value="0"><span>16k</span></div>
           </div>
         </div>
-        <div class="settings-group set-pane" data-pane="look">
-          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Масштаб интерфейса</h3>
-          <div class="setting-row ui-scale-row">
-            <button class="sc-btn" onclick="nudgeZoom(-.1)" title="Меньше (Ctrl+-)">−</button>
-            <span class="ui-scale-val" id="ui-scale-val">100%</span>
-            <button class="sc-btn" onclick="nudgeZoom(.1)" title="Больше (Ctrl+=)">+</button>
-            <button class="sc-btn" onclick="setZoom(1)" title="Сброс (Ctrl+0)" style="width:auto;padding:0 12px;font-size:12px">Сброс</button>
-          </div>
-        </div>
         <div class="settings-group set-pane" data-pane="sound">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>Качество аудио (нативный движок)</h3>
           <div class="eq-presets">
-            <div class="eq-presets">
-              <button class="bit-chip active" data-bit="best">🎧 Лучшее</button>
-              <button class="bit-chip" data-bit="small">📉 Экономия трафика</button>
-            </div>
+            <button class="bit-chip active" data-bit="best">🎧 Лучшее</button>
+            <button class="bit-chip" data-bit="small">📉 Экономия трафика</button>
           </div>
-        <div class="settings-group set-pane" data-pane="look">
-          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Стиль фонов (Вайб)</h3>
-          <div class="eq-presets" id="vcat-chips" title="Перетаскивай, чтобы менять порядок"></div>
-          <div style="margin-top:10px">
-            <label class="toggle-row"><input type="checkbox" id="set-vsession"><span>Держать один фон на всю сессию (не менять с треком)</span></label>
-          </div>
-        </div>
-        </div>
-        <div class="settings-group set-pane" data-pane="app">
-          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Пульт с телефона</h3>
-          <div class="setting-row" style="margin-bottom:10px">
-            <button class="toolbar-btn" onclick="showRemoteQR()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Показать QR и адрес</button>
-          </div>
-          <div id="remote-box"></div>
         </div>
         <div class="settings-group set-pane" data-pane="sound">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-volume"/></svg>Громкость по умолчанию</h3>
@@ -599,6 +604,13 @@
             <input type="range" id="default-volume" min="0" max="1" step="0.05" style="flex:1">
             <span id="default-volume-val">100%</span>
           </div>
+        </div>
+        <div class="settings-group set-pane" data-pane="app">
+          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-mini"/></svg>Пульт с телефона</h3>
+          <div class="setting-row" style="margin-bottom:10px">
+            <button class="toolbar-btn" onclick="showRemoteQR()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-external"/></svg>Показать QR и адрес</button>
+          </div>
+          <div id="remote-box"></div>
         </div>
         <div class="settings-group set-pane" data-pane="app">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-zap"/></svg>Поведение</h3>
@@ -624,21 +636,6 @@
             <button class="toolbar-btn ig-btn" onclick="saveDiscordToken()">Сохранить</button>
           </div>
           <p class="setting-hint">Без токена Discord показывает логотип вместо обложки. Токен: discord.com/developers → твоё приложение VOLNA → Bot → Reset Token. Токен хранится только на этом компьютере.</p>
-        </div>
-        <div class="settings-group set-pane" data-pane="look">
-          <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Фон и волны</h3>
-          <label class="toggle-row"><input type="checkbox" id="set-waves" checked><span>Динамичные волны внизу экрана</span></label>
-          <label class="toggle-row"><input type="checkbox" id="set-mascot" checked><span>Танцующий маскот в караоке (клик по нему — сменить)</span></label>
-          <div class="setting-row" style="margin:8px 0 10px;flex-wrap:wrap">
-            <button class="toolbar-btn" onclick="document.getElementById('wallpaper-input').click()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-image"/></svg>Свои обои…</button>
-            <button class="toolbar-btn" onclick="clearWallpaper()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg>Убрать обои</button>
-            <input type="file" id="wallpaper-input" accept="image/*" hidden>
-          </div>
-          <div class="setting-row">
-            <span style="font-size:13px;color:var(--dim);flex-shrink:0">Затемнение обоев</span>
-            <input type="range" id="wallpaper-dim" min="0" max="100" value="55" style="flex:1">
-          </div>
-          <p style="color:var(--muted);font-size:12px;margin-top:10px">Обои хранятся локально в приложении и никуда не отправляются.</p>
         </div>
         <div class="settings-group set-pane" data-pane="app">
           <h3><svg class="ic" viewBox="0 0 24 24"><use href="#i-shield"/></svg>Антиблок — доступ в РФ</h3>

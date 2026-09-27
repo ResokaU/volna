@@ -19,7 +19,7 @@ ipcMain.handle('mini:toggle', () => {
     width: 340, height: 120,
     minWidth: 300, maxWidth: 520, minHeight: 100, maxHeight: 160,
     frame: false, alwaysOnTop: true, show: false,
-    backgroundColor: '#0a0a12', autoHideMenuBar: true,
+    backgroundColor: '#020817', autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'renderer', 'preload-mini.js'),
       contextIsolation: true, nodeIntegration: false
@@ -477,7 +477,7 @@ function createWindow() {
     minHeight: 600,
     frame: false, // кастомный тайтлбар в renderer
     show: false,
-    backgroundColor: '#07070d',
+    backgroundColor: '#020817',
     title: 'VOLNA',
     icon: path.join(__dirname, 'renderer', 'logo.png'),
     autoHideMenuBar: true,

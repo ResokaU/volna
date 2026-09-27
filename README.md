@@ -4,12 +4,14 @@
 
 <img src="docs/banner.svg" alt="VOLNA" width="100%">
 
-[![версия](https://img.shields.io/badge/версия-1.4-b14aff?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
+[![версия](https://img.shields.io/badge/версия-1.5-b14aff?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
 [![лицензия](https://img.shields.io/badge/License-MIT-d6ff3a?style=for-the-badge)](LICENSE)
 [![платформа](https://img.shields.io/badge/Windows-10%2F11-ff3d7f?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
 [![донат](https://img.shields.io/badge/💜_поддержать-волну-8a2be2?style=for-the-badge)](https://resokau.github.io/volna/donate)
 
 **Не просто плеер — своя волна.** Звук SoundCloud, MilkDrop-визуалы, собственная соцсеть с профилями, друзьями и чатами, ачивки с огоньками — всё в одном красивом окне. Без рекламы и подписок.
+
+> 🌊 **1.5 «Глубина»** — полный редизайн: интерфейс-батискаф в ночном океане музыки. Глубокий сине-чёрный фон со световыми шахтами, плавающие стеклянные острова, жидкий прогресс-бар, сонар-детали и приборные mono-цифры. Вся логика на месте.
 
 **[⬇ Скачать VOLNA-Setup](https://github.com/ResokaU/volna/releases/latest)** · [портативная](https://github.com/ResokaU/volna/releases/latest) · [💜 поддержать](https://resokau.github.io/volna/donate)
 

@@ -171,7 +171,7 @@ function applySettings() {
 }
 
 function bindLibraryUI() {
-  $('.accent-chip').forEach(chip => chip.addEventListener('click', async () => {
+  $$('.accent-chip').forEach(chip => chip.addEventListener('click', async () => {
     if (state.settings.autoAccent) { await saveSetting('autoAccent', false); const cb = $('#set-autoaccent'); if (cb) cb.checked = false; }
     if (window.clearAutoAccent) clearAutoAccent(true);
     applySettings();
