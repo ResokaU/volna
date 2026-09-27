@@ -85,7 +85,7 @@ height:100vh;overflow-y:auto;overflow-x:hidden}
 .sidebar::-webkit-scrollbar-thumb{background:var(--hover);border-radius:3px}
 .logo-block{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px;
 display:flex;align-items:center;gap:12px}
-.logo-mark{width:48px;height:48px;flex-shrink:0;
+.logo-mark{width:48px;height:48px;flex-shrink:0;transition:filter .3s;
 filter:drop-shadow(0 6px 22px color-mix(in srgb,var(--neon) 55%,transparent))}
 .logo{font-family:'Unbounded','Golos Text',sans-serif;font-size:16px;font-weight:900;letter-spacing:-.5px;
 background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -317,6 +317,10 @@ border:1px solid var(--border)}
 background:linear-gradient(180deg,#fff 0%,#8a8694 130%);
 -webkit-background-clip:text;background-clip:text;color:transparent}
 .stat-label{font-size:11px;color:var(--dim);margin-top:6px;text-transform:uppercase;letter-spacing:.14em}
+
+/* волна-логотип: красится акцентом */
+.wa1{stop-color:var(--accent)}.wa2{stop-color:var(--accent2)}
+.tb-icon path{transition:stroke .3s}
 
 /* ============ Heatmap ============ */
 .heatmap{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;grid-template-rows:repeat(7,14px);gap:4px;
@@ -769,7 +773,7 @@ border-color:transparent;color:#fff;font-weight:800;
 box-shadow:0 10px 28px -10px color-mix(in srgb,var(--accent) 70%,transparent)}
 .toolbar-btn.primary:hover{transform:translateY(-2px);filter:brightness(1.12);color:#fff}
 .toolbar-btn.primary .ic{color:#fff}
-.tracks.shelf{display:flex;overflow-x:auto;padding:4px 4px 16px;scroll-snap-type:x proximity;
+.tracks.shelf{display:flex;overflow-x:auto;padding:4px 4px 16px;scroll-snap-type:none;
 scrollbar-width:thin}
 .tracks.shelf .track-card{width:212px;flex-shrink:0;scroll-snap-align:start}
 .tracks.shelf::-webkit-scrollbar{height:8px}

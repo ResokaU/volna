@@ -13,7 +13,7 @@
 <body>
 
 <div class="titlebar" id="titlebar">
-  <img class="tb-icon" src="logo.png" alt="">
+  <svg class="tb-icon" viewBox="0 0 512 512" fill="none" aria-hidden="true"><path d="M96 328 C 104 216, 190 152, 300 160 C 384 166, 436 222, 430 284 C 425 340, 372 372, 322 352 C 288 338, 276 300, 296 272 C 312 250, 344 250, 358 272" stroke="url(#wavg)" stroke-width="58" stroke-linecap="round"/></svg>
   <div class="tb-title" id="tb-title">VOLNA</div>
   <div class="tb-controls">
     <button class="tb-btn" onclick="winMin()" title="Свернуть">─</button>
@@ -34,6 +34,7 @@
       <feGaussianBlur stdDeviation="10" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <linearGradient id="wavg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="wa1"/><stop offset="1" class="wa2"/></linearGradient>
     <!-- 🎨 палитра бейджей артистов/треков (achievements.js) -->
     <linearGradient id="ag0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b14aff"/><stop offset="1" stop-color="#ff3d7f"/></linearGradient>
     <linearGradient id="ag1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6ff3a"/><stop offset="1" stop-color="#4affa3"/></linearGradient>
@@ -149,7 +150,7 @@
 <div class="app">
   <aside class="sidebar">
     <div class="logo-block">
-      <img class="logo-mark" src="logo.svg" alt="VOLNA">
+      <svg class="logo-mark" viewBox="0 0 512 512" fill="none" aria-hidden="true"><path d="M96 328 C 104 216, 190 152, 300 160 C 384 166, 436 222, 430 284 C 425 340, 372 372, 322 352 C 288 338, 276 300, 296 272 C 312 250, 344 250, 358 272" stroke="url(#wavg)" stroke-width="58" stroke-linecap="round"/></svg>
       <div>
         <div class="logo grad-anim">VOLNA</div>
         <div class="logo-sub">слушай волну</div>
@@ -878,7 +879,7 @@
   <div class="modal-content">
     <button class="modal-close" onclick="closeModal('about_modal')">×</button>
     <h2>О приложении</h2>
-    <img class="about-logo" src="logo.svg" alt="VOLNA">
+    <svg class="about-logo" viewBox="0 0 512 512" fill="none" aria-hidden="true"><path d="M96 328 C 104 216, 190 152, 300 160 C 384 166, 436 222, 430 284 C 425 340, 372 372, 322 352 C 288 338, 276 300, 296 272 C 312 250, 344 250, 358 272" stroke="url(#wavg)" stroke-width="58" stroke-linecap="round"/></svg>
     <div id="about-info" style="color:var(--dim);font-size:14px;line-height:1.8;text-align:center"></div>
     <button class="modal-btn" style="margin-top:18px" onclick="openDonation()"><svg class="ic" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:6px"><use href="#i-heart"/></svg>Поддержать автора 💜</button>
   </div>

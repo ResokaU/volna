@@ -842,13 +842,16 @@ function collapseNp() {
 document.addEventListener('wheel', e => {
   const sh = e.target.closest && e.target.closest('.shelf');
   if (!sh) return;
-  const d = (e.deltaY || 0) + (e.deltaX || 0);
-  if (!d) return;
-  const atStart = sh.scrollLeft <= 0;
-  const atEnd = sh.scrollLeft + sh.clientWidth >= sh.scrollWidth - 1;
-  if ((d < 0 && atStart) || (d > 0 && atEnd)) return; // край полки — отдаём скролл странице
+  // доминирующая ось: у обычного колеса это Y, у тачпада может быть X
+  const dy = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  if (!dy) return;
+  const max = sh.scrollWidth - sh.clientWidth;
+  if (max <= 2) return; // полке некуда скроллить — колесо работает как обычно
+  const atStart = sh.scrollLeft <= 2, atEnd = sh.scrollLeft >= max - 2;
+  if ((dy < 0 && atStart) || (dy > 0 && atEnd)) return; // край полки — отдаём скролл странице
   e.preventDefault();
-  sh.scrollLeft += d;
+  const px = e.deltaMode === 1 ? dy * 16 : dy; // строки → пиксели
+  sh.scrollLeft += Math.max(-140, Math.min(140, px * 1.15));
 }, { passive: false });
 
 /* 🎊 пасхалка: набери на клавиатуре «волна» */

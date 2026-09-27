@@ -38,7 +38,6 @@ window.Ach = (function () {
     { name: 'тёмный принц', emoji: '🖤' },
     { name: 'Kai Angel', emoji: '👼' },
     { name: '9mice', emoji: '🐍' },
-    { name: 'VIPERR', emoji: '💎' },
     { name: '5opka', emoji: '💚' },
     { name: 'Dope17', emoji: '💊' },
     { name: 'Юпи', emoji: '⭐' },
@@ -49,12 +48,6 @@ window.Ach = (function () {
     { name: 'снялцепи', emoji: '⛓' },
     { name: 'урал гайсин', emoji: '🪓' },
     { name: 'ENZRO', emoji: '🌙' },
-    { name: 'ЦУЕФА', emoji: '🔥' },
-    { name: 'Полка', emoji: '📚' },
-    { name: 'YASMI', emoji: '💧' },
-    { name: 'HOLLYFLAME', emoji: '🔥' },
-    { name: 'Imael Angel', emoji: '😇' },
-    { name: 'YungMeechy', emoji: '📟' }
   ];
   const ARTIST_TIERS = [
     { need: 3, label: 'Слушатель', rarity: 'common' },
