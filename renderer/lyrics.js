@@ -207,8 +207,15 @@ function applyRecord(rec, track) {
   state.lyrics.lastIdx = null;
   renderLyrics();
   resetLyricsScroll(); // новая песня — текст всегда сверху
-  if ($('#view-nowplaying')?.classList.contains('active')) renderNp(); // текст доехал — обновить полноэкранку
-  else if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false) switchView('lyrics');
+  if ($('#view-nowplaying')?.classList.contains('active')) { renderNp(); return; } // текст доехал — обновить полноэкранку
+  if (state.lyrics.status === 'synced' && state.settings.autoLyrics !== false) {
+    // авто-открытие только с «бытовых» экранов: не выдёргиваем из вайба,
+    // настроек и соцсети — там текст и так виден (гигантская строка в вайбе)
+    const cur = document.querySelector('.view.active')?.id || '';
+    const casual = ['view-home', 'view-discover', 'view-foryou', 'view-favorites',
+      'view-playlists', 'view-playlist-detail', 'view-history', 'view-queue', 'view-stats'];
+    if (casual.includes(cur)) switchView('lyrics');
+  }
 }
 
 function resetLyricsScroll() {
