@@ -563,7 +563,7 @@ window.Social = (function () {
           ${reg ? `
           <div class="vp-regform">
             <div class="vp-regrow">
-              <div class="vp-regfield"><label>Хэндл</label><input type="text" id="vp-reg-handle" maxlength="16" placeholder="ник волны" value="${esc(sug)}"></div>
+              <div class="vp-regfield"><label>Хэндл</label><input type="text" id="vp-reg-handle" maxlength="16" placeholder="ник волны" value="${esc(sug)}"><div class="vp-handle-check" id="vp-handle-check"></div></div>
               <div class="vp-regfield"><label>Имя</label><input type="text" id="vp-reg-name" maxlength="32" placeholder="Как показывать" value="${esc(myName())}"></div>
             </div>
             <div class="vp-regrow">
@@ -583,6 +583,29 @@ window.Social = (function () {
           <p class="vp-claim-hint">Аккаунты живут в GitHub-облаке (токен в Настройках внизу). Вход с любого ПК:
           хэндл + пароль. Пароль хранится только как SHA-256 хэш — никто не увидит исходный.</p>
         </div>`;
+      /* 🔍 живая проверка хэндла: формат сразу, занятость — из реестра облака */
+      const hi = $('#vp-reg-handle'), hc = $('#vp-handle-check');
+      if (hi && hc) {
+        let _hT = 0;
+        const handleCheck = () => {
+          const v = hi.value.trim().toLowerCase();
+          clearTimeout(_hT);
+          hc.className = 'vp-handle-check';
+          if (!v) { hc.textContent = ''; return; }
+          if (!validHandle(v)) { hc.textContent = '✕ 3–16 символов: a-z, 0-9, _'; hc.className = 'vp-handle-check bad'; return; }
+          hc.textContent = '…';
+          _hT = setTimeout(async () => {
+            try {
+              if (!MeshAdapter.available()) { hc.textContent = '☁ Подключи GitHub в Настройках — проверю занятость'; hc.className = 'vp-handle-check warn'; return; }
+              const users = await MeshAdapter.fetchDirectory();
+              if (users[v]) { hc.textContent = '✕ @' + v + ' уже занят — попробуй другой'; hc.className = 'vp-handle-check bad'; }
+              else { hc.textContent = '✓ @' + v + ' свободен'; hc.className = 'vp-handle-check ok'; }
+            } catch (_) { hc.textContent = ''; }
+          }, 550);
+        };
+        hi.addEventListener('input', handleCheck);
+        handleCheck();
+      }
       return;
     }
     const lv = window.Ach ? Ach.summary() : null;

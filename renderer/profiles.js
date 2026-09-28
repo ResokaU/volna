@@ -151,6 +151,7 @@ window.Profiles = (function () {
   function renderView() {
     renderList();
     renderCloud();
+    if (window.updateSidebarProfile) updateSidebarProfile(); // чип в сайдбаре актуален
   }
 
   function renderList() {

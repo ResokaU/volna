@@ -630,6 +630,7 @@ function bindChrome() {
   bindCopyGuard();
   bindGlobalDrop();
   renderMoods(); // волна настроения на главной
+  updateSidebarProfile(); // чип профиля в сайдбаре
   const logo = document.querySelector('.nav-label');
   logo?.addEventListener('click', logoEgg); // 7 кликов…
   const tb = $('#titlebar');
@@ -681,7 +682,7 @@ function trackCardHTML(track, idx, listKey) {
   const plays = track.playback_count != null ? fmtCount(track.playback_count) : '';
   const img = artwork(track);
   return `<div class="track-card" data-idx="${idx}" data-list="${listKey}" data-id="${track.id}"
-    onclick="playFromCard(this)" oncontextmenu="showTrackMenu(event,${track.id})">
+    onclick="playFromCard(this)" oncontextmenu="showTrackMenu(event,${track.id})" onauxclick="quickQueue(this)">
     <div class="track-art">
       <img src="${escapeHtml(img)}" alt="" loading="lazy" onerror="this.style.opacity=0">
       <div class="play-ov"><div class="play-disk"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div></div>
@@ -703,6 +704,35 @@ function trackCardHTML(track, idx, listKey) {
       </div>
     </div>
   </div>`;
+}
+
+/* 🖱 средний клик по карточке — мгновенно в очередь */
+function quickQueue(el) {
+  const t = state.trackIndex.get(Number(el.dataset.id));
+  if (!t) return;
+  addToQueue(t);
+}
+
+/* 👤 чип активного профиля в сайдбаре: аватар + имя, клик → настройки */
+function updateSidebarProfile() {
+  const foot = document.querySelector('.sidebar-footer');
+  if (!foot || !window.Profiles) return;
+  let chip = document.getElementById('sb-profile');
+  if (!chip) {
+    chip = document.createElement('button');
+    chip.id = 'sb-profile';
+    chip.className = 'sb-profile';
+    chip.title = 'Сменить профиль устройства';
+    foot.insertBefore(chip, foot.querySelector('.donate-btn'));
+  }
+  const p = (Profiles.profiles || []).find(x => x.id === Profiles.active);
+  if (!p) { chip.style.display = 'none'; return; }
+  chip.style.display = 'flex';
+  chip.onclick = () => { switchView('settings'); setSettingsPane('id'); };
+  chip.innerHTML = (p.avatar
+    ? `<img src="${p.avatar}" alt="">`
+    : `<span class="sb-pava">${escapeHtml((p.name || '?')[0].toUpperCase())}</span>`)
+    + `<span class="sb-pname">${escapeHtml(p.name)}<small>профиль устройства</small></span>`;
 }
 
 /* ---------- init ---------- */

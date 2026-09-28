@@ -1083,9 +1083,10 @@ function renderQueue() {
   $('#queue-count').textContent = state.queue.length;
   const qd = $('#qd-count');
   if (qd) qd.textContent = state.queue.length;
+  state.queue.forEach(rememberTrack); // для ПКМ-меню и быстрой игры по id
   const rowHTML = (t, i) => `
     <div class="queue-item ${state.currentListKey === 'queue' && state.currentIdx === i ? 'current' : ''}"
-      draggable="true" data-idx="${i}">
+      draggable="true" data-idx="${i}" data-id="${t.id}" oncontextmenu="showTrackMenu(event,${t.id})">
       <img src="${escapeHtml(artwork(t))}" alt="" loading="lazy" onerror="this.style.opacity=0">
       <div class="queue-item-info">
         <div class="queue-item-title">${escapeHtml(t.title)}</div>
@@ -1103,7 +1104,12 @@ function renderQueue() {
   }
   const html = state.queue.map(rowHTML).join('');
   if (listEl) listEl.innerHTML = html;
-  if (drawer) drawer.innerHTML = html;
+  if (drawer) {
+    drawer.innerHTML = html;
+    // открыт drawer — видим, что играет сейчас
+    if (document.body.classList.contains('queue-drawer-open'))
+      drawer.querySelector('.queue-item.current')?.scrollIntoView({ block: 'nearest' });
+  }
 }
 
 function bindQueueDnD() {

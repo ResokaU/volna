@@ -1804,3 +1804,35 @@ background:linear-gradient(180deg,color-mix(in srgb,var(--acid) 90%,transparent)
 .vc-row .modal-btn.vc-no:hover{filter:none;transform:none;background:rgba(255,61,85,.18)}
 .track-artist{transition:color .15s;cursor:none}
 .track-artist:hover{color:var(--acid)}
+
+/* ============ v1.8.0: аккаунты, тайтлбар-эквалайзер, drawer-фишки ============ */
+/* 👤 чип активного профиля в сайдбаре */
+.sb-profile{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:12px;padding:8px 10px;
+border-radius:14px;border:1px solid var(--border);background:rgba(148,197,255,.06);
+cursor:none;transition:.2s;font-family:inherit;text-align:left}
+.sb-profile:hover{border-color:color-mix(in srgb,var(--accent) 50%,transparent);
+background:color-mix(in srgb,var(--accent) 12%,rgba(148,197,255,.06))}
+.sb-profile img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.sb-pava{width:32px;height:32px;border-radius:50%;background:var(--grad);display:flex;align-items:center;
+justify-content:center;font-weight:900;font-size:14px;color:#04101f;flex-shrink:0}
+.sb-pname{display:flex;flex-direction:column;min-width:0;font-size:12.5px;font-weight:800;color:var(--text);
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-pname small{font-family:var(--mono);font-size:8.5px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+/* 🔍 живая проверка хэндла при регистрации */
+.vp-handle-check{font-family:var(--mono);font-size:10.5px;font-weight:600;margin-top:6px;min-height:14px;letter-spacing:.02em}
+.vp-handle-check.ok{color:var(--acid)}
+.vp-handle-check.bad{color:#ff6d88}
+.vp-handle-check.warn{color:#9db1d0}
+/* 🎵 эквалайзер в тайтлбаре — пляшет, пока играет музыка */
+.tb-eq{display:flex;gap:2.5px;align-items:flex-end;height:14px;margin:0 8px 0 2px;opacity:0;transition:opacity .35s}
+body.playing .tb-eq{opacity:1}
+.tb-eq i{width:2.5px;height:5px;border-radius:2px;background:var(--acid);
+box-shadow:0 0 6px color-mix(in srgb,var(--acid) 55%,transparent);
+animation:tbEq .85s ease-in-out infinite alternate}
+.tb-eq i:nth-child(1){animation-delay:0s}
+.tb-eq i:nth-child(2){animation-delay:.24s}
+.tb-eq i:nth-child(3){animation-delay:.1s}
+.tb-eq i:nth-child(4){animation-delay:.33s}
+@keyframes tbEq{from{height:3px}to{height:13px}}
+/* клик по инфо плеера открывает NP */
+.player-info{cursor:none}
