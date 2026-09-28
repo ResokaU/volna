@@ -73,11 +73,14 @@ async function openArtistPage(id, fallbackName) {
   }
 }
 
-function renderArtistPage() {
+function renderArtistPage(gridList) {
   const body = $('#artist-body');
   const p = state._artistPage;
   if (!body || !p) return;
-  const u = p.user, tracks = p.tracks;
+  const u = p.user;
+  const tracks = gridList || (p.sort === 'pop'
+    ? [...p.tracks].sort((a, b) => (b.playback_count || 0) - (a.playback_count || 0))
+    : p.tracks);
   const name = u.username || p.fallbackName || 'Артист';
   const ava = (u.avatar_url || '').replace('large', 't500x500');
   const plays = tracks.reduce((s, t) => s + (t.playback_count || 0), 0);
@@ -108,11 +111,26 @@ function renderArtistPage() {
         </div>
       </div>
     </div>
-    <div class="section-head" style="margin-top:26px"><div><h2 class="section-title" style="font-size:22px">Треки</h2>
-      <div class="section-sub">Свежие вперёд · всего ${tracks.length}</div></div></div>
+    <div class="section-head" style="margin-top:26px">
+      <div><h2 class="section-title" style="font-size:22px">Треки</h2>
+        <div class="section-sub">Всего ${tracks.length}</div></div>
+      <div class="seg">
+        <button class="seg-btn${p.sort !== 'pop' ? ' active' : ''}" onclick="setArtistSort('new')">Новые</button>
+        <button class="seg-btn${p.sort === 'pop' ? ' active' : ''}" onclick="setArtistSort('pop')">Популярные</button>
+      </div>
+    </div>
     <div class="tracks">${tracks.length
       ? tracks.map((t, i) => trackCardHTML(t, i, 'artist')).join('')
       : emptyHTML('i-note', 'Треков нет', 'У артиста пока пусто')}</div>`;
+}
+
+/* сортировка треков на странице артиста */
+function setArtistSort(s) {
+  const p = state._artistPage;
+  if (!p) return;
+  p.sort = s;
+  rememberTrack && p.tracks.forEach(rememberTrack);
+  renderArtistPage();
 }
 
 function copyArtistLink(url) {
@@ -189,7 +207,8 @@ async function checkFollowedReleases() {
   }
   if (list.length) await saveSetting('followedArtists', list);
   if (announced) {
-    toast('🆕 Новое от «' + announced.artist.name + '»: ' + String(announced.track.title || '').slice(0, 42), 'success');
+    toast('🆕 Новое от «' + announced.artist.name + '»: ' + String(announced.track.title || '').slice(0, 42), 'success',
+      { label: '▶ Играть', fn: () => { rememberTrack(announced.track); playTrack(announced.track, 'single'); } });
     if (typeof renderHome === 'function' && $('#view-home')?.classList.contains('active')) renderHome();
   }
 }

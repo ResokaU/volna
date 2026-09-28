@@ -223,6 +223,9 @@ function switchView(name) {
   if ((name === 'vprofile' || name === 'people' || name === 'settings') && window.Profiles) Profiles.refresh(); // профили и облако — в настройках
   if (name === 'settings') setSettingsPane(localStorage.getItem('ga:setpane') || 'look');
   if (typeof updateMascot === 'function') updateMascot();
+  // запоминаем последний бытовой экран — вернёмся сюда при следующем запуске
+  if (['home', 'discover', 'foryou', 'favorites', 'playlists', 'history', 'queue', 'stats', 'settings', 'lyrics'].includes(name))
+    lsSet('lastView', name);
 }
 
 /* ---------- бейджи ---------- */
@@ -249,6 +252,7 @@ function showTrackMenu(e, trackId) {
   const isFav = state.favorites.some(f => f.id === trackId);
   menu.innerHTML = `
     <div class="context-item" data-act="play"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg>Слушать сейчас</div>
+    <div class="context-item" data-act="artistpage"><svg class="ic" viewBox="0 0 24 24"><use href="#i-user"/></svg>Страница артиста</div>
     <div class="context-item" data-act="next"><svg class="ic" viewBox="0 0 24 24"><use href="#i-next"/></svg>Играть следующим</div>
     <div class="context-item" data-act="queue"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>В очередь</div>
     <div class="context-item" data-act="like"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>${isFav ? 'Убрать из лайков' : 'В лайки'}</div>
@@ -382,6 +386,13 @@ function bindContextMenu() {
     if (!track) return;
     switch (item.dataset.act) {
       case 'play': playTrack(track); break;
+      case 'artistpage': {
+        const uid = track.user?.id;
+        if (uid) openArtistPage(uid, track.user?.username);
+        else if (track.user?.username) openArtistByName(track.user.username);
+        else toast('У трека нет данных об артисте', 'error');
+        break;
+      }
       case 'next': playNextInQueue(track); break;
       case 'queue': addToQueue(track); break;
       case 'like': toggleLike(track); break;
@@ -750,7 +761,10 @@ async function init() {
   renderChips();            // search.js
   bindMediaKeys();          // player.js
   defaultSearch();          // search.js
-  switchView('home');       // новое лицо: приземляемся на главную
+  // возвращаемся на последний «бытовой» экран (полноэкранные режимы не восстанавливаем)
+  const SAFE_VIEWS = ['home', 'discover', 'foryou', 'favorites', 'playlists', 'history', 'queue', 'stats', 'settings', 'lyrics'];
+  const lastView = lsGet('lastView', 'home');
+  switchView(SAFE_VIEWS.includes(lastView) ? lastView : 'home');
   if (state.settings.checkUpdates !== false) setTimeout(() => checkUpdate(), 8000);
 }
 
@@ -835,7 +849,8 @@ function heroPlay() {
 /* ---------- Главная: приветствие, продолжить, популярное ---------- */
 function renderHome() {
   const h = new Date().getHours();
-  const greet = h < 5 ? 'Ночной эфир' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+  const greetEmoji = h < 5 ? '🌙' : h < 12 ? '☀️' : h < 18 ? '🌆' : '🌃';
+  const greet = (h < 5 ? 'Ночной эфир' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер');
   const g = $('#home-greeting');
   let pname = '';
   if (window.Profiles) {
@@ -843,7 +858,7 @@ function renderHome() {
     pname = p ? p.name : '';
   }
   // «Основной» — имя дефолтного профиля, в приветствии выглядит странно
-  if (g) g.textContent = greet + (pname && pname !== 'Основной' ? ', ' + pname : '');
+  if (g) g.textContent = greetEmoji + ' ' + greet + (pname && pname !== 'Основной' ? ', ' + pname : '');
   const sub = $('#home-sub');
   if (sub) sub.textContent = state.currentTrack ? `Играет: ${state.currentTrack.title}` : 'Твоя волна на сегодня';
   // кинематографичный hero: размываем обложку трека в фон
@@ -988,6 +1003,11 @@ function renderNp() {
         <button class="pbtn ${state.repeat ? 'active' : ''}" onclick="toggleRepeat();renderNp()" title="Repeat"><svg class="ic" viewBox="0 0 24 24"><use href="#i-repeat"/></svg></button>
         <button class="pbtn rate" onclick="cycleRate();renderNp()" title="Скорость">${state.rate === 1 ? '1' : state.rate}×</button>
         <button class="pbtn ${state.npClip && state.npClip.trackId === t.id && state.npClip.on ? 'active' : ''}" onclick="toggleNpClip()" title="Клип с YouTube (звук трека глушится)">🎬</button>
+      </div>
+      <div class="np-progress-row">
+        <span id="np-time-cur">0:00</span>
+        <div class="np-progress-wrap" id="np-progress-wrap"><div class="np-progress" id="np-progress"></div></div>
+        <span id="np-time-dur">0:00</span>
       </div>
       <canvas id="np-wave" width="600" height="46" title="Волновая форма — клик для перемотки"></canvas>
       ${L.status === 'none' ? '<button class="ac-btn primary" onclick="openTapEditor()" style="width:auto;margin-top:14px">✍️ Сделать текст сам</button>' : ''}

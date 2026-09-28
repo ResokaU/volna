@@ -965,6 +965,8 @@ function applyVolume() {
   const fade = (state.fadeFactor != null) ? state.fadeFactor : 1;
   const eff = Math.max(0, Math.min(1, v * fade));
   $('#vol-fill').style.width = v * 100 + '%';
+  const vs = $('#vol-slider');
+  if (vs) vs.title = 'Громкость: ' + Math.round(v * 100) + '%';
   if (state.engine === 'audio' && state.audio) state.audio.volume = eff;
   else { try { state.widget?.setVolume(eff * 100); } catch (_) {} }
   updateVolumeIcon();
@@ -1083,6 +1085,13 @@ function renderQueue() {
   $('#queue-count').textContent = state.queue.length;
   const qd = $('#qd-count');
   if (qd) qd.textContent = state.queue.length;
+  const qt = $('#qd-time');
+  if (qt) {
+    const total = state.queue.reduce((s, t) => s + (t.duration || 0), 0);
+    qt.textContent = total ? '≈ ' + (total >= 3600000
+      ? Math.floor(total / 3600000) + ' ч ' + Math.round((total % 3600000) / 60000) + ' мин'
+      : Math.max(1, Math.round(total / 60000)) + ' мин') : '';
+  }
   state.queue.forEach(rememberTrack); // для ПКМ-меню и быстрой игры по id
   const rowHTML = (t, i) => `
     <div class="queue-item ${state.currentListKey === 'queue' && state.currentIdx === i ? 'current' : ''}"
