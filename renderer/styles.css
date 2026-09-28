@@ -1690,3 +1690,47 @@ border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
   .set-nav{position:static;flex-direction:row;flex-wrap:wrap;grid-column:1/-1}
   .set-pane{grid-column:1/-1}
 }
+
+/* ============ v1.6.4: финальная полировка ============ */
+/* острова парят над глубиной: мягкая объёмная тень */
+.sidebar,main.main{box-shadow:0 30px 80px -34px rgba(0,0,0,.8)}
+/* виньетка глубины по краям окна — взгляд держится в центре */
+body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
+box-shadow:inset 0 0 190px rgba(1,4,10,.62)}
+/* единое фокус-свечение всех полей ввода */
+.fav-filter:focus,.lyr-manual input:focus,.vp-edit input:focus,.vp-edit textarea:focus,
+.vp-find input:focus,.chat-input input:focus,.profile-create input:focus,
+.vp-regfield input:focus,.vp-claim-row input:focus,.modal input:focus,.modal select:focus,
+.settings-group input[type=text]:focus,.ac-token-input:focus,.profile-rename:focus{
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+/* тактильность: лёгкое сжатие при нажатии */
+.pbtn:active,.mood-chip:active,.chip:active,.hero-chip:active,.toolbar-btn:active{transform:scale(.94)}
+.pbtn.main:active,.vp-row .vp-main:active{transform:scale(.92)}
+/* громкость растёт под курсором, как прогресс */
+.volume-slider{transition:height .15s}
+.volume-slider:hover{height:7px}
+/* караоке в NP: мягкие края при автоскролле */
+.np-lyrics-wrap{mask-image:linear-gradient(180deg,transparent,#000 7%,#000 93%,transparent)}
+/* лого в «О приложении» тихо парит */
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.about-logo{animation:logoFloat 4.5s ease-in-out infinite}
+/* арты без обложки — глубина вместо плоского тёмного пятна */
+.track-art{background:radial-gradient(circle at 50% 42%,rgba(148,197,255,.07),transparent 62%),#071120}
+/* донат-кнопка: блик по наведению */
+.donate-btn{position:relative;overflow:hidden}
+.donate-btn::after{content:'';position:absolute;inset:0;pointer-events:none;
+background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.28) 48%,transparent 62%);
+transform:translateX(-130%);transition:transform .8s ease}
+.donate-btn:hover::after{transform:translateX(130%)}
+/* статистика: акцентное свечение при ховере */
+.stat-card:hover{box-shadow:0 16px 36px -16px color-mix(in srgb,var(--accent) 38%,transparent)}
+/* заголовки: сбалансированные переносы строк */
+.section-title,.empty h3,.np-title{text-wrap:balance}
+/* скролл не «протекает» наружу контейнеров */
+main.main,.chat-msgs,.np-lyrics-wrap,.palette-list{overscroll-behavior:contain}
+/* бережём тех, кому движение мешает */
+@media (prefers-reduced-motion: reduce){
+  .blob,.marquee-track,.cursor-ring,.player::after,.progress::before,#vp-pf::before,
+  .nav-item.active::before,.track-card.playing .track-art::after,.about-logo,
+  .grad-anim,.section-title{animation:none!important}
+}
