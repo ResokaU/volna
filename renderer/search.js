@@ -56,8 +56,9 @@ function normalizeTrack(item) {
     permalink_url: t.permalink_url,
     artwork_url: t.artwork_url,
     playback_count: t.playback_count,
+    created_at: t.created_at || null,
     kind: t.kind || 'track',
-    user: { username: t.user?.username || '—', avatar_url: t.user?.avatar_url }
+    user: { id: t.user?.id ?? null, username: t.user?.username || '—', avatar_url: t.user?.avatar_url }
   };
 }
 
@@ -311,15 +312,15 @@ function renderArtists() {
     const followers = u.followers_count != null ? fmtCount(u.followers_count) + ' подписчиков' : '';
     const tc = u.track_count != null ? fmtCount(u.track_count) + ' треков' : '';
     const meta = [followers, tc].filter(Boolean).join(' · ') || 'артист';
-    return `<div class="track-card" data-name="${escapeHtml(u.username)}" onclick="searchArtistByName(this.dataset.name)">
+    return `<div class="track-card" data-name="${escapeHtml(u.username)}" onclick="openArtistByName(this.dataset.name)">
       <div class="track-art">
         <img src="${escapeHtml(u.avatar_url || '')}" alt="" loading="lazy" onerror="this.style.opacity=0">
-        <div class="play-ov"><div class="play-disk"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-search"/></svg></div></div>
+        <div class="play-ov"><div class="play-disk"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-user"/></svg></div></div>
       </div>
       <div class="track-info">
         <div class="track-title" title="${escapeHtml(u.username)}">${escapeHtml(u.username)}</div>
         <div class="track-artist">${meta}</div>
-        <div class="artist-card-meta">Клик — искать треки ↗</div>
+        <div class="artist-card-meta">Клик — страница артиста ↗</div>
       </div>
     </div>`;
   }).join('');

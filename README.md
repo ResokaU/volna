@@ -4,14 +4,14 @@
 
 <img src="docs/banner.svg" alt="VOLNA" width="100%">
 
-[![версия](https://img.shields.io/badge/версия-1.6-b14aff?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
+[![версия](https://img.shields.io/badge/версия-1.7-b14aff?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
 [![лицензия](https://img.shields.io/badge/License-MIT-d6ff3a?style=for-the-badge)](LICENSE)
 [![платформа](https://img.shields.io/badge/Windows-10%2F11-ff3d7f?style=for-the-badge)](https://github.com/ResokaU/volna/releases/latest)
 [![донат](https://img.shields.io/badge/💜_поддержать-волну-8a2be2?style=for-the-badge)](https://resokau.github.io/volna/donate)
 
 **Не просто плеер — своя волна.** Звук SoundCloud, MilkDrop-визуалы, собственная соцсеть с профилями, друзьями и чатами, ачивки с огоньками — всё в одном красивом окне. Без рекламы и подписок.
 
-> 🌊 **1.6** — редизайн «Глубина» + новые функции: волна настроения, локальный поиск в палитре, нативные уведомления о треке, брось ссылку в окно, крестик: трей или выход. Вся логика на месте.
+> 🌊 **1.7** — страница артиста (герой, «Волна артиста», кнопка следить), отслеживание релизов с полкой новинок на главной, очередь-drawer прямо из плеера, стилизованные подтверждения, стек тостов, график «когда ты слушаешь» и «случайный акцент» в палитре. Поверх всего 1.6 «Глубина».
 
 **[⬇ Скачать VOLNA-Setup](https://github.com/ResokaU/volna/releases/latest)** · [портативная](https://github.com/ResokaU/volna/releases/latest) · [💜 поддержать](https://resokau.github.io/volna/donate)
 

@@ -1065,15 +1065,25 @@ function clearQueue() {
   toast('Очередь очищена');
 }
 
+/* ---------- боковая панель очереди прямо из плеера ---------- */
+function toggleQueueDrawer() {
+  const open = document.body.classList.toggle('queue-drawer-open');
+  if (open) renderQueue();
+}
+function closeQueueDrawer() { document.body.classList.remove('queue-drawer-open'); }
+function closeQueueDrawerIfOpen() {
+  if (!document.body.classList.contains('queue-drawer-open')) return false;
+  closeQueueDrawer();
+  return true;
+}
+
 function renderQueue() {
   const listEl = $('#queue-list');
-  if (!listEl) return;
+  const drawer = $('#queue-drawer-list');
   $('#queue-count').textContent = state.queue.length;
-  if (!state.queue.length) {
-    listEl.innerHTML = emptyHTML('i-queue', 'Очередь пуста', 'Добавь треки из поиска («В очередь») или включи Radio');
-    return;
-  }
-  listEl.innerHTML = state.queue.map((t, i) => `
+  const qd = $('#qd-count');
+  if (qd) qd.textContent = state.queue.length;
+  const rowHTML = (t, i) => `
     <div class="queue-item ${state.currentListKey === 'queue' && state.currentIdx === i ? 'current' : ''}"
       draggable="true" data-idx="${i}">
       <img src="${escapeHtml(artwork(t))}" alt="" loading="lazy" onerror="this.style.opacity=0">
@@ -1085,7 +1095,15 @@ function renderQueue() {
         <button class="queue-btn" title="Играть" onclick="playFromQueue(${i})"><svg class="ic sm fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
         <button class="queue-btn" title="Убрать" onclick="removeFromQueue(${i})"><svg class="ic sm" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
       </div>
-    </div>`).join('');
+    </div>`;
+  if (!state.queue.length) {
+    if (listEl) listEl.innerHTML = emptyHTML('i-queue', 'Очередь пуста', 'Добавь треки из поиска («В очередь») или включи Radio');
+    if (drawer) drawer.innerHTML = '<div class="vp-empty">Очередь пуста — добавь треки из поиска или включи Radio 📻</div>';
+    return;
+  }
+  const html = state.queue.map(rowHTML).join('');
+  if (listEl) listEl.innerHTML = html;
+  if (drawer) drawer.innerHTML = html;
 }
 
 function bindQueueDnD() {

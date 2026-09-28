@@ -112,6 +112,7 @@ window.Profiles = (function () {
     const p = cache.profiles.find(x => x.id === id);
     if (!p) return;
     if (id === cache.active) { toast('Сначала переключись на другой профиль', 'error'); return; }
+    if (typeof volnaConfirm === 'function' && !(await volnaConfirm(`Удалить профиль «${p.name}» со всеми данными?`, 'Удалить'))) return;
     await ipc.invoke('profiles:delete', id);
     await refresh();
     toast('🗑 Профиль «' + p.name + '» удалён');

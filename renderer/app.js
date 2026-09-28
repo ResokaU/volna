@@ -123,8 +123,11 @@ function emptyHTML(icon, title, text) {
   return `<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg class="ic" viewBox="0 0 24 24"><use href="#${icon}"/></svg></div><h3>${title}</h3><p>${text}</p></div>`;
 }
 
-/* ---------- тосты ---------- */
+/* ---------- тосты: стек в колонку (клики по кнопкам работают) ---------- */
 function toast(msg, type = '', action) {
+  let box = $('#toasts');
+  if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.body.appendChild(box); }
+  while (box.children.length >= 4) box.firstChild.remove(); // не захламляем экран
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = msg;
@@ -135,9 +138,48 @@ function toast(msg, type = '', action) {
     b.onclick = () => { t.remove(); if (action.fn) action.fn(); };
     t.appendChild(b);
   }
-  document.body.appendChild(t);
+  box.appendChild(t);
   requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 2400);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 2600);
+}
+
+/* ---------- стилизованное подтверждение вместо системного confirm() ---------- */
+function volnaConfirm(msg, okLabel = 'Да') {
+  return new Promise(res => {
+    let m = document.getElementById('vc_modal');
+    if (m) m.remove();
+    m = document.createElement('div');
+    m.className = 'modal show';
+    m.id = 'vc_modal';
+    m.innerHTML = `<div class="modal-content vc-box">
+      <h2>Подтверди</h2>
+      <p class="vc-msg">${escapeHtml(msg)}</p>
+      <div class="vc-row">
+        <button class="modal-btn" id="vc-ok">${escapeHtml(okLabel)}</button>
+        <button class="modal-btn vc-no" id="vc-no">Отмена</button>
+      </div></div>`;
+    document.body.appendChild(m);
+    const done = v => { if (m._done) return; m._done = true; m.classList.remove('show'); setTimeout(() => m.remove(), 180); res(v); };
+    m.querySelector('#vc-ok').onclick = () => done(true);
+    m.querySelector('#vc-no').onclick = () => done(false);
+    m.addEventListener('click', e => { if (e.target === m) done(false); });
+    const onKey = e => { if (e.key === 'Escape') { done(false); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    setTimeout(() => m.querySelector('#vc-ok').focus(), 60);
+  });
+}
+
+/* 🎨 случайный акцент из всех 18 тем */
+const ACCENT_LIST = ['neon', 'acid', 'hot', 'cyan', 'orange', 'red', 'gold', 'mint', 'sunset', 'violet',
+  'blood', 'emerald', 'abyss', 'wine', 'bronze', 'moss', 'midnight', 'slate'];
+function randomAccent() {
+  const cur = state.settings.accent || 'neon';
+  const pool = ACCENT_LIST.filter(a => a !== cur);
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  document.body.dataset.accent = pick;
+  saveSetting('accent', pick);
+  applySettings(); // синк чипов в настройках
+  toast('🎨 Акцент: ' + pick);
 }
 
 /* ---------- модалки ---------- */
@@ -426,6 +468,7 @@ const PALETTE_CMDS = [
   { t: 'Предыдущий трек', k: '←', run: () => playPrev() },
   { t: 'Лайкнуть текущий', k: 'L', run: () => likeCurrent() },
   { t: 'Мне повезёт', k: '', run: () => feelingLucky() },
+  { t: 'Случайный акцент', k: '', run: () => randomAccent() },
   { t: 'Radio по треку', k: 'R', run: () => enableRadio() },
   { t: 'Shuffle', k: '', run: () => toggleShuffle() },
   { t: 'Repeat', k: '', run: () => toggleRepeat() },
@@ -544,6 +587,7 @@ function onKeydown(e) {
   }
 
   if (e.key === 'Escape') {
+    if (document.body.classList.contains('queue-drawer-open')) { toggleQueueDrawer(); return; }
     if (!$$('.modal.show').length && $('#view-vibe')?.classList.contains('active')) { collapseVibe(); return; }
     if (!$$('.modal.show').length && $('#view-nowplaying')?.classList.contains('active')) { collapseNp(); return; }
     $$('.modal.show').forEach(m => m.classList.remove('show')); closePalette(); hideContextMenu(); return;
@@ -647,7 +691,9 @@ function trackCardHTML(track, idx, listKey) {
     </div>
     <div class="track-info">
       <div class="track-title" title="${escapeHtml(track.title)}">${escapeHtml(track.title)}</div>
-      <div class="track-artist" title="${escapeHtml(track.user?.username || '')}">${escapeHtml(track.user?.username || '—')}</div>
+      <div class="track-artist" title="Страница артиста: ${escapeHtml(track.user?.username || '')}"
+        data-uid="${track.user?.id || ''}" data-name="${escapeHtml(track.user?.username || '')}"
+        onclick="event.stopPropagation();openArtistCard(this)">${escapeHtml(track.user?.username || '—')}</div>
       <div class="track-meta">
         <span class="track-duration">${dur}</span>
         ${listKey === 'pl' ? `<button class="like-btn" title="Убрать из плейлиста"
@@ -866,6 +912,7 @@ function renderHome() {
         </div>`).join('');
     } else fwh.style.display = 'none';
   }
+  if (window.renderFollowedShelf) renderFollowedShelf(); // полка отслеживаний
   const pEl = $('#home-popular');
   if (pEl) {
     if (state.trending.length) {

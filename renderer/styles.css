@@ -1734,3 +1734,73 @@ main.main,.chat-msgs,.np-lyrics-wrap,.palette-list{overscroll-behavior:contain}
   .nav-item.active::before,.track-card.playing .track-art::after,.about-logo,
   .grad-anim,.section-title{animation:none!important}
 }
+
+/* ============ v1.7.0: страница артиста, drawer очереди, тосты-стек ============ */
+/* 🎤 страница артиста */
+.artist-hero{position:relative;overflow:hidden;border-radius:28px;background:rgba(148,197,255,.03);
+border:1px solid rgba(148,197,255,.1);padding:0 30px 24px}
+.artist-skel{height:180px;margin:0 -30px 22px;border-radius:0}
+.artist-banner{height:180px;margin:0 -30px 0;position:relative;overflow:hidden;
+background:radial-gradient(120% 200% at 20% 0%,color-mix(in srgb,var(--accent) 50%,transparent),transparent 60%),
+radial-gradient(120% 200% at 85% 10%,color-mix(in srgb,var(--accent2) 40%,transparent),transparent 55%),
+linear-gradient(120deg,rgba(148,197,255,.05),transparent 55%)}
+.artist-banner-img{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);
+object-fit:cover;filter:blur(30px) saturate(1.25) brightness(.85);opacity:.55}
+.artist-banner::after{content:'';position:absolute;inset:0;
+background:linear-gradient(180deg,rgba(2,8,17,.1) 0%,rgba(2,8,17,.45) 55%,rgba(2,8,17,.96) 100%)}
+.artist-head{display:grid;grid-template-columns:auto 1fr;gap:0 22px;align-items:start;margin-top:-52px;
+position:relative;z-index:1}
+.artist-ava{width:108px;height:108px;border-radius:50%;overflow:hidden;flex-shrink:0;
+border:4px solid rgba(2,8,17,.92);background:#071120;
+box-shadow:0 12px 36px -12px color-mix(in srgb,var(--accent) 70%,transparent)}
+.artist-ava img{width:100%;height:100%;object-fit:cover}
+.artist-id{padding-top:56px;min-width:0}
+.artist-name-big{font-family:'Unbounded','Golos Text',sans-serif;font-size:26px;font-weight:900;
+letter-spacing:-.02em;margin:0;
+background:linear-gradient(100deg,var(--ink) 30%,color-mix(in srgb,var(--acid) 80%,#fff) 60%,var(--ink));
+background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+animation:gradShift 8s ease-in-out infinite}
+.artist-verified{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+border-radius:50%;background:var(--acid);color:#04101f;font-size:12px;font-weight:900;
+vertical-align:6px;-webkit-text-fill-color:#04101f}
+.artist-stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.artist-bio{font-size:13px;color:#c9d6ea;margin-top:10px;line-height:1.55;max-width:640px}
+.artist-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;position:relative;z-index:1}
+/* 📋 drawer очереди */
+.queue-drawer{position:fixed;top:60px;right:16px;bottom:130px;width:min(380px,92vw);z-index:210;
+display:flex;flex-direction:column;padding:16px;
+background:linear-gradient(180deg,rgba(10,22,42,.92),rgba(3,9,20,.95));
+backdrop-filter:blur(28px) saturate(1.5);
+border:1px solid var(--border2);border-radius:24px;
+box-shadow:0 30px 80px -22px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.1);
+transform:translateX(calc(100% + 40px));transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+body.queue-drawer-open .queue-drawer{transform:none}
+.qd-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;color:var(--ink)}
+.qd-head strong{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:800}
+.qd-count{font-family:var(--mono);font-size:10.5px;color:var(--acid);background:color-mix(in srgb,var(--acid) 12%,transparent);
+padding:2px 9px;border-radius:99px}
+.qd-head .fc-x{margin-left:auto}
+.qd-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.qd-all{margin-top:12px;justify-content:center}
+/* 🍞 тосты: стек-колонка */
+#toasts{position:fixed;bottom:140px;left:50%;transform:translateX(-50%);z-index:300;
+display:flex;flex-direction:column-reverse;gap:10px;align-items:center;pointer-events:none;max-width:92vw}
+.toast{position:static;transform:translateY(14px) scale(.97);pointer-events:auto;opacity:0;max-width:100%}
+.toast.show{opacity:1;transform:translateY(0) scale(1)}
+/* ⏰ пик времени суток */
+.hours-chart{display:flex;gap:4px;align-items:flex-end;height:132px;padding:18px 18px 12px;
+background:rgba(148,197,255,.04);border:1px solid rgba(148,197,255,.1);border-radius:20px;margin-bottom:28px}
+.hour-col{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+gap:6px;min-width:0}
+.hour-col .hour-bar{width:100%;min-height:2px;border-radius:6px 6px 2px 2px;
+background:linear-gradient(180deg,color-mix(in srgb,var(--acid) 90%,transparent),color-mix(in srgb,var(--accent) 50%,transparent 45%))}
+.hour-col.peak .hour-bar{box-shadow:0 0 16px color-mix(in srgb,var(--acid) 45%,transparent)}
+.hour-col span{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:-.05em}
+/* подтверждение */
+.vc-msg{color:var(--dim);font-size:14px;line-height:1.6;margin:-6px 0 20px}
+.vc-row{display:flex;gap:10px}
+.vc-row .modal-btn{flex:1;width:auto}
+.vc-row .modal-btn.vc-no{background:var(--hover);color:var(--text);box-shadow:none}
+.vc-row .modal-btn.vc-no:hover{filter:none;transform:none;background:rgba(255,61,85,.18)}
+.track-artist{transition:color .15s;cursor:none}
+.track-artist:hover{color:var(--acid)}

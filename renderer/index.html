@@ -292,6 +292,8 @@
         <div class="tracks shelf" id="home-likes"></div>
         <div class="section-head" id="home-fwaves-head" style="display:none"><div><h2 class="section-title">Волны друзей</h2><div class="section-sub">Что слушают прямо сейчас — клик, и слушаешь вместе</div></div></div>
         <div class="tracks shelf" id="home-fwaves"></div>
+        <div class="section-head" id="home-followed-head" style="display:none"><div><h2 class="section-title">Отслеживания</h2><div class="section-sub">Новые треки артистов, за которыми ты следишь</div></div></div>
+        <div class="tracks shelf" id="home-followed"></div>
         <div class="section-head"><div><h2 class="section-title">Продолжить</h2><div class="section-sub">Недавно игравшие</div></div></div>
         <div class="tracks shelf" id="home-continue"></div>
         <div class="section-head"><div><h2 class="section-title">Твои плейлисты</h2><div class="section-sub">Быстрый доступ</div></div><button class="toolbar-btn" onclick="openNewPlaylistModal()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>Новый</button></div>
@@ -493,6 +495,11 @@
           </div>
         </div>
         <div class="heatmap" id="heatmap"></div>
+        <div class="section-head" style="margin-top:40px">
+          <div><h2 class="section-title" style="font-size:22px">Когда ты слушаешь</h2>
+          <div class="section-sub">24 часа суток — где твоя волна пикует</div></div>
+        </div>
+        <div class="hours-chart" id="hours-chart"></div>
         <div class="section-head" style="margin-top:40px">
           <div><h2 class="section-title" style="font-size:22px">Топ артисты</h2></div>
         </div>
@@ -700,6 +707,10 @@
         <div id="uprofile-wrap"></div>
       </section>
 
+      <section class="view" id="view-artist">
+        <div id="artist-body"></div>
+      </section>
+
       <section class="view" id="view-people">
         <div class="section-head">
           <div>
@@ -750,6 +761,9 @@
     <button class="pbtn rate" id="btn-rate" onclick="cycleRate()" title="Скорость воспроизведения">1×</button>
     <button class="pbtn" onclick="enableRadio()" title="Radio">
       <svg class="ic" viewBox="0 0 24 24"><use href="#i-radio"/></svg>
+    </button>
+    <button class="pbtn" onclick="toggleQueueDrawer()" title="Очередь (боковая панель)">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>
     </button>
     <button class="pbtn" onclick="switchView('lyrics')" title="Текст песни">
       <svg class="ic" viewBox="0 0 24 24"><use href="#i-quote"/></svg>
@@ -912,6 +926,17 @@
 
 <div class="context-menu" id="context-menu"></div>
 
+<div class="queue-drawer" id="queue-drawer" aria-hidden="true">
+  <div class="qd-head">
+    <svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>
+    <strong>Очередь</strong>
+    <span class="qd-count" id="qd-count">0</span>
+    <button class="fc-x" onclick="toggleQueueDrawer()" title="Закрыть">✕</button>
+  </div>
+  <div class="qd-list" id="queue-drawer-list"></div>
+  <button class="toolbar-btn qd-all" onclick="closeQueueDrawer();switchView('queue')">Открыть полный вид</button>
+</div>
+
 <iframe id="sc-widget" class="sc-widget" allow="autoplay"
   src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2F&amp;auto_play=false&amp;hide_related=true&amp;show_comments=false&amp;show_user=false&amp;show_reposts=false"></iframe>
 <input type="file" id="file-input" accept=".json" hidden>
@@ -929,6 +954,7 @@
 <script src="rooms.js"></script>
 <script src="profiles.js"></script>
 <script src="achievements.js"></script>
+<script src="artist.js"></script>
 <script src="social.js"></script>
 <script>init(); setTimeout(() => { if (window.Social) Social.init(); }, 2500);</script>
 </body>

@@ -578,7 +578,7 @@ function playAllFavorites() {
 
 async function clearFavs() {
   if (!state.favorites.length) return;
-  if (!confirm('Удалить все лайки?')) return;
+  if (!(await volnaConfirm('Удалить все лайки?'))) return;
   state.favorites = [];
   await persistFavorites();
   updateBadges(); updateLikeButtons(); renderFavorites();
@@ -661,7 +661,7 @@ function renderHistory() {
 
 async function clearHistory() {
   if (!state.history.length) return;
-  if (!confirm('Очистить историю?')) return;
+  if (!(await volnaConfirm('Очистить историю?'))) return;
   state.history = [];
   await persistHistory();
   renderHistory();
@@ -736,7 +736,7 @@ function playCurrentPlaylist() {
 async function deletePlaylist(id) {
   const pl = state.playlists.find(p => p.id === id);
   if (!pl) return;
-  if (!confirm(`Удалить плейлист «${pl.name}»?`)) return;
+  if (!(await volnaConfirm(`Удалить плейлист «${pl.name}»?`))) return;
   state.playlists = state.playlists.filter(p => p.id !== id);
   if (state.currentPlaylistId === id) {
     state.currentPlaylistId = null;
@@ -814,7 +814,7 @@ function renderStats() {
 
   const top = topArtists();
   $('#top-artists').innerHTML = top.length ? top.map((a, i) => `
-    <div class="artist-row" data-name="${escapeHtml(a.name)}" onclick="searchArtist(this.dataset.name)">
+    <div class="artist-row" data-name="${escapeHtml(a.name)}" onclick="openArtistByName(this.dataset.name)">
       <div class="artist-rank">${i + 1}</div>
       <div class="artist-name">${escapeHtml(a.name)}</div>
       <div class="artist-bar"><div class="artist-bar-fill" style="width:${a.pct}%"></div></div>
@@ -823,6 +823,25 @@ function renderStats() {
     : `<div class="empty" style="grid-column:1/-1;padding:40px"><h3>Пока нет данных</h3><p>Слушай музыку — топ артистов появится здесь</p></div>`;
 
   renderHeatmap();
+  renderHours();
+}
+
+/* ⏰ когда ты слушаешь: распределение по 24 часам суток (из истории) */
+function renderHours() {
+  const el = $('#hours-chart');
+  if (!el) return;
+  const buckets = Array(24).fill(0);
+  state.history.forEach(h => {
+    if (!h.playedAt) return;
+    buckets[new Date(h.playedAt).getHours()]++;
+  });
+  const max = Math.max(1, ...buckets);
+  el.innerHTML = buckets.map((v, h) => {
+    const hh = String(h).padStart(2, '0');
+    const pct = Math.round(v / max * 100);
+    return `<div class="hour-col${v && v === max ? ' peak' : ''}" title="${hh}:00 — ${v} прослушиваний">
+      <div class="hour-bar" style="height:${pct}%"></div><span>${hh}</span></div>`;
+  }).join('');
 }
 
 /* 🌊 Волна года: кинематографичное слайд-шоу по статистике */
@@ -946,7 +965,7 @@ function searchArtist(name) {
 }
 
 async function resetStats() {
-  if (!confirm('Сбросить статистику?')) return;
+  if (!(await volnaConfirm('Сбросить статистику?'))) return;
   if (ipc) { try { state.stats = await ipc.invoke('stats:reset'); } catch (_) {} }
   else state.stats = { totalPlayed: 0, totalTime: 0, sessionStart: Date.now() };
   renderStats();
@@ -973,8 +992,7 @@ async function importFullBackup() {
 }
 
 async function wipeAll() {
-  if (!confirm('Точно стереть ВСЕ данные (лайки, историю, плейлисты, статистику)?')) return;
-  if (!confirm('Отменить это будет нельзя. Стираем?')) return;
+  if (!(await volnaConfirm('Стереть ВСЁ: лайки, историю, плейлисты, статистику? Отменить будет нельзя.', 'Стереть'))) return;
   if (ipc) {
     try {
       await ipc.invoke('favorites:clear');
