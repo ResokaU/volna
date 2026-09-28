@@ -140,7 +140,8 @@ function toast(msg, type = '', action) {
   }
   box.appendChild(t);
   requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 2600);
+  // ошибки держим дольше — их нужно успеть прочитать
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, type === 'error' ? 4400 : 2600);
 }
 
 /* ---------- стилизованное подтверждение вместо системного confirm() ---------- */
@@ -167,6 +168,24 @@ function volnaConfirm(msg, okLabel = 'Да') {
     document.addEventListener('keydown', onKey);
     setTimeout(() => m.querySelector('#vc-ok').focus(), 60);
   });
+}
+
+/* 🎲 случайный трек из лайков */
+function randomFavorite() {
+  if (!state.favorites.length) { toast('Лайков пока нет — жми ❤ на треках', 'error'); return; }
+  const t = state.favorites[Math.floor(Math.random() * state.favorites.length)];
+  playTrack(t, 'fav');
+  toast('🎲 ' + (t.title || ''), 'success');
+}
+
+/* 🌊 волны внизу экрана: вкл/выкл одной командой */
+function toggleWavesSetting() {
+  const on = state.settings.waves === false;
+  state.settings.waves = on;
+  saveSetting('waves', on);
+  document.body.classList.toggle('waves-off', !on);
+  const cb = $('#set-waves'); if (cb) cb.checked = on;
+  toast(on ? '🌊 Волны включены' : 'Волны выключены');
 }
 
 /* 🎨 случайный акцент из всех 18 тем */
@@ -479,8 +498,11 @@ const PALETTE_CMDS = [
   { t: 'Предыдущий трек', k: '←', run: () => playPrev() },
   { t: 'Лайкнуть текущий', k: 'L', run: () => likeCurrent() },
   { t: 'Мне повезёт', k: '', run: () => feelingLucky() },
+  { t: 'Случайный трек из лайков', k: '', run: () => randomFavorite() },
+  { t: 'Волны: вкл/выкл', k: '', run: () => toggleWavesSetting() },
   { t: 'Случайный акцент', k: '', run: () => randomAccent() },
   { t: 'Radio по треку', k: 'R', run: () => enableRadio() },
+  { t: 'Очередь (боковая панель)', k: 'Q', run: () => toggleQueueDrawer() },
   { t: 'Shuffle', k: '', run: () => toggleShuffle() },
   { t: 'Repeat', k: '', run: () => toggleRepeat() },
   { t: 'Mini player', k: 'M', run: () => toggleMiniPlayer() },
@@ -625,6 +647,7 @@ function onKeydown(e) {
   if (k === 'l') { likeCurrent(); return; }
   if (k === 'n') { playNext(); return; }
   if (k === 'm') { toggleMiniPlayer(); return; }
+  if (k === 'q') { toggleQueueDrawer(); return; } // 📋 drawer очереди
   if (k === 'r') { enableRadio(); return; } // 📻 волна по похожим трекам
 
   const views = { '1': 'home', '3': 'favorites', '4': 'playlists', '5': 'history', '6': 'queue', '7': 'stats', '8': 'settings', '9': 'vibe' };
@@ -686,15 +709,18 @@ function bindCopyGuard() {
   });
 }
 
-/* ---------- карточка трека (общая для всех списков) ---------- */
-function trackCardHTML(track, idx, listKey) {
+/* ---------- карточка трека (общая для всех списков) ----------
+   o.selFn — режим выбора (клик выделяет вместо игры), o.selected — выделена */
+function trackCardHTML(track, idx, listKey, o = {}) {
   const isFav = state.favorites.some(f => f.id === track.id);
   const dur = formatTime((track.duration || 0) / 1000);
   const plays = track.playback_count != null ? fmtCount(track.playback_count) : '';
   const img = artwork(track);
-  return `<div class="track-card" data-idx="${idx}" data-list="${listKey}" data-id="${track.id}"
-    onclick="playFromCard(this)" oncontextmenu="showTrackMenu(event,${track.id})" onauxclick="quickQueue(this)">
+  const click = o.selFn ? `${o.selFn}(${track.id})` : 'playFromCard(this)';
+  return `<div class="track-card${o.selected ? ' selected' : ''}" data-idx="${idx}" data-list="${listKey}" data-id="${track.id}"
+    onclick="${click}" oncontextmenu="showTrackMenu(event,${track.id})" onauxclick="quickQueue(this)">
     <div class="track-art">
+      ${o.selFn ? '<div class="sel-check">✓</div>' : ''}
       <img src="${escapeHtml(img)}" alt="" loading="lazy" onerror="this.style.opacity=0">
       <div class="play-ov"><div class="play-disk"><svg class="ic fill" viewBox="0 0 24 24"><use href="#i-play"/></svg></div></div>
       <div class="eq-bars"><span></span><span></span><span></span><span></span></div>

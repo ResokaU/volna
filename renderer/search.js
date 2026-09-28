@@ -129,6 +129,7 @@ function bindSearchUI() {
   const box = $('#recent-searches');
   box.addEventListener('mousedown', e => {
     e.preventDefault();
+    if (e.target.closest('.recent-clear')) { clearRecentSearches(); return; }
     const chip = e.target.closest('.recent-chip');
     if (chip) { input.value = chip.textContent; doSearch(chip.textContent); hideRecent(); }
   });
@@ -425,8 +426,16 @@ function showRecent() {
   const box = $('#recent-searches');
   const arr = state.recentCache || [];
   if (!arr.length) return;
-  box.innerHTML = arr.slice(0, 8).map(q => `<button class="chip recent-chip">${escapeHtml(q)}</button>`).join('');
+  box.innerHTML = arr.slice(0, 8).map(q => `<button class="chip recent-chip">${escapeHtml(q)}</button>`).join('')
+    + '<button class="chip recent-clear" title="Удалить все недавние">✕ Очистить</button>';
   box.style.display = 'flex';
+}
+async function clearRecentSearches() {
+  state.recentCache = [];
+  if (ipc) { try { await ipc.invoke('recentSearches:clear'); } catch (_) {} }
+  lsSet('recentSearches', []);
+  hideRecent();
+  toast('Недавние поиски очищены');
 }
 function hideRecent() { const b = $('#recent-searches'); if (b) b.style.display = 'none'; }
 function clearSearchInput() {

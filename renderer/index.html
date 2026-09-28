@@ -383,12 +383,20 @@
           <div class="result-count"><strong id="fav-count">0</strong> треков</div>
           <div class="toolbar-actions">
             <input type="text" id="fav-filter" class="fav-filter" placeholder="Фильтр по названию/артисту…">
+            <button class="toolbar-btn" id="fav-sel-btn" onclick="toggleFavSelectMode()" title="Мульти-выбор: массовые действия"><svg class="ic" viewBox="0 0 24 24"><use href="#i-check"/></svg><span id="fav-sel-label">Выбор</span></button>
             <button class="toolbar-btn" id="sort-btn" onclick="toggleSort()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-sort"/></svg><span id="sort-label">По дате</span></button>
             <button class="toolbar-btn" onclick="playAllFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
             <button class="toolbar-btn" onclick="exportFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-download"/></svg>Экспорт</button>
             <button class="toolbar-btn" onclick="importFavorites()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-upload"/></svg>Импорт</button>
             <button class="toolbar-btn danger" onclick="clearFavs()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Очистить</button>
           </div>
+        </div>
+        <div class="bulk-bar" id="fav-bulk" style="display:none">
+          <strong id="fav-sel-count">Выбрано: 0</strong>
+          <button class="toolbar-btn" onclick="bulkToPlaylist()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>В плейлист</button>
+          <button class="toolbar-btn" onclick="bulkToQueue()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-queue"/></svg>В очередь</button>
+          <button class="toolbar-btn danger" onclick="bulkRemoveFavs()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>Убрать</button>
+          <button class="toolbar-btn" onclick="toggleFavSelectMode()">Готово</button>
         </div>
         <div class="tracks" id="favorites-list"></div>
       </section>
@@ -436,6 +444,7 @@
         <div class="toolbar">
           <div class="result-count"><strong id="hist-count">0</strong> треков</div>
           <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="playAllHistory()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-play-circle"/></svg>Играть всё</button>
             <button class="toolbar-btn danger" onclick="clearHistory()"><svg class="ic" viewBox="0 0 24 24"><use href="#i-trash"/></svg>Очистить</button>
           </div>
         </div>
@@ -854,6 +863,7 @@
       <li><span>Перемотка ±5с</span><span class="kbd">Shift + ← →</span></li>
       <li><span>Фокус на поиск</span><span class="kbd">F</span></li>
       <li><span>Лайк текущего</span><span class="kbd">L</span></li>
+      <li><span>Очередь (боковая панель)</span><span class="kbd">Q</span></li>
       <li><span>Radio по треку</span><span class="kbd">R</span></li>
       <li><span>Мини-плеер</span><span class="kbd">M</span></li>
       <li><span>Разделы</span><span class="kbd">1–8</span></li>

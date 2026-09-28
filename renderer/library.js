@@ -438,8 +438,91 @@ function renderFavorites() {
     grid.innerHTML = emptyHTML('i-search', 'Не нашлось', 'Под фильтр «' + escapeHtml(state.favFilter) + '» лайков нет');
     return;
   }
-  grid.innerHTML = list.map((t, i) => trackCardHTML(t, i, 'fav')).join('');
+  grid.innerHTML = list.map((t, i) => trackCardHTML(t, i, 'fav',
+    state.favSelectMode ? { selFn: 'toggleFavCard', selected: !!(state.favSel && state.favSel.has(t.id)) } : undefined)).join('');
   highlightPlaying();
+}
+
+/* ---------- ☑ мульти-выбор в лайках: массовые действия ---------- */
+function toggleFavSelectMode() {
+  state.favSelectMode = !state.favSelectMode;
+  state.favSel = new Set();
+  document.body.classList.toggle('fav-selecting', state.favSelectMode);
+  const bar = $('#fav-bulk');
+  if (bar) bar.style.display = state.favSelectMode ? 'flex' : 'none';
+  const btn = $('#fav-sel-btn');
+  if (btn) btn.classList.toggle('active', state.favSelectMode);
+  const lbl = $('#fav-sel-label');
+  if (lbl) lbl.textContent = state.favSelectMode ? 'Выбор…' : 'Выбор';
+  updateFavSelCount();
+  renderFavorites();
+  if (state.favSelectMode) toast('☑ Кликай треки — потом массовое действие внизу');
+}
+function toggleFavCard(id) {
+  if (!state.favSel) state.favSel = new Set();
+  const on = !state.favSel.has(id);
+  if (on) state.favSel.add(id); else state.favSel.delete(id);
+  document.querySelector(`#favorites-list .track-card[data-id="${id}"]`)?.classList.toggle('selected', on);
+  updateFavSelCount();
+}
+function updateFavSelCount() {
+  const el = $('#fav-sel-count');
+  if (el) el.textContent = 'Выбрано: ' + (state.favSel ? state.favSel.size : 0);
+}
+function bulkToPlaylist() {
+  if (!state.favSel || !state.favSel.size) return;
+  if (!state.playlists.length) { toast('Сначала создай плейлист', 'error'); return; }
+  const menu = $('#context-menu');
+  menu.innerHTML = '<div class="context-title">Добавить выбранные в плейлист</div>' +
+    state.playlists.map(pl =>
+      `<div class="context-item" data-pl="${pl.id}"><svg class="ic" viewBox="0 0 24 24"><use href="#i-folder"/></svg>${escapeHtml(pl.name)}</div>`).join('');
+  menu.classList.add('show');
+  menu.style.left = Math.max(20, innerWidth / 2 - 130) + 'px';
+  menu.style.top = '140px';
+  menu.querySelectorAll('.context-item').forEach(item => item.addEventListener('click', () => {
+    hideContextMenu();
+    const pl = state.playlists.find(x => x.id === Number(item.dataset.pl));
+    if (!pl) return;
+    let added = 0;
+    state.favSel.forEach(id => {
+      const t = state.trackIndex.get(id);
+      if (t && !pl.tracks.some(x => x.id === t.id)) { pl.tracks.push(t); rememberTrack(t); added++; }
+    });
+    persistPlaylists().then(() => {
+      updateBadges();
+      toast(`📁 В «${pl.name}»: +${added}`, 'success');
+      toggleFavSelectMode();
+    });
+  }));
+  setTimeout(() => document.addEventListener('click', hideContextMenu, { once: true }), 10);
+}
+function bulkToQueue() {
+  if (!state.favSel || !state.favSel.size) return;
+  let added = 0;
+  state.favSel.forEach(id => {
+    const t = state.trackIndex.get(id);
+    if (t && !state.queue.some(q => q.id === t.id)) { state.queue.push(t); added++; }
+  });
+  persistQueueSoon();
+  updateBadges();
+  renderQueue();
+  toast(added ? `📋 В очереди: +${added}` : 'Всё уже в очереди', added ? 'success' : '');
+}
+function bulkRemoveFavs() {
+  if (!state.favSel || !state.favSel.size) return;
+  const removed = state.favorites.filter(f => state.favSel.has(f.id));
+  state.favorites = state.favorites.filter(f => !state.favSel.has(f.id));
+  persistFavorites().then(() => {
+    updateBadges(); updateLikeButtons(); renderFavorites();
+  });
+  toast(`Убрано из лайков: ${removed.length}`, '', { label: '↩ Вернуть', fn: () => {
+    state.favorites = [...removed, ...state.favorites.filter(f => !removed.some(r => r.id === f.id))];
+    persistFavorites().then(() => { updateBadges(); updateLikeButtons(); renderFavorites(); });
+  }});
+}
+function playAllHistory() {
+  if (!state.history.length) { toast('История пуста', 'error'); return; }
+  playTrack(state.history[0], 'hist');
 }
 
 /* bot-токен Discord для обложек в статусе (хранится только локально) */
@@ -719,8 +802,11 @@ function openPlaylist(id) {
   state.currentPlaylistId = id;
   state.currentPlaylistTracks = pl.tracks;
   $('#pl-detail-name').textContent = pl.name;
+  const total = (pl.tracks || []).reduce((s, t) => s + (t.duration || 0), 0);
+  const durLabel = total ? formatTime(total / 1000) : '';
   $('#pl-detail-desc').textContent =
-    (pl.tracks.length ? `${pl.tracks.length} треков · ` : '') + (pl.desc || 'без описания');
+    (pl.tracks.length ? `${pl.tracks.length} ${plural(pl.tracks.length, 'трек', 'трека', 'треков')}${durLabel ? ' · ' + durLabel : ''} · ` : '')
+    + (pl.desc || 'без описания');
   const grid = $('#pl-detail-tracks');
   grid.innerHTML = pl.tracks.length
     ? pl.tracks.map((t, i) => trackCardHTML(t, i, 'pl')).join('')

@@ -916,6 +916,7 @@ ipcMain.handle('recentSearches:push', (_e, q) => {
   store.set('recentSearches', arr);
   return arr;
 });
+ipcMain.handle('recentSearches:clear', () => { store.set('recentSearches', []); return []; });
 
 ipcMain.handle('dialog:exportFavs', async () => {
   if (!win) return { ok: false };
