@@ -831,6 +831,44 @@ ipcMain.handle('playlists:get', () => store.get('playlists'));
 ipcMain.handle('playlists:save', (_e, pls) => { store.set('playlists', pls); return pls; });
 
 ipcMain.handle('settings:get', () => store.get('settings'));
+/* 🔋 «Держать экран включённым при воспроизведении»: рендерер дёргает powerSave:*,
+   держим один блокировщик дисплея на всё приложение */
+ipcMain.handle('powerSave:enable', () => {
+  try {
+    if (blockerId === null) blockerId = powerSaveBlocker.start('prevent-display-sleep');
+    return true;
+  } catch (_) { return false; }
+});
+ipcMain.handle('powerSave:disable', () => {
+  try { if (blockerId !== null) { powerSaveBlocker.stop(blockerId); blockerId = null; } } catch (_) {}
+  return true;
+});
+/* ℹ️ версия для «О приложении» */
+ipcMain.handle('app:version', () => ({
+  version: app.getVersion(),
+  electron: process.versions.electron || '—',
+  chrome: process.versions.chrome || '—',
+  node: process.versions.node || '—',
+  platform: process.platform
+}));
+/* 📦 проверка обновлений: последний релиз GitHub Releases против текущей версии */
+ipcMain.handle('app:check-update', async () => {
+  try {
+    const r = await net.fetch('https://api.github.com/repos/ResokaU/volna/releases/latest', {
+      headers: { 'User-Agent': 'VOLNA' }, signal: AbortSignal.timeout(10000)
+    });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    const j = await r.json();
+    const asset = (Array.isArray(j.assets) ? j.assets : []).find(a => /Setup/i.test(a.name));
+    return {
+      ok: true,
+      latest: String(j.tag_name || '').replace(/^v/i, ''),
+      current: app.getVersion(),
+      url: j.html_url || 'https://github.com/ResokaU/volna/releases/latest',
+      assetUrl: (asset && asset.browser_download_url) || j.html_url
+    };
+  } catch (e) { return { ok: false, error: e && e.message }; }
+});
 /* 🔮 нативное уведомление о новом треке (настройка «trackNotify» в рендерере) */
 ipcMain.handle('notify:track', (_e, info) => {
   try {
@@ -845,7 +883,8 @@ ipcMain.handle('notify:track', (_e, info) => {
     n.show();
     return true;
   } catch (_) { return false; }
-});ipcMain.handle('settings:set', (_e, key, val) => {
+});
+ipcMain.handle('settings:set', (_e, key, val) => {
   store.set(`settings.${key}`, val);
   return store.get('settings');
 });

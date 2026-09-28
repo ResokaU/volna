@@ -294,7 +294,9 @@ window.Ach = (function () {
       if ((a.rarity === 'epic' || a.rarity === 'legendary') && typeof confettiBurst === 'function')
         confettiBurst(); // эпические и легендарные — с конфетти
     }, i * 600));
-    if (fresh.length && typeof persistQueueSoon === 'function') persistQueueSoon(); // триггер сохранения профиля
+    /* ачивки/серии/счётчики живут только в профиле — сохраняем сразу,
+       иначе разблокировки и огоньки пропадают при перезапуске */
+    if (window.Profiles && Profiles.persist) Profiles.persist();
     return fresh.length;
   }
 

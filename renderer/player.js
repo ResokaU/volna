@@ -943,7 +943,7 @@ function bindPlayerControls() {
   if (volBtn) volBtn.addEventListener('wheel', wheelVol, { passive: false });
   if (bar) bar.addEventListener('wheel', e => {
     e.preventDefault();
-    seekBy(e.deltaY < 0 ? 10 : -10);
+    seekBy(e.deltaY < 0 ? 10000 : -10000); // колесо над прогрессом — ±10с (seekBy принимает мс)
   }, { passive: false });
   const volOf = e => {
     const r = slider.getBoundingClientRect();
@@ -1189,17 +1189,6 @@ function sendMiniSync(force) {
     dur = (state.audio.duration || 0) * 1000 || dur;
   }
   try { ipc.send('mini:sync', { title: t.title, artist: displayArtist(t), art: artwork(t), isPlaying: state.isPlaying, pos, dur, liked: state.favorites.some(f => f.id === t.id), accent: (getComputedStyle(document.body).getPropertyValue('--accent') || '').trim() }); } catch (_) {}
-}
-
-/* быстрая перемотка на ±секунд (колесо мыши) */
-function seekBy(sec) {
-  if (state.engine === 'audio' && state.audio) {
-    try { state.audio.currentTime = Math.max(0, state.audio.currentTime + sec); } catch (_) {}
-  } else if (state.widget) {
-    try {
-      state.widget.getPosition(p => { try { state.widget.seekTo(Math.max(0, p / 1000 + sec)); } catch (_) {} });
-    } catch (_) {}
-  }
 }
 
 /* FFT-полосы для мини-плеера (8 бандов) */
